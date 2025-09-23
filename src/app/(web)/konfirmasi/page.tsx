@@ -254,6 +254,48 @@ function KonfirmasiComponent() {
         fetchVehicleAndDriver();
     }, [vehicleId, driverId, supabase]);
 
+    const handleUploadSuccess = async (proofUrl: string) => {
+        if (!supabase || !vehicleId || !vehicle) return;
+
+        const newOrder: Omit<Order, 'created_at'> = {
+            id: orderId,
+            customerName: customerName,
+            customerPhone: customerPhone,
+            carName: `${vehicle.brand} ${vehicle.name}`,
+            type: vehicle.type,
+            fuel: vehicle.fuel,
+            transmission: vehicle.transmission,
+            service: service?.replace('-', ' ') || null,
+            driver: driver ? driver.name : null,
+            driverId: driverId,
+            vehicleId: vehicleId,
+            paymentProof: proofUrl,
+            status: 'pending',
+            paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
+            total: Number(total),
+        };
+
+        const { error: insertError } = await supabase.from('orders').insert(newOrder);
+
+        if (insertError) {
+            console.error('Error creating order in Supabase:', insertError);
+            toast({ variant: 'destructive', title: 'Gagal Membuat Pesanan', description: insertError.message });
+            return;
+        }
+
+        // Only update status for non-special units
+        if (vehicle.unitType !== 'khusus') {
+            const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
+            if (vehicleStatusError) {
+                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
+            }
+        }
+
+
+        console.log('New order added to Supabase:', newOrder);
+        setUploadSuccess(true);
+    };
+
     if (!vehicleId || !total || !service || !paymentMethod || !customerName || !customerPhone) {
         return (
              <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
@@ -281,45 +323,6 @@ function KonfirmasiComponent() {
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
     
-    const handleUploadSuccess = async (proofUrl: string) => {
-        if (!supabase || !vehicleId) return;
-
-        const newOrder: Omit<Order, 'created_at'> = {
-            id: orderId,
-            customerName: customerName,
-            customerPhone: customerPhone,
-            carName: `${vehicle.brand} ${vehicle.name}`,
-            type: vehicle.type,
-            fuel: vehicle.fuel,
-            transmission: vehicle.transmission,
-            service: service.replace('-', ' '),
-            driver: driver ? driver.name : null,
-            driverId: driverId,
-            vehicleId: vehicleId,
-            paymentProof: proofUrl,
-            status: 'pending',
-            paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
-            total: Number(total),
-        };
-
-        const { error: insertError } = await supabase.from('orders').insert(newOrder);
-
-        if (insertError) {
-            console.error('Error creating order in Supabase:', insertError);
-            toast({ variant: 'destructive', title: 'Gagal Membuat Pesanan', description: insertError.message });
-            return;
-        }
-
-        const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
-        if (vehicleStatusError) {
-             toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
-        }
-
-
-        console.log('New order added to Supabase:', newOrder);
-        setUploadSuccess(true);
-    };
-
     if (uploadSuccess) {
         const driverWhatsappUrl = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, '')}` : "#";
 
