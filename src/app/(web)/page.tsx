@@ -48,16 +48,16 @@ export const dynamic = 'force-dynamic';
 
 function HomePageContent() {
     const { dictionary } = useLanguage();
-    const [supabase, setSupabase = useState<SupabaseClient | null>(null);
-    const [fleet, setFleet = useState<Vehicle[]>([]);
-    const [promotions, setPromotions = useState<Promotion[]>([]);
-    const [isLoading, setIsLoading = useState(true);
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+    const [fleet, setFleet] = useState<Vehicle[]>([]);
+    const [promotions, setPromotions] = useState<Promotion[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [visibleCars, setVisibleCars = useState(6);
-    const [searchQuery, setSearchQuery = useState('');
-    const [filters, setFilters = useState({ brand: 'all', type: 'all' });
-    const [sortBy, setSortBy = useState('price-asc');
-    const [isSheetOpen, setSheetOpen = useState(false);
+    const [visibleCars, setVisibleCars] = useState(6);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filters, setFilters] = useState({ brand: 'all', type: 'all' });
+    const [sortBy, setSortBy] = useState('price-asc');
+    const [isSheetOpen, setSheetOpen] = useState(false);
     
     const plugin = useRef(
       Autoplay({ delay: 5000, stopOnInteraction: true })
