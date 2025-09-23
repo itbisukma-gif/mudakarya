@@ -59,7 +59,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           <div className="relative">
             <Link href={isOutOfStock ? '#' : detailUrl} className={isOutOfStock ? 'cursor-not-allowed' : ''}>
                 <CardContent className="p-0">
-                  <div className="aspect-video w-full relative">
+                  <div className="aspect-3/2 w-full relative">
                       <Image
                         src={displayVehicle.photo!}
                         alt={displayVehicle.name}
@@ -101,20 +101,20 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <p className="text-xs text-muted-foreground">{displayVehicle.type}</p>
                 </Link>
             </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
+             <div className="flex items-start justify-between text-xs text-muted-foreground mt-3">
               <div className="flex flex-col gap-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Fuel className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{displayVehicle.fuel || 'Bensin'}</span>
-                </div>
+                  <div className="flex items-center gap-1.5">
+                      <Users className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                      <Fuel className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{displayVehicle.fuel || 'Bensin'}</span>
+                  </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Cog className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{availableTransmissionsText}</span>
+               <div className="flex items-center gap-1.5">
+                  <Cog className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate text-right">{availableTransmissionsText}</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t flex items-end justify-between">

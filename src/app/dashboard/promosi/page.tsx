@@ -337,7 +337,7 @@ export default function PromosiPage() {
                         const vehicle = vehicles.find(v => v.id === promo.vehicleId);
                         return (
                         <div key={promo.id} className="flex items-center gap-4 border rounded-lg p-3">
-                            <Image src={promo.imageUrl} alt={promo.title} width={160} height={90} className="rounded-md object-cover aspect-video bg-muted" />
+                            <Image src={promo.imageUrl} alt={promo.title} width={160} height={90} className="rounded-md object-cover aspect-3/2 bg-muted" />
                             <div className="flex-grow">
                                 <h4 className="font-bold">{promo.title}</h4>
                                 <p className="text-sm text-muted-foreground">{promo.description}</p>

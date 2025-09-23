@@ -183,7 +183,7 @@ function VehicleDetail() {
     <div className="container py-6 md:py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         <div className="relative">
-           <div className="relative aspect-video w-full overflow-hidden rounded-lg shadow-md">
+           <div className="relative aspect-3/2 w-full overflow-hidden rounded-lg shadow-md">
             <Image 
                 src={representativeVehicle.photo!} 
                 alt={`${representativeVehicle.brand} ${representativeVehicle.name}`} 

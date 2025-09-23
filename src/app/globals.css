@@ -82,6 +82,12 @@
   }
 }
 
+@layer utilities {
+    .aspect-3\/2 {
+        aspect-ratio: 3 / 2;
+    }
+}
+
 @media print {
   body {
     background: white;

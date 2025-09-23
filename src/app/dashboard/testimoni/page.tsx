@@ -171,7 +171,7 @@ function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | nu
                      <div className="space-y-2">
                         <Label>Foto Ilustrasi</Label>
                         {previewUrl && (
-                            <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+                            <div className="relative aspect-3/2 w-full rounded-md overflow-hidden border">
                                 <Image src={previewUrl} alt="Pratinjau" fill className="object-cover" />
                             </div>
                         )}
@@ -305,7 +305,7 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
                                 </Select>
                             </div>
                             {previewUrl && (
-                                <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+                                <div className="relative aspect-3/2 w-full rounded-md overflow-hidden border">
                                     <Image src={previewUrl} alt="Pratinjau Foto" fill className="object-cover" />
                                 </div>
                             )}
@@ -455,7 +455,7 @@ function FeatureEditor() {
                      <div className="flex justify-center items-center h-48"><Loader2 className="h-6 w-6 animate-spin"/></div>
                 ) : features.length > 0 ? features.map(feature => (
                     <div key={feature.id} className="flex items-center gap-4 border rounded-lg p-3">
-                        <Image src={feature.imageUrl!} alt={feature.title} width={120} height={80} className="rounded-md object-cover aspect-video bg-muted" />
+                        <Image src={feature.imageUrl!} alt={feature.title} width={120} height={80} className="rounded-md object-cover aspect-3/2 bg-muted" />
                         <div className="flex-grow">
                             <h4 className="font-bold">{feature.title}</h4>
                             <p className="text-sm text-muted-foreground">{feature.description}</p>

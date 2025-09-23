@@ -57,20 +57,21 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
     return (
         <Card className="overflow-hidden flex flex-col group">
             <CardHeader className="p-0 relative">
-                 {vehicle.photo ? (
-                    <Image
-                        src={vehicle.photo}
-                        alt={vehicle.name}
-                        width={600}
-                        height={400}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                        data-ai-hint={vehicle.dataAiHint || 'car exterior'}
-                    />
-                ) : (
-                    <div className="w-full h-48 bg-muted flex items-center justify-center text-muted-foreground">
-                        No Image
-                    </div>
-                )}
+                 <div className="relative w-full aspect-3/2">
+                    {vehicle.photo ? (
+                        <Image
+                            src={vehicle.photo}
+                            alt={vehicle.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            data-ai-hint={vehicle.dataAiHint || 'car exterior'}
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+                            No Image
+                        </div>
+                    )}
+                 </div>
                  {logoUrl && (
                     <div className="absolute top-2 left-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                         <div className="relative h-8 w-12">
@@ -268,7 +269,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                     <div className="lg:col-span-1 space-y-2">
                         <Label>Foto Mobil</Label>
                         <div className="mt-2 flex flex-col items-center gap-4">
-                            <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+                            <div className="relative aspect-3/2 w-full rounded-md overflow-hidden border">
                                 {previewUrl ? (
                                     <Image
                                         src={previewUrl}
@@ -277,7 +278,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="aspect-video w-full p-8 flex justify-center items-center bg-muted rounded-md border border-dashed">
+                                    <div className="aspect-3/2 w-full p-8 flex justify-center items-center bg-muted rounded-md border border-dashed">
                                         <p className="text-sm text-center text-muted-foreground">Pratinjau akan muncul di sini</p>
                                     </div>
                                 )}
