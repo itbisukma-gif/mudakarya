@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { Users, Cog, Tag } from 'lucide-react';
+import { Users, Cog, Tag, Fuel } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
 import { OrderForm } from '@/components/order-form';
 import { useLanguage } from '@/hooks/use-language';
@@ -100,7 +100,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <p className="text-xs text-muted-foreground">{displayVehicle.type}</p>
                 </Link>
             </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-muted-foreground mt-3">
               <div className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
                 <span>{displayVehicle.passengers}</span>
@@ -108,6 +108,10 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               <div className="flex items-center gap-1.5">
                 <Cog className="h-4 w-4" />
                 <span>{availableTransmissionsText}</span>
+              </div>
+              <div className="flex items-center gap-1.5 col-span-2">
+                <Fuel className="h-4 w-4" />
+                <span>{displayVehicle.fuel || '-'}</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t flex items-end justify-between">

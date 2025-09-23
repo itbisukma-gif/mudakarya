@@ -110,9 +110,9 @@ function HomePageContent() {
             return searchMatch && brandMatch && typeMatch;
         });
 
-        // 2. Group by brand and name
+        // 2. Group by brand, name, and fuel type
         const grouped = filtered.reduce((acc, vehicle) => {
-            const key = `${vehicle.brand}|${vehicle.name}`;
+            const key = `${vehicle.brand}|${vehicle.name}|${vehicle.fuel}`;
             if (!acc[key]) {
                 acc[key] = [];
             }
