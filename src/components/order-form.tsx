@@ -92,14 +92,24 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 .eq('status', 'Tersedia');
             if (data) {
                 setAvailableDrivers(data);
-                // Auto-select the first available driver if service requires one
-                if (showDriverSelection && data.length > 0 && !driverId) {
+                // Auto-select the first available driver if service requires one and there is no driver selected yet
+                if (showDriverSelection && data.length > 0) {
                     setDriverId(data[0].id);
                 }
             }
         };
         fetchDrivers();
-    }, [supabase, showDriverSelection, driverId]);
+    }, [supabase]);
+    
+    // Auto-select driver when service changes
+    useEffect(() => {
+        if (showDriverSelection && availableDrivers.length > 0) {
+            setDriverId(availableDrivers[0].id);
+        } else {
+            setDriverId(undefined);
+        }
+    }, [showDriverSelection, availableDrivers]);
+
 
     // This effect determines the actual vehicle to be booked
     useEffect(() => {
@@ -412,8 +422,8 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                     {dictionary.orderForm.bookNow}
                 </Link>
             </Button>
-             {isBookingDisabled && showDriverSelection && !driverId && (
-                <p className="text-xs text-center mt-2 text-destructive">{dictionary.orderForm.common.driver.selectionRequired}</p>
+             {isBookingDisabled && showDriverSelection && !driverId && availableDrivers.length === 0 && (
+                <p className="text-xs text-center mt-2 text-destructive">{dictionary.orderForm.common.driver.noAvailable}</p>
             )}
         </div>
       </div>

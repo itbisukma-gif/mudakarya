@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Suspense, useEffect, useState, ChangeEvent, useMemo } from "react";
@@ -329,10 +330,7 @@ function KonfirmasiComponent() {
             }
 
             if (!isPartnerUnit) {
-                const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
-                if (vehicleStatusError) {
-                    toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
-                }
+                await updateVehicleStatus(vehicleId, 'dipesan');
             }
 
             setUploadSuccess(true);
