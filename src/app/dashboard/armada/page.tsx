@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from "react";
@@ -73,18 +71,6 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                     )}
                  </div>
                  <div className="absolute top-2 right-2 flex items-center gap-2">
-                    {logoUrl && (
-                        <div className="bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
-                            <div className="relative h-8 w-12">
-                                <Image
-                                    src={logoUrl}
-                                    alt={`${vehicle.brand} logo`}
-                                    fill
-                                    className="object-contain"
-                                />
-                            </div>
-                        </div>
-                    )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="secondary" size="icon" className="h-8 w-8">
@@ -112,7 +98,19 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                             </AlertDialog>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </div>
+                 </div>
+                  {logoUrl && (
+                    <div className="absolute top-2 left-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                        <div className="relative h-8 w-12">
+                            <Image
+                                src={logoUrl}
+                                alt={`${vehicle.brand} logo`}
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
+                    </div>
+                 )}
                  <div className="absolute bottom-2 left-2 flex items-center gap-2">
                     <Badge variant="outline" className={cn("text-xs py-1", statusInfo.className)}>
                         <statusInfo.icon className="h-3 w-3 mr-1.5"/>
@@ -127,7 +125,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                     )}
                 </div>
                  {hasDiscount && (
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 right-12">
                          <Badge variant="destructive">{vehicle.discountPercentage}% OFF</Badge>
                     </div>
                 )}

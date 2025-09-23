@@ -264,6 +264,9 @@ export default function KeuanganPage() {
                  <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Pengaturan Jenis Pembayaran</DialogTitle>
+                         <DialogDescription>
+                            Kelola rekening bank dan kode QRIS untuk menerima pembayaran.
+                        </DialogDescription>
                     </DialogHeader>
                     <Tabs defaultValue="bank">
                         <TabsList className="grid w-full grid-cols-2">
@@ -339,6 +342,9 @@ export default function KeuanganPage() {
                                         <DialogContent>
                                             <DialogHeader>
                                                 <DialogTitle>Upload Kode QRIS</DialogTitle>
+                                                <DialogDescription>
+                                                    Unggah gambar kode QRIS baru untuk menggantikan yang lama.
+                                                </DialogDescription>
                                             </DialogHeader>
                                             <div className="py-4 space-y-4">
                                                  {previewUrl && (

@@ -16,7 +16,8 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
     if (data.vehicleName) {
-        revalidatePath('/mobil');
+        // Revalidate the home page as vehicle ratings might be aggregated there
+        revalidatePath('/');
     }
     return { data, error: null };
 }
@@ -28,7 +29,7 @@ export async function deleteTestimonial(id: string) {
     if (error) return { error };
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/mobil');
+    revalidatePath('/');
     return { error: null };
 }
 
@@ -53,7 +54,7 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
     }
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/mobil');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -87,7 +88,7 @@ export async function deleteGalleryItem(id: string) {
 
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/mobil');
+    revalidatePath('/');
     return { error: null };
 }
 
