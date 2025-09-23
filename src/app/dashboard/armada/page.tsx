@@ -399,3 +399,123 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
         </form>
     )
 }
+
+function ArmadaPage() {
+    const [fleet, setFleet] = useState<Vehicle[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFormOpen, setFormOpen] = useState(false);
+    const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const [isDeleting, startDeleteTransition] = useTransition();
+
+    const { toast } = useToast();
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+    const fetchFleet = useCallback(async () => {
+        if (!supabase) return;
+        setIsLoading(true);
+        let query = supabase.from('vehicles').select('*');
+        if (debouncedSearchTerm) {
+            query = query.or(`name.ilike.%${debouncedSearchTerm}%,brand.ilike.%${debouncedSearchTerm}%,code.ilike.%${debouncedSearchTerm}%`);
+        }
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+            toast({ variant: "destructive", title: "Gagal memuat armada", description: error.message });
+        } else {
+            setFleet(data || []);
+        }
+        setIsLoading(false);
+    }, [supabase, debouncedSearchTerm, toast]);
+
+    useEffect(() => {
+        const supabaseClient = createClient();
+        setSupabase(supabaseClient);
+    }, []);
+
+    useEffect(() => {
+        fetchFleet();
+    }, [fetchFleet]);
+
+    const handleEdit = (vehicle: Vehicle) => {
+        setSelectedVehicle(vehicle);
+        setFormOpen(true);
+    };
+
+    const handleDelete = (vehicleId: string) => {
+        startDeleteTransition(async () => {
+            const { error } = await deleteVehicle(vehicleId);
+            if (error) {
+                toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
+            } else {
+                toast({ title: "Kendaraan Dihapus" });
+                fetchFleet();
+            }
+        });
+    };
+
+    const handleSave = () => {
+        setFormOpen(false);
+        setSelectedVehicle(null);
+        fetchFleet();
+    };
+
+    const dialogTitle = selectedVehicle ? "Edit Kendaraan" : "Tambahkan Kendaraan Baru";
+    const dialogDescription = selectedVehicle ? "Perbarui detail kendaraan di bawah ini." : "Isi detail kendaraan baru untuk menambahkannya ke armada.";
+
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Manajemen Armada</h1>
+                    <p className="text-muted-foreground">
+                        Kelola seluruh unit kendaraan yang tersedia untuk disewa.
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Input
+                        placeholder="Cari armada (nama/brand/kode)..."
+                        className="w-full sm:w-64"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <Button className="w-full" onClick={() => { setSelectedVehicle(null); setFormOpen(true); }}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Tambah Armada
+                    </Button>
+                </div>
+            </div>
+
+            {isLoading ? (
+                <div className="text-center py-16 flex justify-center items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Memuat data armada...
+                </div>
+            ) : fleet.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {fleet.map((vehicle) => (
+                        <VehicleCard key={vehicle.id} vehicle={vehicle} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <h3 className="text-xl font-semibold">Tidak Ada Hasil</h3>
+                    <p className="text-muted-foreground mt-2">Tidak ada kendaraan yang cocok dengan pencarian Anda.</p>
+                </div>
+            )}
+
+            <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+                <DialogContent className="sm:max-w-4xl p-0">
+                    <DialogHeader className="p-6 pb-0">
+                        <DialogTitle>{dialogTitle}</DialogTitle>
+                        <DialogDescription>{dialogDescription}</DialogDescription>
+                    </DialogHeader>
+                    <VehicleForm vehicle={selectedVehicle} onSave={handleSave} onCancel={() => setFormOpen(false)} />
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+
+export default ArmadaPage;
