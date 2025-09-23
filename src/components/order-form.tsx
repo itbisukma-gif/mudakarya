@@ -49,7 +49,9 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     const [service, setService] = useState('lepas-kunci');
     const [driverId, setDriverId] = useState<string | undefined>(undefined);
     const [availableDrivers, setAvailableDrivers] = useState<Driver[]>([]);
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(variants[0]?.id);
+    const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(variants[0]?.id);
+    const [finalVehicleId, setFinalVehicleId] = useState<string | undefined>(undefined);
+    const [isPartnerUnit, setIsPartnerUnit] = useState(false);
 
     const [isStartCalendarOpen, setStartCalendarOpen] = useState(false);
     const [isEndCalendarOpen, setEndCalendarOpen] = useState(false);
@@ -58,7 +60,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
     const representativeVehicle = useMemo(() => {
         if (!variants || variants.length === 0) return null;
-        // Find the vehicle with the lowest price in the group to be the representative
         return variants.reduce((lowest, current) => {
             const lowestPrice = lowest.discountPercentage ? (lowest.price! * (1 - lowest.discountPercentage / 100)) : lowest.price;
             const currentPrice = current.discountPercentage ? (current.price! * (1 - current.discountPercentage / 100)) : current.price;
@@ -67,14 +68,13 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     }, [variants]);
     
     const selectedVehicle = useMemo(() => {
-        return variants.find(v => v.id === selectedVehicleId);
-    }, [variants, selectedVehicleId]);
+        return variants.find(v => v.id === selectedVariantId);
+    }, [variants, selectedVariantId]);
 
 
     useEffect(() => {
         const supabaseClient = createClient();
         setSupabase(supabaseClient);
-        // Set initial dates only on the client-side to avoid hydration errors
         const today = startOfDay(new Date());
         setStartDate(today);
         setEndDate(addDays(today, 1));
@@ -82,27 +82,72 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
     useEffect(() => {
         if (!supabase) return;
-        // Fetch available drivers
+        
         const fetchDrivers = async () => {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('drivers')
                 .select('*')
                 .eq('status', 'Tersedia');
-            
-            if (data) {
-                setAvailableDrivers(data);
-            }
+            if (data) setAvailableDrivers(data);
         };
-
         fetchDrivers();
     }, [supabase]);
 
-    // Reset driver selection if service changes to not require one
     useEffect(() => {
         if (!showDriverSelection) {
             setDriverId(undefined);
         }
     }, [service, showDriverSelection]);
+
+    // This effect determines the actual vehicle to be booked
+    useEffect(() => {
+      const determineVehicle = async () => {
+        if (!selectedVehicle || !supabase) return;
+
+        // 1. Find a physical, available unit first
+        const { data: availablePhysicalUnit } = await supabase
+          .from('vehicles')
+          .select('id')
+          .eq('brand', selectedVehicle.brand)
+          .eq('name', selectedVehicle.name)
+          .eq('transmission', selectedVehicle.transmission)
+          .eq('fuel', selectedVehicle.fuel)
+          .eq('status', 'tersedia')
+          .eq('unitType', 'biasa')
+          .order('created_at', { ascending: true }) // To cycle through units
+          .limit(1)
+          .single();
+
+        if (availablePhysicalUnit) {
+          setFinalVehicleId(availablePhysicalUnit.id);
+          setIsPartnerUnit(false);
+          return;
+        }
+
+        // 2. If no physical unit, find a partner unit ('khusus')
+        const { data: partnerUnit } = await supabase
+          .from('vehicles')
+          .select('id')
+          .eq('brand', selectedVehicle.brand)
+          .eq('name', selectedVehicle.name)
+          .eq('transmission', selectedVehicle.transmission)
+          .eq('fuel', selectedVehicle.fuel)
+          .eq('unitType', 'khusus')
+          .limit(1)
+          .single();
+
+        if (partnerUnit) {
+          setFinalVehicleId(partnerUnit.id);
+          setIsPartnerUnit(true);
+        } else {
+          // Should not happen if data is set up correctly, but as a fallback
+          setFinalVehicleId(selectedVehicle.id);
+          setIsPartnerUnit(selectedVehicle.unitType === 'khusus');
+        }
+      };
+
+      determineVehicle();
+    }, [selectedVehicle, supabase]);
 
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -111,7 +156,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         if (activeTab === 'reservation') {
             if (startDate && endDate) {
                 const diff = differenceInCalendarDays(endDate, startDate);
-                // Ensure duration is at least 1 day
                 return diff >= 1 ? diff : 1;
             }
             return 1;
@@ -172,11 +216,11 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicleId;
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !finalVehicleId;
 
     const paymentUrl = useMemo(() => {
-        if (isBookingDisabled || !selectedVehicleId) return '#';
-        let url = `/pembayaran?vehicleId=${selectedVehicleId}&days=${calculatedDuration}&service=${service}`;
+        if (isBookingDisabled || !finalVehicleId) return '#';
+        let url = `/pembayaran?vehicleId=${finalVehicleId}&days=${calculatedDuration}&service=${service}&isPartnerUnit=${isPartnerUnit}`;
         if (activeTab === 'reservation' && startDate && endDate) {
             url += `&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
         }
@@ -184,7 +228,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             url += `&driverId=${driverId}`;
         }
         return url;
-    }, [selectedVehicleId, calculatedDuration, service, activeTab, startDate, endDate, driverId, isBookingDisabled]);
+    }, [finalVehicleId, calculatedDuration, service, activeTab, startDate, endDate, driverId, isBookingDisabled, isPartnerUnit]);
 
     const locale = language === 'id' ? id : undefined;
 
@@ -285,7 +329,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 <div className="space-y-4 pt-4 border-t mt-6">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">{dictionary.orderForm.common.transmission.label}</label>
-                         <Select onValueChange={setSelectedVehicleId} defaultValue={selectedVehicleId} disabled={variants.length <= 1}>
+                         <Select onValueChange={setSelectedVariantId} defaultValue={selectedVariantId} disabled={variants.length <= 1}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Pilih Transmisi" />
                             </SelectTrigger>

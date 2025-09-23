@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Send, Eye, Share, CheckCircle, Car, ShieldCheck, Clock, AlertTriangle, Loader2 } from "lucide-react";
+import { Send, Eye, Share, CheckCircle, Car, ShieldCheck, Clock, AlertTriangle, Loader2, Users } from "lucide-react";
 import Link from "next/link";
 import type { Driver, Order, OrderStatus } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -85,9 +85,9 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                 return;
             }
 
-            if (newStatus === 'disetujui') {
+            if (newStatus === 'disetujui' && !order.isPartnerUnit) {
                 await updateVehicleStatus(order.vehicleId, 'disewa');
-            } else if (newStatus === 'tidak disetujui' || newStatus === 'selesai') {
+            } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && !order.isPartnerUnit) {
                 await updateVehicleStatus(order.vehicleId, 'tersedia');
                 if (order.driverId) {
                     await updateDriverStatus(order.driverId, 'Tersedia');
@@ -181,6 +181,15 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                         <AlertTitle className="font-semibold">Perlu Perhatian</AlertTitle>
                         <AlertDescription className="text-yellow-700">
                             Pesanan ini belum ditanggapi lebih dari 1 jam.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                 {order.isPartnerUnit && order.status === 'pending' && (
+                    <Alert className="bg-blue-50 border-blue-200 text-blue-800 [&>svg]:text-blue-600">
+                        <Users className="h-4 w-4" />
+                        <AlertTitle className="font-semibold">Unit Mitra</AlertTitle>
+                        <AlertDescription className="text-blue-700">
+                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{order.carName} ({order.transmission}, {order.fuel})</span>.
                         </AlertDescription>
                     </Alert>
                 )}

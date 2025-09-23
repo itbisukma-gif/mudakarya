@@ -79,6 +79,7 @@ export type Order = {
   created_at: string; // ISO 8601 date string
   driverId: string | null;
   vehicleId: string;
+  isPartnerUnit: boolean | null;
 };
     
 export type ContactInfo = {

@@ -194,6 +194,7 @@ function KonfirmasiComponent() {
     const customerName = searchParams.get('name');
     const customerPhone = searchParams.get('phone');
     const driverId = searchParams.get('driverId');
+    const isPartnerUnit = searchParams.get('isPartnerUnit') === 'true';
     
     const { dictionary } = useLanguage();
 
@@ -273,6 +274,7 @@ function KonfirmasiComponent() {
             status: 'pending',
             paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
             total: Number(total),
+            isPartnerUnit: isPartnerUnit,
         };
 
         const { error: insertError } = await supabase.from('orders').insert(newOrder);
@@ -283,8 +285,7 @@ function KonfirmasiComponent() {
             return;
         }
 
-        // Only update status for non-special units
-        if (vehicle.unitType !== 'khusus') {
+        if (!isPartnerUnit) {
             const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
             if (vehicleStatusError) {
                  toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
