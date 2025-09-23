@@ -57,6 +57,24 @@ function VehicleDetail() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+
+  const representativeVehicle = useMemo(() => {
+    if (!variants || variants.length === 0) return null;
+    // Find the vehicle with the lowest price in the group to be the representative
+    return variants.reduce((lowest, current) => {
+        const lowestPrice = lowest.discountPercentage ? (lowest.price! * (1 - lowest.discountPercentage / 100)) : lowest.price;
+        const currentPrice = current.discountPercentage ? (current.price! * (1 - current.discountPercentage / 100)) : current.price;
+        return lowestPrice! < currentPrice! ? lowest : current;
+    });
+  }, [variants]);
+
+  const { logoUrl } = useVehicleLogo(representativeVehicle ? representativeVehicle.brand : '');
+  
+  const availableTransmissionsText = useMemo(() => {
+    if (!variants || variants.length === 0) return '-';
+    const transmissionTypes = new Set(variants.map(v => v.transmission));
+    return Array.from(transmissionTypes).join(' | ');
+  }, [variants]);
   
   useEffect(() => {
     const supabaseClient = createClient();
@@ -140,25 +158,6 @@ function VehicleDetail() {
       }
       setIsSubmittingReview(false);
   }
-  
-  const representativeVehicle = useMemo(() => {
-    if (!variants || variants.length === 0) return null;
-    // Find the vehicle with the lowest price in the group to be the representative
-    return variants.reduce((lowest, current) => {
-        const lowestPrice = lowest.discountPercentage ? (lowest.price! * (1 - lowest.discountPercentage / 100)) : lowest.price;
-        const currentPrice = current.discountPercentage ? (current.price! * (1 - current.discountPercentage / 100)) : current.price;
-        return lowestPrice! < currentPrice! ? lowest : current;
-    });
-  }, [variants]);
-
-  const { logoUrl } = useVehicleLogo(representativeVehicle ? representativeVehicle.brand : '');
-  
-  const availableTransmissionsText = useMemo(() => {
-    if (!variants || variants.length === 0) return '-';
-    const transmissionTypes = new Set(variants.map(v => v.transmission));
-    return Array.from(transmissionTypes).join(' | ');
-  }, [variants]);
-
 
   if (isLoading || !representativeVehicle) {
       return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></div>
