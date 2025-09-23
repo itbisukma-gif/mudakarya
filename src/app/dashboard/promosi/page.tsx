@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, ChangeEvent, useRef, useEffect, useTransition } from 'react';
@@ -66,6 +67,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
             };
 
             const { error: promoError } = await upsertPromotion(promoData);
+
             if (promoError) {
                 toast({ variant: 'destructive', title: 'Gagal Menyimpan Promosi', description: promoError.message });
                 return;
@@ -76,7 +78,10 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 const vehicleToUpdate = vehicles.find(v => v.id === vehicleId);
                 if (vehicleToUpdate) {
                     const updatedVehicle: Vehicle = { ...vehicleToUpdate, discountPercentage: discount || null };
-                    await upsertVehicle(updatedVehicle);
+                    const { error: vehicleError } = await upsertVehicle(updatedVehicle);
+                     if (vehicleError) {
+                        toast({ variant: 'destructive', title: 'Gagal Apply Diskon', description: `Promosi disimpan, tapi gagal menerapkan diskon ke kendaraan. ${vehicleError.message}` });
+                     }
                 }
             }
             
@@ -248,14 +253,12 @@ export default function PromosiPage() {
             }
 
             toast({ title: "Promosi Dihapus" });
-            fetchData();
         });
     };
     
     const handleFormSave = () => {
         setFormOpen(false);
         setSelectedPromo(null);
-        fetchData(); // refetch data
     };
 
     const dialogTitle = selectedPromo ? "Edit Promosi" : "Tambahkan Promosi Baru";
@@ -282,7 +285,7 @@ export default function PromosiPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Pratinjau Slider Promosi</CardTitle>
-                        <CardDescription>Beginilah tampilan slider di halaman utama.</CardDescription>
+                        <DialogDescription>Beginilah tampilan slider di halaman utama.</DialogDescription>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -325,7 +328,7 @@ export default function PromosiPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Daftar Promosi Aktif</CardTitle>
-                        <CardDescription>Kelola semua promosi yang ada.</CardDescription>
+                        <DialogDescription>Kelola semua promosi yang ada.</DialogDescription>
                     </div>
                      <Button onClick={handleAddClick}>
                         <PlusCircle className="mr-2 h-4 w-4" />

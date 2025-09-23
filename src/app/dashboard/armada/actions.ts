@@ -3,6 +3,7 @@
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
 import type { Vehicle } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 export async function upsertVehicle(vehicleData: Vehicle) {
     const supabase = createServiceRoleClient();
@@ -27,6 +28,8 @@ export async function upsertVehicle(vehicleData: Vehicle) {
         return { data: null, error };
     }
     
+    revalidatePath('/dashboard/armada');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -55,6 +58,8 @@ export async function deleteVehicle(vehicleId: string) {
         await supabase.storage.from(bucketName).remove([filePath]);
     }
 
+    revalidatePath('/dashboard/armada');
+    revalidatePath('/');
     return { error: null };
 }
 
@@ -71,5 +76,7 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
         return { error };
     }
 
+    revalidatePath('/dashboard/armada');
+    revalidatePath('/');
     return { error: null };
 }

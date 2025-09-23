@@ -3,6 +3,7 @@
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
 import type { Promotion } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) {
     const supabase = createServiceRoleClient();
@@ -21,6 +22,9 @@ export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) 
         console.error('Error upserting promotion:', error);
         return { data: null, error };
     }
+
+    revalidatePath('/dashboard/promosi');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -44,6 +48,8 @@ export async function deletePromotion(promoId: string) {
         const filePath = itemData.imageUrl.substring(itemData.imageUrl.indexOf(bucketName) + bucketName.length + 1);
         await supabase.storage.from(bucketName).remove([filePath]);
     }
-
+    
+    revalidatePath('/dashboard/promosi');
+    revalidatePath('/');
     return { error: null };
 }

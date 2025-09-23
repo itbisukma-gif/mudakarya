@@ -3,6 +3,7 @@
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
 import type { Testimonial, GalleryItem, FeatureItem } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 // --- Testimonial Actions ---
 
@@ -13,6 +14,8 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
         console.error('Error upserting testimonial:', error);
         return { data: null, error };
     }
+    revalidatePath('/dashboard/testimoni');
+    revalidatePath(`/mobil/${data.vehicleName}`); // Revalidate specific car page
     return { data, error: null };
 }
 
@@ -21,6 +24,7 @@ export async function deleteTestimonial(id: string) {
     const supabase = createServiceRoleClient();
     const { error } = await supabase.from('testimonials').delete().eq('id', id);
     if (error) return { error };
+    revalidatePath('/dashboard/testimoni');
     return { error: null };
 }
 
@@ -43,6 +47,8 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
         console.error('Error adding gallery item:', error);
         return { data: null, error };
     }
+    revalidatePath('/dashboard/testimoni');
+    revalidatePath('/testimoni');
     return { data, error: null };
 }
 
@@ -73,6 +79,8 @@ export async function deleteGalleryItem(id: string) {
         // We don't return an error here because the DB record is already gone, which is the main goal.
     }
 
+    revalidatePath('/dashboard/testimoni');
+    revalidatePath('/testimoni');
     return { error: null };
 }
 
@@ -96,6 +104,8 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         console.error('Error upserting feature:', error);
         return { data: null, error };
     }
+    revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -117,5 +127,7 @@ export async function deleteFeature(id: string) {
         await supabase.storage.from(bucketName).remove([filePath]);
     }
     
+    revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { error: null };
 }

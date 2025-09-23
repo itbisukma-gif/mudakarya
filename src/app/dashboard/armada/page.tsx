@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from "react";
@@ -100,7 +101,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                     </DropdownMenu>
                  </div>
                   {logoUrl && (
-                    <div className="absolute top-2 left-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                    <div className="absolute top-3 right-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                         <div className="relative h-8 w-12">
                             <Image
                                 src={logoUrl}
@@ -125,9 +126,9 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                     )}
                 </div>
                  {hasDiscount && (
-                    <div className="absolute top-2 right-12">
-                         <Badge variant="destructive">{vehicle.discountPercentage}% OFF</Badge>
-                    </div>
+                    <Badge variant="destructive" className="absolute top-2 left-2 shadow-lg">
+                      {vehicle.discountPercentage}% OFF
+                    </Badge>
                 )}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
@@ -286,7 +287,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                                     </div>
                                 )}
                                 {logoUrl && (
-                                     <div className="absolute top-2 right-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                                     <div className="absolute top-3 right-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                                         <div className="relative h-8 w-12">
                                             <Image
                                                 src={logoUrl}
@@ -439,8 +440,10 @@ function ArmadaPage() {
     }, []);
 
     useEffect(() => {
-        fetchFleet();
-    }, [fetchFleet]);
+        if (supabase) {
+          fetchFleet();
+        }
+    }, [supabase, fetchFleet]);
 
     const handleEdit = (vehicle: Vehicle) => {
         setSelectedVehicle(vehicle);
@@ -454,7 +457,7 @@ function ArmadaPage() {
                 toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
             } else {
                 toast({ title: "Kendaraan Dihapus" });
-                fetchFleet();
+                // Data will be refetched by revalidation
             }
         });
     };
@@ -462,7 +465,7 @@ function ArmadaPage() {
     const handleSave = () => {
         setFormOpen(false);
         setSelectedVehicle(null);
-        fetchFleet();
+        // Data will be refetched by revalidation
     };
 
     const dialogTitle = selectedVehicle ? "Edit Kendaraan" : "Tambahkan Kendaraan Baru";

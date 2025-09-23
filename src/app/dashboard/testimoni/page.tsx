@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, ChangeEvent, useMemo, useEffect, useTransition } from 'react';
@@ -253,7 +254,6 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
                 setAddPhotoOpen(false);
                 setPreviewUrl(null);
                 setSelectedVehicleName(undefined);
-                fetchGallery(); // refetch
             }
         });
     };
@@ -265,7 +265,6 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
                 toast({ variant: 'destructive', title: 'Gagal menghapus foto', description: result.error.message });
             } else {
                 toast({ variant: "destructive", title: "Foto Dihapus" });
-                fetchGallery(); // refetch
             }
         });
     };
@@ -426,7 +425,6 @@ function FeatureEditor() {
     const handleFormSave = () => {
         setIsFormOpen(false);
         setSelectedFeature(null);
-        fetchFeatures(); // refetch
     };
 
     const handleDelete = (featureId: string) => {
@@ -436,7 +434,6 @@ function FeatureEditor() {
                  toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
             } else {
                 toast({ variant: "destructive", title: "Keunggulan Dihapus" });
-                fetchFeatures(); // refetch
             }
         });
     };
@@ -596,7 +593,6 @@ export default function TestimoniPage() {
             toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
         } else {
             toast({ variant: "destructive", title: "Testimoni Dihapus" });
-            fetchData();
         }
     });
   };
@@ -604,7 +600,6 @@ export default function TestimoniPage() {
   const handleFormSave = () => {
     setFormOpen(false);
     setSelectedTestimonial(null);
-    fetchData(); // refetch
   };
 
   const dialogTitle = selectedTestimonial ? "Edit Testimoni" : "Tambahkan Testimoni Baru";
