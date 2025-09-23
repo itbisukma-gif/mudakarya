@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Inter } from 'next/font/google'
+import { LanguageProvider } from './language-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -30,7 +31,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
         <Toaster />
       </body>
     </html>
