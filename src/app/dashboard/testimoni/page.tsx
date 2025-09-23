@@ -284,6 +284,10 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
                 toast({ variant: 'destructive', title: 'Tidak ada foto dipilih' });
                 return;
             }
+            if (!supabase) {
+                toast({ variant: 'destructive', title: 'Klien Supabase tidak tersedia' });
+                return;
+            }
             
             const fileExtension = selectedFile.name.split('.').pop();
             const fileName = `gallery-photo-${Date.now()}.${fileExtension}`;
@@ -845,5 +849,3 @@ export default function TestimoniPage() {
     </div>
   );
 }
-
-    
