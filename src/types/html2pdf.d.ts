@@ -1,6 +1,6 @@
 
 declare module 'html2pdf.js' {
-  interface Html2PdfOptions {
+  export interface Html2PdfOptions {
     margin?: number | [number, number] | [number, number, number, number];
     filename?: string;
     image?: { type: 'jpeg' | 'png' | 'webp'; quality: number };
@@ -9,7 +9,7 @@ declare module 'html2pdf.js' {
     [key: string]: any;
   }
 
-  interface Html2Pdf {
+  export interface Html2Pdf {
     from(element: HTMLElement | string, type?: string): this;
     to(target: any): this;
     set(options: Html2PdfOptions): this;
