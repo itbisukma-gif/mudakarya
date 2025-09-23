@@ -63,25 +63,25 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
         startTransition(async () => {
             const { error: orderError } = await updateOrderStatus(order.id, newStatus);
             if (orderError) {
-                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: orderError.message });
+                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: (orderError as Error).message });
                 return;
             }
 
             if (newStatus === 'disetujui' && !order.isPartnerUnit) {
                 const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'disewa');
                  if (vehicleError) {
-                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
+                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
                  }
             } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && !order.isPartnerUnit) {
                 const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'tersedia');
                  if (vehicleError) {
-                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
+                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
                  }
 
                 if (order.driverId) {
                     const { error: driverError } = await updateDriverStatus(order.driverId, 'Tersedia');
                     if (driverError) {
-                        toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: driverError.message });
+                        toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: (driverError as Error).message });
                     }
                 }
             }
@@ -99,19 +99,19 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
             if (order.driverId) {
                 const { error: oldDriverError } = await updateDriverStatus(order.driverId, 'Tersedia');
                  if (oldDriverError) {
-                    toast({ variant: 'destructive', title: 'Gagal Melepas Driver Lama', description: oldDriverError.message });
+                    toast({ variant: 'destructive', title: 'Gagal Melepas Driver Lama', description: (oldDriverError as Error).message });
                  }
             }
 
             const { error: orderError } = await updateOrderDriver(order.id, driverName, driverId);
             if (orderError) {
-                toast({ variant: 'destructive', title: 'Gagal Menugaskan Driver', description: orderError.message });
+                toast({ variant: 'destructive', title: 'Gagal Menugaskan Driver', description: (orderError as Error).message });
                 return;
             }
 
             const { error: driverError } = await updateDriverStatus(driverId, 'Bertugas');
             if (driverError) {
-                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Driver', description: driverError.message });
+                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Driver', description: (driverError as Error).message });
             } else {
                 toast({ title: "Driver Ditugaskan", description: `${driverName} telah ditugaskan ke pesanan ${order.id}.` });
             }
