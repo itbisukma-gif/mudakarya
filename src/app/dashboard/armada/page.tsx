@@ -72,20 +72,19 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                         </div>
                     )}
                  </div>
-                 {logoUrl && (
-                    <div className="absolute top-2 left-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
-                        <div className="relative h-8 w-12">
-                            <Image
-                                src={logoUrl}
-                                alt={`${vehicle.brand} logo`}
-                                fill
-                                className="object-contain"
-                            />
+                 <div className="absolute top-2 right-2 flex items-center gap-2">
+                    {logoUrl && (
+                        <div className="bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                            <div className="relative h-8 w-12">
+                                <Image
+                                    src={logoUrl}
+                                    alt={`${vehicle.brand} logo`}
+                                    fill
+                                    className="object-contain"
+                                />
+                            </div>
                         </div>
-                    </div>
-                )}
-                <div className="absolute top-2 right-2 flex items-center gap-2">
-                    {hasDiscount && <Badge variant="destructive">{vehicle.discountPercentage}% OFF</Badge>}
+                    )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="secondary" size="icon" className="h-8 w-8">
@@ -127,6 +126,11 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                         </Badge>
                     )}
                 </div>
+                 {hasDiscount && (
+                    <div className="absolute top-2 left-2">
+                         <Badge variant="destructive">{vehicle.discountPercentage}% OFF</Badge>
+                    </div>
+                )}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
                 <div>
@@ -283,7 +287,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                                     </div>
                                 )}
                                 {logoUrl && (
-                                     <div className="absolute top-2 left-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                                     <div className="absolute top-2 right-2 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                                         <div className="relative h-8 w-12">
                                             <Image
                                                 src={logoUrl}

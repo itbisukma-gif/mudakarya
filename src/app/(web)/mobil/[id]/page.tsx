@@ -60,7 +60,6 @@ function VehicleDetail() {
   
   const representativeVehicle = useMemo(() => {
     if (!variants || variants.length === 0) return null;
-    // Find the vehicle with the lowest price in the group to be the representative
     return variants.reduce((lowest, current) => {
         const lowestPrice = lowest.discountPercentage ? (lowest.price! * (1 - lowest.discountPercentage / 100)) : lowest.price;
         const currentPrice = current.discountPercentage ? (current.price! * (1 - current.discountPercentage / 100)) : current.price;
@@ -90,7 +89,6 @@ function VehicleDetail() {
     const fetchData = async () => {
         setIsLoading(true);
         
-        // Fetch current vehicle
         const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*').eq('id', vehicleId).single();
         if (vehicleError || !vehicleData) {
             console.error('Error fetching vehicle', vehicleError);
@@ -99,15 +97,14 @@ function VehicleDetail() {
         }
         setVehicle(vehicleData);
 
-        // Fetch variants (same brand and name)
         const { data: variantData } = await supabase
             .from('vehicles')
             .select('*')
             .eq('brand', vehicleData.brand)
-            .eq('name', vehicleData.name);
+            .eq('name', vehicleData.name)
+            .eq('fuel', vehicleData.fuel);
         setVariants(variantData || []);
 
-        // Fetch other vehicles (different name)
         const { data: otherVehiclesData } = await supabase
           .from('vehicles')
           .select('*')
@@ -118,11 +115,9 @@ function VehicleDetail() {
 
         const vehicleFullName = `${vehicleData.brand} ${vehicleData.name}`;
 
-        // Fetch testimonials for this vehicle model (brand and name)
         const { data: testimonialsData } = await supabase.from('testimonials').select('*').eq('vehicleName', vehicleFullName);
         setTestimonials(testimonialsData || []);
 
-        // Fetch gallery for this vehicle model (brand and name)
         const { data: galleryData } = await supabase.from('gallery').select('*').eq('vehicleName', vehicleFullName);
         setGallery(galleryData || []);
 
@@ -191,8 +186,14 @@ function VehicleDetail() {
                 className="object-cover" 
                 data-ai-hint={representativeVehicle.dataAiHint || ''}
             />
+             {hasDiscount && (
+                <Badge variant="destructive" className="absolute top-3 left-3 text-sm py-1 px-2 shadow-lg">
+                  <Tag className="h-4 w-4 mr-1.5" />
+                  {representativeVehicle.discountPercentage}% OFF
+                </Badge>
+              )}
              {logoUrl && (
-                <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                <div className="absolute top-3 right-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                     <div className="relative h-8 w-12">
                         <Image
                             src={logoUrl}
@@ -204,12 +205,6 @@ function VehicleDetail() {
                 </div>
             )}
           </div>
-           {hasDiscount && (
-            <Badge variant="destructive" className="absolute top-3 right-3 text-sm py-1 px-2 shadow-lg">
-              <Tag className="h-4 w-4 mr-1.5" />
-              {representativeVehicle.discountPercentage}% OFF
-            </Badge>
-          )}
         </div>
 
         <div className="flex flex-col gap-4">

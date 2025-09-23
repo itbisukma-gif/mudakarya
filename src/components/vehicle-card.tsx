@@ -20,7 +20,6 @@ import { useLanguage } from '@/hooks/use-language';
 import { useVehicleLogo } from '@/hooks/use-vehicle-logo';
 import { useMemo } from 'react';
 
-// The vehicle prop might now have a `variants` property if it's a grouped representation
 type VehicleCardProps = {
   vehicle: Vehicle & { variants?: Vehicle[] };
 };
@@ -29,8 +28,6 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const { dictionary } = useLanguage();
   const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
   
-  // If there are variants, find the one with the lowest price to display.
-  // The passed `vehicle` is already the representative with the lowest price.
   const displayVehicle = vehicle;
   
   const hasDiscount = displayVehicle.discountPercentage && displayVehicle.discountPercentage > 0;
@@ -42,7 +39,6 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   const isOutOfStock = displayVehicle.unitType === 'khusus' && (!displayVehicle.stock || displayVehicle.stock <= 0);
 
-  // The link should always point to the representative vehicle's detail page.
   const detailUrl = `/mobil/${displayVehicle.id}`;
 
   const availableTransmissionsText = useMemo(() => {
@@ -68,7 +64,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                         data-ai-hint={displayVehicle.dataAiHint || ''}
                       />
                       {logoUrl && (
-                        <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
+                        <div className="absolute top-3 right-3 bg-white/70 backdrop-blur-sm p-1.5 rounded-md shadow-sm">
                            <div className="relative h-6 w-10">
                               <Image
                                   src={logoUrl}
@@ -83,7 +79,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 </CardContent>
             </Link>
             {hasDiscount && !isOutOfStock && (
-              <Badge variant="destructive" className="absolute top-2 right-2 shadow-lg">
+              <Badge variant="destructive" className="absolute top-2 left-2 shadow-lg">
                 <Tag className="h-3 w-3 mr-1" />
                 {displayVehicle.discountPercentage}% OFF
               </Badge>
@@ -101,21 +97,21 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <p className="text-xs text-muted-foreground">{displayVehicle.type}</p>
                 </Link>
             </div>
-             <div className="flex items-start justify-between text-xs text-muted-foreground mt-3">
-              <div className="flex flex-col gap-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                      <Fuel className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{displayVehicle.fuel || 'Bensin'}</span>
-                  </div>
-              </div>
-               <div className="flex items-center gap-1.5">
-                  <Cog className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate text-right">{availableTransmissionsText}</span>
-              </div>
+             <div className="flex justify-between items-start text-xs text-muted-foreground mt-3">
+                <div className="flex flex-col gap-y-1.5 text-left">
+                    <div className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <Fuel className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{displayVehicle.fuel || 'Bensin'}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-right">
+                    <Cog className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{availableTransmissionsText}</span>
+                </div>
             </div>
             <div className="mt-4 pt-4 border-t flex items-end justify-between">
               <div className="flex-shrink-0">
