@@ -48,10 +48,6 @@ function PembayaranComponent() {
         return parseInt(daysStr || '1', 10);
     }, [startDateStr, endDateStr, daysStr]);
 
-    const isFormValid = useMemo(() => {
-        return fullName.trim() !== '' && phone.trim() !== '';
-    }, [fullName, phone]);
-
     const { rentalPeriod, baseRentalCost, maticFee, driverFee, fuelFee, discountAmount, totalCost } = useMemo(() => {
         if (!vehicle) {
             return { rentalPeriod: '', baseRentalCost: 0, maticFee: 0, driverFee: 0, fuelFee: 0, discountAmount: 0, totalCost: 0 };
@@ -94,6 +90,10 @@ function PembayaranComponent() {
         };
     }, [vehicle, days, service, startDateStr, endDateStr, dictionary, language]);
 
+    const isFormValid = useMemo(() => {
+        return fullName.trim() !== '' && phone.trim() !== '';
+    }, [fullName, phone]);
+
     const confirmationUrl = useMemo(() => {
         if (!isFormValid || !vehicle) return '#';
         let url = `/konfirmasi?paymentMethod=${paymentMethod}&total=${totalCost}&vehicleId=${vehicle.id}&days=${days}&service=${service}&name=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}`;
@@ -134,6 +134,12 @@ function PembayaranComponent() {
 
         fetchVehicle();
     }, [vehicleId, supabase]);
+    
+    if (!vehicle) {
+        return <div className="flex h-screen items-center justify-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{dictionary.loading}...</div>;
+    }
+
+    const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
     const handleConfirmAndPay = () => {
         if (isFormValid) {
@@ -146,12 +152,6 @@ function PembayaranComponent() {
             });
         }
     }
-    
-    if (!vehicle) {
-        return <div className="flex h-screen items-center justify-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{dictionary.loading}...</div>;
-    }
-
-    const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
     return (
         <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
@@ -302,10 +302,11 @@ function PembayaranComponent() {
 }
 
 export default function PembayaranPage() {
-    const { dictionary } = useLanguage();
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center">{dictionary.loading}...</div>}>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></div>}>
             <PembayaranComponent />
         </Suspense>
     )
 }
+
+    

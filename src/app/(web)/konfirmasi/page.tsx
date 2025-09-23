@@ -194,6 +194,8 @@ function KonfirmasiComponent() {
     const customerName = searchParams.get('name');
     const customerPhone = searchParams.get('phone');
     const driverId = searchParams.get('driverId');
+    
+    const { dictionary } = useLanguage();
 
     const showDriverContact = driver && (service === 'dengan-supir' || service === 'all-include');
 
@@ -203,6 +205,32 @@ function KonfirmasiComponent() {
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
     }, [selectedBankId]);
+    
+    const formattedRentalPeriod = useMemo(() => {
+        if (startDateStr && endDateStr) {
+            try {
+                const start = parseISO(startDateStr);
+                const end = parseISO(endDateStr);
+                const locale = id;
+                return `${format(start, 'd LLL yy', { locale })} - ${format(end, 'd LLL yy', { locale })}`;
+            } catch (error) {
+                console.error("Error parsing date strings:", error);
+                return dictionary.confirmation.invalidPeriod;
+            }
+        }
+        const days = searchParams.get('days') || '1';
+        return `${days} ${dictionary.confirmation.days}`;
+    }, [startDateStr, endDateStr, searchParams, dictionary]);
+    
+    const invoiceUrl = useMemo(() => {
+        let url = `/invoice/${orderId}/share`;
+        const params = new URLSearchParams();
+        if (startDateStr) params.append('startDate', startDateStr);
+        if (endDateStr) params.append('endDate', endDateStr);
+        if (searchParams.get('days')) params.append('days', searchParams.get('days')!);
+        const queryString = params.toString();
+        return queryString ? `${url}?${queryString}` : url;
+    }, [orderId, startDateStr, endDateStr, searchParams]);
 
     useEffect(() => {
         setSupabase(createClient());
@@ -225,24 +253,6 @@ function KonfirmasiComponent() {
         };
         fetchVehicleAndDriver();
     }, [vehicleId, driverId, supabase]);
-
-    const { dictionary } = useLanguage();
-
-    const formattedRentalPeriod = useMemo(() => {
-        if (startDateStr && endDateStr) {
-            try {
-                const start = parseISO(startDateStr);
-                const end = parseISO(endDateStr);
-                const locale = id;
-                return `${format(start, 'd LLL yy', { locale })} - ${format(end, 'd LLL yy', { locale })}`;
-            } catch (error) {
-                console.error("Error parsing date strings:", error);
-                return dictionary.confirmation.invalidPeriod;
-            }
-        }
-        const days = searchParams.get('days') || '1';
-        return `${days} ${dictionary.confirmation.days}`;
-    }, [startDateStr, endDateStr, searchParams, dictionary]);
 
     if (!vehicleId || !total || !service || !paymentMethod || !customerName || !customerPhone) {
         return (
@@ -309,16 +319,6 @@ function KonfirmasiComponent() {
         console.log('New order added to Supabase:', newOrder);
         setUploadSuccess(true);
     };
-
-    const invoiceUrl = useMemo(() => {
-        let url = `/invoice/${orderId}/share`;
-        const params = new URLSearchParams();
-        if (startDateStr) params.append('startDate', startDateStr);
-        if (endDateStr) params.append('endDate', endDateStr);
-        if (searchParams.get('days')) params.append('days', searchParams.get('days')!);
-        const queryString = params.toString();
-        return queryString ? `${url}?${queryString}` : url;
-    }, [orderId, startDateStr, endDateStr, searchParams]);
 
     if (uploadSuccess) {
         const driverWhatsappUrl = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, '')}` : "#";
@@ -568,3 +568,5 @@ export default function KonfirmasiPage() {
         </Suspense>
     )
 }
+
+    

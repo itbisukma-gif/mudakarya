@@ -57,7 +57,7 @@ function VehicleDetail() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
-
+  
   const representativeVehicle = useMemo(() => {
     if (!variants || variants.length === 0) return null;
     // Find the vehicle with the lowest price in the group to be the representative
@@ -372,3 +372,5 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
+
+    
