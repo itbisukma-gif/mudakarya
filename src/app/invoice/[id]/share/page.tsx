@@ -15,6 +15,7 @@ import type { Order } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
+import type { Html2PdfOptions } from 'html2pdf.js';
 
 const getStatusVariant = (status: string): "default" | "secondary" | "destructive" => {
     switch (status) {
@@ -131,7 +132,7 @@ function SharedInvoiceComponent() {
         }
         try {
             const html2pdf = (await import('html2pdf.js')).default;
-            const opt = {
+            const opt: Html2PdfOptions = {
               margin:       0.5,
               filename:     `invoice-${order.id}.pdf`,
               image:        { type: 'jpeg', quality: 0.98 },
