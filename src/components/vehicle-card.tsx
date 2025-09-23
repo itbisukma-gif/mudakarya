@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link';
@@ -16,6 +17,7 @@ import type { Vehicle } from '@/lib/types';
 import { OrderForm } from '@/components/order-form';
 import { useLanguage } from '@/hooks/use-language';
 import { useVehicleLogo } from '@/hooks/use-vehicle-logo';
+import { useMemo } from 'react';
 
 // The vehicle prop might now have a `variants` property if it's a grouped representation
 type VehicleCardProps = {
@@ -41,6 +43,14 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   // The link should always point to the representative vehicle's detail page.
   const detailUrl = `/mobil/${displayVehicle.id}`;
+
+  const availableTransmissionsText = useMemo(() => {
+    if (vehicle.variants && vehicle.variants.length > 1) {
+      const transmissionTypes = new Set(vehicle.variants.map(v => v.transmission));
+      return Array.from(transmissionTypes).join(' | ');
+    }
+    return displayVehicle.transmission;
+  }, [vehicle.variants, displayVehicle.transmission]);
 
 
   return (
@@ -97,8 +107,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Cog className="h-4 w-4" />
-                {/* If there are multiple variants, show that. Otherwise, show the single transmission type. */}
-                <span>{vehicle.variants && vehicle.variants.length > 1 ? 'Multi Transmisi' : displayVehicle.transmission}</span>
+                <span>{availableTransmissionsText}</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t flex items-end justify-between">
