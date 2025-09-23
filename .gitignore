@@ -5,40 +5,47 @@
 /.pnp
 .pnp.js
 
+# Testing
+/coverage
+
 # Next.js build output
 /.next/
+/out/
+
+# Production
+/build
 
 # TypeScript
 *.tsbuildinfo
-tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Misc
+.DS_Store
+*.pem
 
 # Local Environment Variables
-.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Test suites
-/coverage
-
-# IDEs and editors
-.vscode/
-.idea/
-*.*.swp
-*.sublime-project
-*.sublime-workspace
-
-# OS-generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Misc
-.vercel
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Firebase
+.firebase/
+firebase.json
+database-debug.log
+storage-debug.log
