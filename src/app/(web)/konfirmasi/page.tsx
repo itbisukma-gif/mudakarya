@@ -373,14 +373,16 @@ function KonfirmasiComponent() {
     
     if (uploadSuccess) {
         const driverWhatsappUrl = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, '')}` : "#";
+        const adminWhatsappMessage = `Halo Admin, saya ingin konfirmasi pembayaran untuk pesanan dengan Order ID: ${orderId}`;
+        const adminWhatsappUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(adminWhatsappMessage)}`;
 
         return (
             <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
                  <Card>
                     <CardContent className="p-6 md:p-8 text-center">
                         <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                        <h1 className="text-2xl md:text-3xl font-bold">{dictionary.confirmation.upload.success.title}</h1>
-                        <p className="text-muted-foreground mt-2">{dictionary.confirmation.upload.success.description}</p>
+                        <h1 className="text-2xl md:text-3xl font-bold">Satu Langkah Lagi!</h1>
+                        <p className="text-muted-foreground mt-2 max-w-sm mx-auto">Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin kami melalui WhatsApp untuk mempercepat proses verifikasi.</p>
                         
                          <div className="text-left bg-muted/30 rounded-lg p-4 mt-6 space-y-2 text-sm">
                             <div className="flex justify-between">
@@ -405,64 +407,28 @@ function KonfirmasiComponent() {
                                     <span className="font-semibold">{driver.name}</span>
                                 </div>
                             )}
-                            {maticFee && Number(maticFee) > 0 && (
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Biaya Tambahan Matic</span>
-                                    <span className="font-semibold">{formatCurrency(Number(maticFee))}</span>
-                                </div>
-                            )}
-                            {discount && Number(discount) > 0 && (
-                                <div className="flex justify-between text-green-600">
-                                    <span className="font-medium">Diskon</span>
-                                    <span className="font-semibold">- {formatCurrency(Number(discount))}</span>
-                                </div>
-                            )}
                             <Separator />
                              <div className="flex justify-between items-baseline">
                                 <span className="text-muted-foreground">{dictionary.confirmation.totalPayment}:</span>
                                 <span className="font-semibold text-primary">{total ? formatCurrency(Number(total)) : '-'}</span>
                             </div>
-                            {paymentMethod === 'bank' && selectedBank ? (
-                                 <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">{dictionary.confirmation.paymentTo}:</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="relative h-6 w-10">
-                                            <Image src={selectedBank.logoUrl} alt={`${selectedBank.bankName} logo`} fill className="object-contain" />
-                                        </div>
-                                        <span className="font-semibold">{selectedBank.bankName}</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">{dictionary.confirmation.paymentMethod}:</span>
-                                    <span className="font-semibold capitalize">QRIS</span>
-                                </div>
-                            )}
-                            <div className="pt-2">
-                                 <Button asChild className="w-full" variant="outline">
-                                    <Link href={invoiceUrl} target="_blank">
-                                        <FileCheck className="h-4 w-4 mr-2" />
-                                        Lihat & Unduh Invoice
-                                    </Link>
-                                </Button>
-                            </div>
-                        </div>
+                         </div>
 
-                         <div className={cn("mt-8 grid gap-2", showDriverContact ? "grid-cols-2" : "grid-cols-1")}>
+                         <div className="mt-8 grid gap-2">
+                            <Button asChild className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
+                                <Link href={adminWhatsappUrl} target="_blank">
+                                    <WhatsAppIcon className="h-4 w-4 mr-2" />
+                                    {dictionary.confirmation.upload.success.contactAdmin}
+                                </Link>
+                            </Button>
                             {showDriverContact && (
-                                 <Button asChild variant="outline" className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
+                                 <Button asChild variant="outline" className="w-full">
                                     <Link href={driverWhatsappUrl} target="_blank">
                                         <WhatsAppIcon className="h-4 w-4 mr-2" />
                                         Hubungi Supir
                                     </Link>
                                 </Button>
                             )}
-                            <Button asChild className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
-                                <Link href="https://wa.me/6281234567890" target="_blank">
-                                    <WhatsAppIcon className="h-4 w-4 mr-2" />
-                                    {dictionary.confirmation.upload.success.contactAdmin}
-                                </Link>
-                            </Button>
                          </div>
                     </CardContent>
                 </Card>

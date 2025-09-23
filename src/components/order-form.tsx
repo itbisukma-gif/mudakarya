@@ -90,16 +90,16 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 .from('drivers')
                 .select('*')
                 .eq('status', 'Tersedia');
-            if (data) setAvailableDrivers(data);
+            if (data) {
+                setAvailableDrivers(data);
+                // Auto-select the first available driver if service requires one
+                if (showDriverSelection && data.length > 0 && !driverId) {
+                    setDriverId(data[0].id);
+                }
+            }
         };
         fetchDrivers();
-    }, [supabase]);
-
-    useEffect(() => {
-        if (!showDriverSelection) {
-            setDriverId(undefined);
-        }
-    }, [service, showDriverSelection]);
+    }, [supabase, showDriverSelection, driverId]);
 
     // This effect determines the actual vehicle to be booked
     useEffect(() => {
@@ -361,32 +361,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {showDriverSelection && (
-                        <>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">{dictionary.orderForm.common.driver.label}</label>
-                                <Select onValueChange={setDriverId} value={driverId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={dictionary.orderForm.common.driver.placeholder} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableDrivers.length > 0 ? (
-                                            availableDrivers.map(driver => (
-                                                <SelectItem key={driver.id} value={driver.id}>
-                                                    {driver.name}
-                                                </SelectItem>
-                                            ))
-                                        ) : (
-                                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                                {dictionary.orderForm.common.driver.noAvailable}
-                                            </div>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </>
-                    )}
                 </div>
             </Tabs>
         </div>
