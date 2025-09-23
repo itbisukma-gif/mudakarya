@@ -190,19 +190,19 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                 .from('vehicles')
                 .select('brand, type, photo')
                 .ilike('name', `%${debouncedName}%`)
-                .limit(1)
-                .single();
+                .limit(1);
 
-            if (data) {
-                setValue('brand', data.brand, { shouldValidate: true });
-                setValue('type', data.type, { shouldValidate: true });
-                if (data.photo) {
-                    setPreviewUrl(data.photo);
-                    setValue('photo', data.photo, { shouldValidate: true });
+            if (data && data.length > 0) {
+                const existingVehicle = data[0];
+                setValue('brand', existingVehicle.brand, { shouldValidate: true });
+                setValue('type', existingVehicle.type, { shouldValidate: true });
+                if (existingVehicle.photo) {
+                    setPreviewUrl(existingVehicle.photo);
+                    setValue('photo', existingVehicle.photo, { shouldValidate: true });
                 }
                 toast({
                     title: "Varian Ditemukan!",
-                    description: `Data dari mobil ${data.brand} ${debouncedName} telah diisi otomatis.`,
+                    description: `Data dari mobil ${existingVehicle.brand} ${debouncedName} telah diisi otomatis.`,
                     className: "bg-blue-50 border-blue-200 text-blue-800"
                 });
             }
