@@ -209,7 +209,8 @@ function VehicleDetail() {
 
         <div className="flex flex-col gap-4">
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-bold tracking-tight">{representativeVehicle.brand} {representativeVehicle.name}</h1>
+            <p className="text-base font-light text-muted-foreground">{representativeVehicle.brand}</p>
+            <h1 className="text-3xl font-bold tracking-tight -mt-1">{representativeVehicle.name}</h1>
             <StarRating rating={representativeVehicle.rating || 0} totalReviews={testimonials.length} />
           </div>
           
@@ -367,5 +368,3 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
-
-    

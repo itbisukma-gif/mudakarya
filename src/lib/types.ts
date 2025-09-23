@@ -66,6 +66,7 @@ export type Order = {
   id: string;
   customerName: string | null;
   customerPhone: string | null;
+  carBrand: string | null;
   carName: string | null;
   type: string | null;
   fuel: string | null;

@@ -171,7 +171,7 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                 </div>
                 <div className="flex items-center gap-2 pt-3 text-sm text-muted-foreground">
                     <Car className="h-4 w-4" />
-                    <span>{order.carName}</span>
+                    <span>{order.carBrand} {order.carName}</span>
                 </div>
             </CardHeader>
             <CardContent className="flex-grow space-y-4">
@@ -189,7 +189,7 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                         <Users className="h-4 w-4" />
                         <AlertTitle className="font-semibold">Unit Mitra</AlertTitle>
                         <AlertDescription className="text-blue-700">
-                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{order.carName} ({order.transmission}, {order.fuel})</span>.
+                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{order.carBrand} {order.carName} ({order.transmission}, {order.fuel})</span>.
                         </AlertDescription>
                     </Alert>
                 )}

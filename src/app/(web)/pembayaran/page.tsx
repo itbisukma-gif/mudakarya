@@ -173,7 +173,8 @@ function PembayaranComponent() {
                         <div className="flex items-center gap-4 mb-6">
                         <Image src={vehicle.photo || ''} alt={vehicle.name || ''} width={120} height={80} className="rounded-lg object-cover" data-ai-hint={vehicle.dataAiHint || ''} />
                         <div>
-                            <h3 className="font-bold text-lg">{vehicle.brand} {vehicle.name}</h3>
+                            <p className="text-sm font-light text-muted-foreground">{vehicle.brand}</p>
+                            <h3 className="font-bold text-lg -mt-1">{vehicle.name}</h3>
                             <p className="text-sm text-muted-foreground">{vehicle.type} - {vehicle.transmission}</p>
                         </div>
                     </div>

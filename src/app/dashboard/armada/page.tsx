@@ -134,7 +134,8 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
             </CardHeader>
             <CardContent className="p-4 flex-grow">
                 <div>
-                    <h3 className="text-lg font-bold">{vehicle.brand} {vehicle.name}</h3>
+                    <p className="text-xs font-light text-muted-foreground">{vehicle.brand}</p>
+                    <h3 className="text-lg font-bold -mt-0.5">{vehicle.name}</h3>
                     <p className="text-sm text-muted-foreground">{vehicle.type} - {vehicle.year} ({vehicle.code})</p>
                 </div>
                 <div className="text-sm mt-4 text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-2">

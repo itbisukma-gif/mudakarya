@@ -93,22 +93,22 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           <div className="p-4 flex flex-col flex-grow">
             <div className="flex-grow">
                 <Link href={isOutOfStock ? '#' : detailUrl} className={isOutOfStock ? 'cursor-not-allowed' : 'hover:text-primary'}>
-                    <h3 className="text-base font-bold leading-snug">{displayVehicle.brand} {displayVehicle.name}</h3>
-                    <p className="text-xs text-muted-foreground">{displayVehicle.type}</p>
+                    <p className="text-xs font-light text-muted-foreground">{displayVehicle.brand}</p>
+                    <h3 className="text-base font-bold leading-snug -mt-0.5">{displayVehicle.name}</h3>
                 </Link>
             </div>
-             <div className="flex justify-between items-start text-xs text-muted-foreground mt-3">
-                <div className="flex flex-col gap-y-1.5 text-left">
+             <div className="mt-3 grid grid-cols-2 gap-x-4 text-xs text-muted-foreground">
+                <div className="flex flex-col gap-y-1.5 items-start">
                     <div className="flex items-center gap-1.5">
                         <Users className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                     <div className="flex items-center gap-1.5">
                         <Fuel className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{displayVehicle.fuel || 'Bensin'}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-right">
+                <div className="flex items-center gap-1.5 justify-end">
                     <Cog className="h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{availableTransmissionsText}</span>
                 </div>
