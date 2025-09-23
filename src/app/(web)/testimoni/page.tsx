@@ -3,30 +3,17 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, UserCircle, Loader2, Image as ImageIcon } from "lucide-react";
+import { UserCircle, Loader2, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/hooks/use-language";
-import { FeaturesSection } from "@/components/features-section";
 import { useState, useEffect } from "react";
 import type { Testimonial, GalleryItem } from "@/lib/types";
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { StarRating } from "@/components/star-rating";
 
 export const dynamic = 'force-dynamic';
-
-function StarRating({ rating }: { rating: number }) {
-    return (
-        <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-                <Star
-                    key={i}
-                    className={`h-5 w-5 ${i < Math.round(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                />
-            ))}
-        </div>
-    );
-}
 
 function TestimonialsPageContent() {
     const { dictionary } = useLanguage();
@@ -136,9 +123,6 @@ function TestimonialsPageContent() {
                         )}
                     </TabsContent>
                 </Tabs>
-            </div>
-            <div className="mt-8 md:mt-0">
-                <FeaturesSection />
             </div>
         </>
     )
