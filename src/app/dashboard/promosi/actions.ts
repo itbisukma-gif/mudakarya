@@ -24,7 +24,6 @@ export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) 
     }
 
     revalidatePath('/dashboard/promosi');
-    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -50,6 +49,5 @@ export async function deletePromotion(promoId: string) {
     }
     
     revalidatePath('/dashboard/promosi');
-    revalidatePath('/');
     return { error: null };
 }

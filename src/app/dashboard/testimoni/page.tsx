@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, ChangeEvent, useMemo, useEffect, useTransition } from 'react';
@@ -15,7 +14,7 @@ import { MoreHorizontal, PlusCircle, Star, Trash2, Upload, Edit, Loader2 } from 
 import type { Testimonial, GalleryItem, FeatureItem, Vehicle } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StarRating } from '@/components/star-rating';
 import { LanguageProvider } from '@/app/language-provider';
@@ -223,7 +222,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
         if (supabase) {
             fetchGallery();
         }
-    }, [supabase]);
+    }, [supabase, toast]);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -322,7 +321,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
                         <DialogFooter>
                             <Button onClick={handleAddPhoto} disabled={!previewUrl || isPending}>
                                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Upload & Simpan
+                                Upload &amp; Simpan
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -411,7 +410,7 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
         if (supabase) {
             fetchFeatures();
         }
-    }, [supabase]);
+    }, [supabase, toast]);
 
 
     const handleAddClick = () => {
@@ -430,13 +429,13 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
         onDataChange();
     };
 
-    const handleDelete = (featureId: string) => {
+    const handleDelete = (featureId: string, featureTitle: string) => {
         startTransition(async () => {
             const result = await deleteFeature(featureId);
             if (result.error) {
                  toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
             } else {
-                toast({ variant: "destructive", title: "Keunggulan Dihapus" });
+                toast({ variant: "destructive", title: "Keunggulan Dihapus", description: `Keunggulan "${featureTitle}" telah dihapus.` });
                 onDataChange();
             }
         });
@@ -481,7 +480,7 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(feature.id)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleDelete(feature.id, feature.title)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -552,7 +551,7 @@ export default function TestimoniPage() {
     if (supabase) {
         fetchData();
     }
-  }, [supabase]);
+  }, [supabase, toast]);
 
   const filteredTestimonials = useMemo(() => {
     if (filter === 'all') {
@@ -596,7 +595,7 @@ export default function TestimoniPage() {
         if (result.error) {
             toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
         } else {
-            toast({ variant: "destructive", title: "Testimoni Dihapus" });
+            toast({ variant: "destructive", title: "Testimoni Dihapus", description: `Testimoni dari ${testimonial.customerName} dihapus.` });
             fetchData();
         }
     });
@@ -614,7 +613,7 @@ export default function TestimoniPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manajemen Testimoni & Keunggulan</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Manajemen Testimoni &amp; Keunggulan</h1>
         <p className="text-muted-foreground">
           Kelola semua testimoni, galeri, dan poin keunggulan dari layanan Anda.
         </p>

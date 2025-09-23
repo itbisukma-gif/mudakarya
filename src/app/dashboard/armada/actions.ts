@@ -29,7 +29,6 @@ export async function upsertVehicle(vehicleData: Vehicle) {
     }
     
     revalidatePath('/dashboard/armada');
-    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -59,7 +58,6 @@ export async function deleteVehicle(vehicleId: string) {
     }
 
     revalidatePath('/dashboard/armada');
-    revalidatePath('/');
     return { error: null };
 }
 
@@ -77,6 +75,5 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
     }
 
     revalidatePath('/dashboard/armada');
-    revalidatePath('/');
     return { error: null };
 }

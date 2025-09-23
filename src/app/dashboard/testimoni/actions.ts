@@ -1,4 +1,3 @@
-
 'use server';
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
@@ -10,13 +9,13 @@ import { revalidatePath } from 'next/cache';
 export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'created_at'>) {
     const supabase = createServiceRoleClient();
     const { data, error } = await supabase.from('testimonials').upsert(testimonialData, { onConflict: 'id' }).select().single();
+    
     if (error) {
         console.error('Error upserting testimonial:', error);
         return { data: null, error };
     }
+    
     revalidatePath('/dashboard/testimoni');
-    // Revalidating a dynamic path like this is problematic. Let client-side refetch handle it.
-    // revalidatePath(`/mobil/${data.vehicleName}`); 
     return { data, error: null };
 }
 
@@ -24,7 +23,9 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
 export async function deleteTestimonial(id: string) {
     const supabase = createServiceRoleClient();
     const { error } = await supabase.from('testimonials').delete().eq('id', id);
-    if (error) return { error };
+    if (error) {
+        return { error };
+    }
     revalidatePath('/dashboard/testimoni');
     return { error: null };
 }
@@ -104,7 +105,6 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         return { data: null, error };
     }
     revalidatePath('/dashboard/testimoni');
-    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -127,6 +127,5 @@ export async function deleteFeature(id: string) {
     }
     
     revalidatePath('/dashboard/testimoni');
-    revalidatePath('/');
     return { error: null };
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, ChangeEvent, useRef, useEffect, useTransition } from 'react';
@@ -13,8 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { PlusCircle, Edit, Trash2, Upload, Eye, Car, Loader2 } from "lucide-react";
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast";
+import { cn } from '@/lib/utils";
 import type { Promotion, Vehicle } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@/utils/supabase/client';
@@ -142,7 +141,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Gambar & Pratinjau</Label>
+                        <Label>Gambar &amp; Pratinjau</Label>
                         <div className="mt-2 flex flex-col items-center gap-4">
                             <div className="relative aspect-video w-full rounded-md overflow-hidden border bg-muted">
                                 {previewUrl ? (
@@ -223,7 +222,7 @@ export default function PromosiPage() {
         if (supabase) {
             fetchData();
         }
-    }, [supabase]);
+    }, [supabase, toast]);
 
     const handleAddClick = () => {
         setSelectedPromo(null);
@@ -287,7 +286,7 @@ export default function PromosiPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Pratinjau Slider Promosi</CardTitle>
-                        <DialogDescription>Beginilah tampilan slider di halaman utama.</DialogDescription>
+                        <CardDescription>Beginilah tampilan slider di halaman utama.</CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -330,7 +329,7 @@ export default function PromosiPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Daftar Promosi Aktif</CardTitle>
-                        <DialogDescription>Kelola semua promosi yang ada.</DialogDescription>
+                        <CardDescription>Kelola semua promosi yang ada.</CardDescription>
                     </div>
                      <Button onClick={handleAddClick}>
                         <PlusCircle className="mr-2 h-4 w-4" />

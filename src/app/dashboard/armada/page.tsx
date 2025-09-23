@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from "react";
@@ -132,7 +131,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                 )}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
-                <div>
+                 <div>
                     <p className="text-xs font-light text-muted-foreground">{vehicle.brand}</p>
                     <h3 className="text-lg font-bold -mt-0.5">{vehicle.name}</h3>
                     <p className="text-sm text-muted-foreground">{vehicle.type} - {vehicle.year} ({vehicle.code})</p>
@@ -457,7 +456,7 @@ function ArmadaPage() {
                 toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
             } else {
                 toast({ title: "Kendaraan Dihapus" });
-                fetchFleet(); // Refetch
+                fetchFleet();
             }
         });
     };
@@ -465,7 +464,7 @@ function ArmadaPage() {
     const handleSave = () => {
         setFormOpen(false);
         setSelectedVehicle(null);
-        fetchFleet(); // Refetch
+        fetchFleet();
     };
 
     const dialogTitle = selectedVehicle ? "Edit Kendaraan" : "Tambahkan Kendaraan Baru";

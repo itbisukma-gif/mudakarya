@@ -1,4 +1,3 @@
-
 'use client'
 
 import * as React from 'react'
@@ -254,7 +253,7 @@ export default function DashboardPage() {
             toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
         } else {
             toast({ title: "Driver Dihapus", description: `Data driver telah berhasil dihapus.` });
-            fetchData(); // Refetch
+            fetchData();
         }
     });
   }
@@ -266,13 +265,13 @@ export default function DashboardPage() {
             toast({ variant: "destructive", title: "Gagal Memperbarui Status", description: result.error.message });
         } else {
             toast({ title: "Status Diperbarui", description: `Status driver telah berhasil diperbarui.` });
-            fetchData(); // Refetch
+            fetchData();
         }
     });
   };
   
   const handleFormSave = () => {
-    fetchData(); // Refetch data after saving
+    fetchData();
     setAddDialogOpen(false);
     setEditDialogOpen(false);
     setSelectedDriver(null);
@@ -540,7 +539,10 @@ export default function DashboardPage() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteDriver(driver.id)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleDeleteDriver(driver.id)} className="bg-destructive hover:bg-destructive/90">
+                                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            Ya, Hapus
+                                        </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
