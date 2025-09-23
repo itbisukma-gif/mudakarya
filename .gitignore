@@ -1,44 +1,44 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Dependencies
-# Sembunyikan folder node_modules yang berisi ribuan paket pihak ketiga.
-# Ini adalah penyebab utama ukuran push yang besar.
 /node_modules
+/.pnp
+.pnp.js
 
-# Build output
-# Sembunyikan folder .next yang dibuat oleh Next.js saat build.
-# Folder ini juga sangat besar dan tidak seharusnya dilacak.
+# Next.js build output
 /.next/
 
-# Next.js build cache
-.next/cache/
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
-# Production build folder
-.next/out/
+# Local Environment Variables
+.env*.local
 
-# Static export folder
-.next/static/
+# Test suites
+/coverage
 
-# Development-only files
-# File environment lokal yang berisi kunci rahasia.
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# IDEs and editors
+.vscode/
+.idea/
+*.*.swp
+*.sublime-project
+*.sublime-workspace
 
-# Log files
-# Abaikan file log yang dibuat selama development.
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Editor directories and files
-# File konfigurasi spesifik editor seperti VSCode, Sublime Text, dll.
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# Miscellaneous
-.DS_Store
-Thumbs.db
+# Misc
+.vercel
