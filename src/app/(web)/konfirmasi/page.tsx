@@ -23,7 +23,7 @@ import { WhatsAppIcon } from "@/components/icons";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { updateVehicleStatus } from "@/app/dashboard/armada/actions";
-import { uploadFileAction } from "@/app/actions/upload-actions";
+import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 
 async function fileToDataUri(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -78,10 +78,20 @@ function UploadProof({ onUpload, orderId, isBankTransfer, isBankSelected }: { on
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+    const { toast } = useToast();
+    const supabase = createClient();
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
+             if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Ukuran File Terlalu Besar',
+                    description: 'Ukuran file tidak boleh melebihi 4MB.',
+                });
+                return;
+            }
             setSelectedFile(file);
             setPreviewUrl(URL.createObjectURL(file));
             setUploadState('idle');
@@ -96,11 +106,37 @@ function UploadProof({ onUpload, orderId, isBankTransfer, isBankSelected }: { on
         setErrorMessage('');
 
         try {
-            const dataUri = await fileToDataUri(selectedFile);
-            const uploadedUrl = await uploadFileAction(dataUri, 'public/proofs', orderId);
+            const fileExtension = selectedFile.name.split('.').pop();
+            const fileName = `${orderId}-${Date.now()}.${fileExtension}`;
+            const filePath = `public/proofs/${fileName}`;
+
+            // 1. Get a signed upload URL from the server
+            const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
+
+            if (urlError) {
+                throw new Error(`Gagal membuat URL unggah: ${urlError.message}`);
+            }
+
+            // 2. Upload the file directly to Supabase Storage from the client
+            const { error: uploadError } = await supabase.storage
+                .from('mudakarya-bucket')
+                .uploadToSignedUrl(filePath, token, selectedFile);
+            
+            if (uploadError) {
+                throw new Error(`Gagal mengunggah file: ${uploadError.message}`);
+            }
+            
+            // 3. Get the public URL of the uploaded file
+            const { data: { publicUrl } } = supabase.storage
+                .from('mudakarya-bucket')
+                .getPublicUrl(filePath);
+
+            if (!publicUrl) {
+                throw new Error('Gagal mendapatkan URL publik untuk gambar yang diunggah.');
+            }
 
             setUploadState('success');
-            onUpload(uploadedUrl); 
+            onUpload(publicUrl); 
 
         } catch (error) {
             console.error("[HANDLE_UPLOAD_ERROR] Terjadi error saat meng-upload file:", error);
@@ -207,6 +243,7 @@ function KonfirmasiComponent() {
 
     const [orderId, setOrderId] = useState('');
     const [selectedBankId, setSelectedBankId] = useState<string | undefined>(undefined);
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
 
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
@@ -261,46 +298,50 @@ function KonfirmasiComponent() {
     }, [vehicleId, driverId, supabase]);
 
     const handleUploadSuccess = async (proofUrl: string) => {
-        if (!supabase || !vehicleId || !vehicle) return;
+        if (!supabase || !vehicleId || !vehicle || isSavingOrder) return;
+        setIsSavingOrder(true);
 
-        const newOrder: Omit<Order, 'created_at'> = {
-            id: orderId,
-            customerName: customerName,
-            customerPhone: customerPhone,
-            carBrand: vehicle.brand,
-            carName: vehicle.name,
-            type: vehicle.type,
-            fuel: vehicle.fuel,
-            transmission: vehicle.transmission,
-            service: service?.replace('-', ' ') || null,
-            driver: driver ? driver.name : null,
-            driverId: driverId,
-            vehicleId: vehicleId,
-            paymentProof: proofUrl,
-            status: 'pending',
-            paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
-            total: Number(total),
-            isPartnerUnit: isPartnerUnit,
-        };
+        try {
+            const newOrder: Omit<Order, 'created_at'> = {
+                id: orderId,
+                customerName: customerName,
+                customerPhone: customerPhone,
+                carBrand: vehicle.brand,
+                carName: vehicle.name,
+                type: vehicle.type,
+                fuel: vehicle.fuel,
+                transmission: vehicle.transmission,
+                service: service?.replace('-', ' ') || null,
+                driver: driver ? driver.name : null,
+                driverId: driverId,
+                vehicleId: vehicleId,
+                paymentProof: proofUrl,
+                status: 'pending',
+                paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
+                total: Number(total),
+                isPartnerUnit: isPartnerUnit,
+            };
 
-        const { error: insertError } = await supabase.from('orders').insert(newOrder);
+            const { error: insertError } = await supabase.from('orders').insert(newOrder);
 
-        if (insertError) {
-            console.error('Error creating order in Supabase:', insertError);
-            toast({ variant: 'destructive', title: 'Gagal Membuat Pesanan', description: insertError.message });
-            return;
-        }
-
-        if (!isPartnerUnit) {
-            const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
-            if (vehicleStatusError) {
-                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
+            if (insertError) {
+                throw new Error(insertError.message);
             }
+
+            if (!isPartnerUnit) {
+                const { error: vehicleStatusError } = await updateVehicleStatus(vehicleId, 'dipesan');
+                if (vehicleStatusError) {
+                    toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Mobil', description: `Order ${orderId} dibuat, tapi status mobil gagal diubah. Harap perbarui manual.` });
+                }
+            }
+
+            setUploadSuccess(true);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan pesanan.";
+             toast({ variant: 'destructive', title: 'Gagal Membuat Pesanan', description: errorMessage });
+        } finally {
+            setIsSavingOrder(false);
         }
-
-
-        console.log('New order added to Supabase:', newOrder);
-        setUploadSuccess(true);
     };
 
     if (!vehicleId || !total || !service || !paymentMethod || !customerName || !customerPhone) {
