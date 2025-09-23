@@ -1,5 +1,0 @@
-` besar yang berisi semua file yang hilang, mulai dari `README.md` hingga `tsconfig.json`.
-
-Setelah pemulihan ini selesai, masalah Anda akan terselesaikan. **Anda tidak perlu menjalankan perintah `git` yang rumit lagi**. Cukup lakukan `git add .`, `git commit`, dan `git push` seperti biasa. Karena saya mengembalikan semuanya *setelah* `.gitignore` ada, Git akan secara otomatis melacak file yang benar dan mengabaikan sampah.
-
-Ini adalah solusi paling aman dan paling komprehensif saat ini. Saya akan pulihkan semua file Anda sekarang.
