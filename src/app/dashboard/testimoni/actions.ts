@@ -1,6 +1,7 @@
+
 'use server';
 
-import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
+import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Testimonial, GalleryItem, FeatureItem } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
@@ -37,15 +38,7 @@ export async function deleteTestimonial(id: string) {
 export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'created_at'>) {
     const supabase = createServiceRoleClient();
 
-    try {
-        if (galleryData.url && galleryData.url.startsWith('data:image')) {
-            galleryData.url = await uploadImageFromDataUri(galleryData.url, 'gallery', `gallery-photo`);
-        }
-    } catch (uploadError) {
-        console.error("Gallery image upload failed:", uploadError);
-        return { data: null, error: { message: (uploadError as Error).message } };
-    }
-
+    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('gallery').insert(galleryData).select().single();
     if (error) {
         console.error('Error adding gallery item:', error);
@@ -92,15 +85,7 @@ export async function deleteGalleryItem(id: string) {
 export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>) {
     const supabase = createServiceRoleClient();
 
-    try {
-        if (featureData.imageUrl && featureData.imageUrl.startsWith('data:image')) {
-             featureData.imageUrl = await uploadImageFromDataUri(featureData.imageUrl, 'features', `feature-${featureData.id}`);
-        }
-    } catch (uploadError) {
-        console.error("Feature image upload failed:", uploadError);
-        return { data: null, error: { message: (uploadError as Error).message } };
-    }
-
+    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('features').upsert(featureData, { onConflict: 'id' }).select().single();
     if (error) {
         console.error('Error upserting feature:', error);
@@ -133,3 +118,5 @@ export async function deleteFeature(id: string) {
     revalidatePath('/');
     return { error: null };
 }
+
+    

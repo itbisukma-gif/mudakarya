@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/utils/supabase/client';
 import { upsertTestimonial, deleteTestimonial, addGalleryItem, deleteGalleryItem, upsertFeature, deleteFeature } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSignedUploadUrl } from '@/app/actions/upload-actions';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -115,25 +117,60 @@ function TestimonialForm({ testimonial, vehicles, onSave, onCancel }: { testimon
 
 function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | null, onSave: () => void, onCancel: () => void }) {
     const { toast } = useToast();
+    const supabase = createClient();
     const [isPending, startTransition] = useTransition();
 
     const [title, setTitle] = useState(feature?.title || '');
     const [description, setDescription] = useState(feature?.description || '');
     const [previewUrl, setPreviewUrl] = useState<string | null>(feature?.imageUrl || null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => setPreviewUrl(reader.result as string);
-            reader.readAsDataURL(file);
+             if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Ukuran File Terlalu Besar',
+                    description: 'Ukuran file tidak boleh melebihi 4MB.',
+                });
+                return;
+            }
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
     const handleSave = () => {
         startTransition(async () => {
-            if (!title || !description || !previewUrl) {
+            if (!title || !description) {
                 toast({ variant: 'destructive', title: 'Formulir tidak lengkap' });
+                return;
+            }
+
+            let imageUrl = feature?.imageUrl || null;
+
+            if (selectedFile) {
+                 const fileExtension = selectedFile.name.split('._').pop();
+                 const fileName = `feature-${feature?.id || Date.now()}.${fileExtension}`;
+                 const filePath = `public/features/${fileName}`;
+
+                 const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
+                 if (urlError) {
+                     toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal membuat URL: ${urlError.message}` });
+                     return;
+                 }
+                 const { error: uploadError } = await supabase.storage.from('mudakarya-bucket').uploadToSignedUrl(filePath, token, selectedFile);
+                 if (uploadError) {
+                     toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal mengunggah file: ${uploadError.message}` });
+                     return;
+                 }
+                 const { data: { publicUrl } } = supabase.storage.from('mudakarya-bucket').getPublicUrl(filePath);
+                 imageUrl = publicUrl;
+            }
+            
+            if (!imageUrl) {
+                toast({ variant: 'destructive', title: 'Gambar wajib diisi' });
                 return;
             }
 
@@ -141,7 +178,7 @@ function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | nu
                 id: feature?.id || crypto.randomUUID(),
                 title,
                 description,
-                imageUrl: previewUrl,
+                imageUrl: imageUrl,
                 dataAiHint: feature?.dataAiHint || 'feature illustration'
             };
 
@@ -200,6 +237,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
     const [isAddPhotoOpen, setAddPhotoOpen] = useState(false);
     const { toast } = useToast();
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selectedVehicleName, setSelectedVehicleName] = useState<string | undefined>(undefined);
     const [isPending, startTransition] = useTransition();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
@@ -227,21 +265,49 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => setPreviewUrl(reader.result as string);
-            reader.readAsDataURL(file);
+             if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Ukuran File Terlalu Besar',
+                    description: 'Ukuran file tidak boleh melebihi 4MB.',
+                });
+                return;
+            }
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
     const handleAddPhoto = () => {
         startTransition(async () => {
-            if (!previewUrl) {
+            if (!selectedFile) {
                 toast({ variant: 'destructive', title: 'Tidak ada foto dipilih' });
+                return;
+            }
+            
+            const fileExtension = selectedFile.name.split('.').pop();
+            const fileName = `gallery-photo-${Date.now()}.${fileExtension}`;
+            const filePath = `public/gallery/${fileName}`;
+
+            const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
+            if (urlError) {
+                toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal membuat URL: ${urlError.message}` });
+                return;
+            }
+            const { error: uploadError } = await supabase.storage.from('mudakarya-bucket').uploadToSignedUrl(filePath, token, selectedFile);
+            if (uploadError) {
+                toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal mengunggah file: ${uploadError.message}` });
+                return;
+            }
+            const { data: { publicUrl } } = supabase.storage.from('mudakarya-bucket').getPublicUrl(filePath);
+
+            if (!publicUrl) {
+                toast({ variant: 'destructive', title: 'Gagal menambah foto', description: 'Gagal mendapatkan URL publik.' });
                 return;
             }
 
             const newPhotoData: Omit<GalleryItem, 'id' | 'created_at'> = {
-                url: previewUrl,
+                url: publicUrl,
                 vehicleName: selectedVehicleName,
             };
             
@@ -252,6 +318,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
                 toast({ title: "Foto Ditambahkan", description: "Foto baru telah ditambahkan ke galeri." });
                 setAddPhotoOpen(false);
                 setPreviewUrl(null);
+                setSelectedFile(null);
                 setSelectedVehicleName(undefined);
                 onDataChange();
             }
@@ -277,7 +344,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
                     <CardTitle>Galeri Foto Pelanggan</CardTitle>
                     <CardDescription>Kelola foto-foto yang ditampilkan di halaman testimoni.</CardDescription>
                 </div>
-                <Dialog open={isAddPhotoOpen} onOpenChange={(isOpen) => { setAddPhotoOpen(isOpen); if(!isOpen) { setPreviewUrl(null); setSelectedVehicleName(undefined); } }}>
+                <Dialog open={isAddPhotoOpen} onOpenChange={(isOpen) => { setAddPhotoOpen(isOpen); if(!isOpen) { setPreviewUrl(null); setSelectedFile(null); setSelectedVehicleName(undefined); } }}>
                     <DialogTrigger asChild>
                         <Button variant="outline">
                             <PlusCircle className="mr-2 h-4 w-4" />
@@ -319,7 +386,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
                             <Input id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleAddPhoto} disabled={!previewUrl || isPending}>
+                            <Button onClick={handleAddPhoto} disabled={!selectedFile || isPending}>
                                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Upload &amp; Simpan
                             </Button>
@@ -778,3 +845,5 @@ export default function TestimoniPage() {
     </div>
   );
 }
+
+    

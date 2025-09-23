@@ -67,43 +67,4 @@ export const createServiceRoleClient = () => {
   });
 };
 
-
-export const uploadImageFromDataUri = async (dataUri: string, folder: string, fileNamePrefix: string) => {
-    // Use the service role client for all storage operations from the server
-    const supabase = createServiceRoleClient();
-    const matches = dataUri.match(/^data:(image\/(?:png|jpeg|jpg));base64,(.*)$/);
     
-    if (!matches || matches.length !== 3) {
-        throw new Error('Invalid Data URI format');
-    }
-
-    const mimeType = matches[1];
-    const base64Data = matches[2];
-    const fileExtension = mimeType.split('/')[1];
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    const fileName = `${fileNamePrefix}-${Date.now()}.${fileExtension}`;
-    const filePath = `${folder}/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-        .from('mudakarya-bucket')
-        .upload(filePath, buffer, {
-            contentType: mimeType,
-            upsert: true,
-        });
-
-    if (uploadError) {
-        console.error(`Supabase upload error for ${filePath}:`, uploadError);
-        throw new Error(uploadError.message);
-    }
-
-    const { data: publicUrlData } = supabase.storage
-        .from('mudakarya-bucket')
-        .getPublicUrl(filePath);
-
-    if (!publicUrlData.publicUrl) {
-        throw new Error('Failed to get public URL for the uploaded image.');
-    }
-
-    return publicUrlData.publicUrl;
-};

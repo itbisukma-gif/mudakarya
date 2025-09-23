@@ -20,6 +20,7 @@ import { createClient } from '@/utils/supabase/client';
 import { upsertVehicle } from '../armada/actions';
 import { upsertPromotion, deletePromotion } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 
 
 export const dynamic = 'force-dynamic';
@@ -27,11 +28,13 @@ export const dynamic = 'force-dynamic';
 // Form component for adding/editing a promotion
 function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: Promotion | null; vehicles: Vehicle[]; onSave: () => void; onCancel: () => void; }) {
     const { toast } = useToast();
+    const supabase = createClient();
     const [isPending, startTransition] = useTransition();
 
     const [title, setTitle] = useState(promotion?.title || '');
     const [description, setDescription] = useState(promotion?.description || '');
     const [previewUrl, setPreviewUrl] = useState<string | null>(promotion?.imageUrl || null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [vehicleId, setVehicleId] = useState<string | undefined>(promotion?.vehicleId || undefined);
     
     const initialVehicle = vehicles.find(v => v.id === promotion?.vehicleId);
@@ -39,19 +42,51 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
 
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewUrl(reader.result as string);
-            };
-            reader.readAsDataURL(event.target.files[0]);
+        const file = event.target.files?.[0];
+        if (file) {
+             if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Ukuran File Terlalu Besar',
+                    description: 'Ukuran file tidak boleh melebihi 4MB.',
+                });
+                return;
+            }
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
     const handleSave = () => {
         startTransition(async () => {
-            if (!title || !description || !previewUrl) {
-                toast({ variant: 'destructive', title: 'Formulir Tidak Lengkap' });
+            if (!title || !description) {
+                toast({ variant: 'destructive', title: 'Formulir Tidak Lengkap', description: 'Judul dan deskripsi tidak boleh kosong.' });
+                return;
+            }
+
+            let imageUrl = promotion?.imageUrl || null;
+
+            if (selectedFile) {
+                const fileExtension = selectedFile.name.split('.').pop();
+                const fileName = `promo-${promotion?.id || Date.now()}.${fileExtension}`;
+                const filePath = `public/promotions/${fileName}`;
+                
+                const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
+                if (urlError) {
+                    toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal membuat URL: ${urlError.message}` });
+                    return;
+                }
+                const { error: uploadError } = await supabase.storage.from('mudakarya-bucket').uploadToSignedUrl(filePath, token, selectedFile);
+                if (uploadError) {
+                    toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal mengunggah file: ${uploadError.message}` });
+                    return;
+                }
+                const { data: { publicUrl } } = supabase.storage.from('mudakarya-bucket').getPublicUrl(filePath);
+                imageUrl = publicUrl;
+            }
+
+            if (!imageUrl) {
+                toast({ variant: 'destructive', title: 'Formulir Tidak Lengkap', description: 'Gambar promosi wajib diisi.' });
                 return;
             }
 
@@ -61,7 +96,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 id: newId,
                 title,
                 description,
-                imageUrl: previewUrl,
+                imageUrl: imageUrl,
                 vehicleId: vehicleId === 'none' ? undefined : vehicleId,
             };
 
@@ -399,3 +434,5 @@ export default function PromosiPage() {
         </div>
     );
 }
+
+    

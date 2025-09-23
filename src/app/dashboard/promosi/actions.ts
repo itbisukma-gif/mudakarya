@@ -1,21 +1,14 @@
+
 'use server';
 
-import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
+import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Promotion } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
 export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) {
     const supabase = createServiceRoleClient();
     
-    try {
-        if (promoData.imageUrl && promoData.imageUrl.startsWith('data:image')) {
-            promoData.imageUrl = await uploadImageFromDataUri(promoData.imageUrl, 'promotions', `promo-${promoData.id}`);
-        }
-    } catch (uploadError) {
-        console.error("Promotion image upload failed:", uploadError);
-        return { data: null, error: { message: (uploadError as Error).message } };
-    }
-    
+    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('promotions').upsert(promoData, { onConflict: 'id' }).select().single();
     if (error) {
         console.error('Error upserting promotion:', error);
@@ -52,3 +45,5 @@ export async function deletePromotion(promoId: string) {
     revalidatePath('/');
     return { error: null };
 }
+
+    

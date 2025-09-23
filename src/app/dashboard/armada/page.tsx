@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from "react";
+import { useState, useTransition, useEffect, useCallback, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,6 +21,7 @@ import { upsertVehicle, deleteVehicle } from "./actions";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useDebounce } from "@/hooks/use-debounce";
+import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -164,12 +165,14 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
 
 function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; onSave: () => void; onCancel: () => void; }) {
     const { toast } = useToast();
+    const supabase = createClient();
     const [isPending, startTransition] = useTransition();
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Vehicle>({
         defaultValues: vehicle || { id: crypto.randomUUID(), code: '', unitType: 'biasa', stock: 0, status: 'tersedia' }
     });
     
     const [previewUrl, setPreviewUrl] = useState<string | null>(vehicle?.photo || null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     
     const vehicleName = watch('name');
     const brand = watch('brand');
@@ -216,28 +219,58 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
 
     }, [debouncedName, setValue, vehicle, toast]);
     
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const result = reader.result as string;
-                setPreviewUrl(result);
-                setValue('photo', result, { shouldValidate: true });
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 4 * 1024 * 1024) { // 4MB limit
+                toast({
+                    variant: 'destructive',
+                    title: 'Ukuran File Terlalu Besar',
+                    description: 'Ukuran file tidak boleh melebihi 4MB.',
+                });
+                return;
+            }
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
     
     const onSubmit: SubmitHandler<Vehicle> = (data) => {
         startTransition(async () => {
-            if (!data.photo) {
-                 toast({ variant: "destructive", title: "Foto wajib diisi" });
-                 return;
+            let photoUrl = vehicle?.photo || null;
+
+            // 1. Handle file upload if a new file is selected
+            if (selectedFile) {
+                const fileExtension = selectedFile.name.split('.').pop();
+                const fileName = `vehicle-${data.id}-${Date.now()}.${fileExtension}`;
+                const filePath = `public/vehicles/${fileName}`;
+                
+                const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
+
+                if (urlError) {
+                    toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal membuat URL: ${urlError.message}` });
+                    return;
+                }
+
+                const { error: uploadError } = await supabase.storage.from('mudakarya-bucket').uploadToSignedUrl(filePath, token, selectedFile);
+            
+                if (uploadError) {
+                    toast({ variant: "destructive", title: "Gagal Mengunggah Foto", description: `Gagal mengunggah file: ${uploadError.message}` });
+                    return;
+                }
+                
+                const { data: { publicUrl } } = supabase.storage.from('mudakarya-bucket').getPublicUrl(filePath);
+                photoUrl = publicUrl;
+            }
+            
+            if (!photoUrl) {
+                toast({ variant: "destructive", title: "Foto wajib diisi" });
+                return;
             }
 
             const vehicleData: Vehicle = {
                 ...data,
+                photo: photoUrl,
                 price: Number(data.price),
                 year: data.year ? Number(data.year) : null,
                 passengers: data.passengers ? Number(data.passengers) : null,
@@ -525,3 +558,5 @@ function ArmadaPage() {
 }
 
 export default ArmadaPage;
+
+    

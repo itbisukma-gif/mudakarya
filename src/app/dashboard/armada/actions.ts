@@ -1,22 +1,14 @@
 
 'use server';
 
-import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
+import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Vehicle } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
 export async function upsertVehicle(vehicleData: Vehicle) {
     const supabase = createServiceRoleClient();
 
-    try {
-        if (vehicleData.photo && vehicleData.photo.startsWith('data:image')) {
-            vehicleData.photo = await uploadImageFromDataUri(vehicleData.photo, 'vehicles', `vehicle-${vehicleData.id}`);
-        }
-    } catch (uploadError) {
-        console.error("Vehicle image upload failed:", uploadError);
-        return { data: null, error: { message: (uploadError as Error).message } };
-    }
-
+    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase
         .from('vehicles')
         .upsert(vehicleData, { onConflict: 'id' })
@@ -78,3 +70,5 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
     revalidatePath('/dashboard/orders');
     return { error: null };
 }
+
+    
