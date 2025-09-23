@@ -183,6 +183,7 @@ export default function DashboardPage() {
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const { toast } = useToast();
+  const [isProcessing, startTransition] = useTransition();
 
    const fetchData = async () => {
         if (!supabase) return;
@@ -246,24 +247,28 @@ export default function DashboardPage() {
     setEditDialogOpen(true);
   };
   
-  const handleDeleteDriver = async (driverId: string) => {
-    const result = await deleteDriver(driverId);
-     if (result.error) {
-        toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
-     } else {
-        toast({ title: "Driver Dihapus", description: `Data driver telah berhasil dihapus.` });
-        fetchData(); // Refetch
-     }
+  const handleDeleteDriver = (driverId: string) => {
+    startTransition(async () => {
+        const result = await deleteDriver(driverId);
+        if (result.error) {
+            toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
+        } else {
+            toast({ title: "Driver Dihapus", description: `Data driver telah berhasil dihapus.` });
+            fetchData(); // Refetch
+        }
+    });
   }
 
-  const handleStatusChange = async (driverId: string, newStatus: 'Tersedia' | 'Bertugas') => {
-    const result = await updateDriverStatus(driverId, newStatus);
-     if (result.error) {
-        toast({ variant: "destructive", title: "Gagal Memperbarui Status", description: result.error.message });
-     } else {
-        toast({ title: "Status Diperbarui", description: `Status driver telah berhasil diperbarui.` });
-        fetchData(); // Refetch
-     }
+  const handleStatusChange = (driverId: string, newStatus: 'Tersedia' | 'Bertugas') => {
+    startTransition(async () => {
+        const result = await updateDriverStatus(driverId, newStatus);
+        if (result.error) {
+            toast({ variant: "destructive", title: "Gagal Memperbarui Status", description: result.error.message });
+        } else {
+            toast({ title: "Status Diperbarui", description: `Status driver telah berhasil diperbarui.` });
+            fetchData(); // Refetch
+        }
+    });
   };
   
   const handleFormSave = () => {
@@ -499,7 +504,7 @@ export default function DashboardPage() {
                         <TableCell className="font-medium">{driver.name}</TableCell>
                         <TableCell>{driver.phone}</TableCell>
                         <TableCell>
-                        <Select value={driver.status} onValueChange={(value: 'Tersedia' | 'Bertugas') => handleStatusChange(driver.id, value)}>
+                        <Select value={driver.status} onValueChange={(value: 'Tersedia' | 'Bertugas') => handleStatusChange(driver.id, value)} disabled={isProcessing}>
                             <SelectTrigger className={cn("w-[130px] capitalize", 
                                 driver.status === 'Tersedia' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
                             )}>
@@ -514,7 +519,7 @@ export default function DashboardPage() {
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isProcessing}>
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Toggle menu</span>
                             </Button>

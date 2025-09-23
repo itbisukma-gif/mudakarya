@@ -457,7 +457,7 @@ function ArmadaPage() {
                 toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
             } else {
                 toast({ title: "Kendaraan Dihapus" });
-                // Data will be refetched by revalidation
+                fetchFleet(); // Refetch
             }
         });
     };
@@ -465,7 +465,7 @@ function ArmadaPage() {
     const handleSave = () => {
         setFormOpen(false);
         setSelectedVehicle(null);
-        // Data will be refetched by revalidation
+        fetchFleet(); // Refetch
     };
 
     const dialogTitle = selectedVehicle ? "Edit Kendaraan" : "Tambahkan Kendaraan Baru";

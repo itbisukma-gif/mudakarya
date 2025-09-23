@@ -66,10 +66,10 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 vehicleId: vehicleId === 'none' ? undefined : vehicleId,
             };
 
-            const { error: promoError } = await upsertPromotion(promoData);
+            const promoResult = await upsertPromotion(promoData);
 
-            if (promoError) {
-                toast({ variant: 'destructive', title: 'Gagal Menyimpan Promosi', description: promoError.message });
+            if (promoResult.error) {
+                toast({ variant: 'destructive', title: 'Gagal Menyimpan Promosi', description: promoResult.error.message });
                 return;
             }
 
@@ -78,9 +78,9 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 const vehicleToUpdate = vehicles.find(v => v.id === vehicleId);
                 if (vehicleToUpdate) {
                     const updatedVehicle: Vehicle = { ...vehicleToUpdate, discountPercentage: discount || null };
-                    const { error: vehicleError } = await upsertVehicle(updatedVehicle);
-                     if (vehicleError) {
-                        toast({ variant: 'destructive', title: 'Gagal Apply Diskon', description: `Promosi disimpan, tapi gagal menerapkan diskon ke kendaraan. ${vehicleError.message}` });
+                    const vehicleResult = await upsertVehicle(updatedVehicle);
+                     if (vehicleResult.error) {
+                        toast({ variant: 'destructive', title: 'Gagal Apply Diskon', description: `Promosi disimpan, tapi gagal menerapkan diskon ke kendaraan. ${vehicleResult.error.message}` });
                      }
                 }
             }
@@ -253,12 +253,14 @@ export default function PromosiPage() {
             }
 
             toast({ title: "Promosi Dihapus" });
+            fetchData();
         });
     };
     
     const handleFormSave = () => {
         setFormOpen(false);
         setSelectedPromo(null);
+        fetchData();
     };
 
     const dialogTitle = selectedPromo ? "Edit Promosi" : "Tambahkan Promosi Baru";

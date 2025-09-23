@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,13 +37,19 @@ type SocialLinkItem = {
 async function updateContactInfo(data: ContactInfo) {
     const supabase = createClient();
     const { error } = await supabase.from('contact_info').update(data).eq('id', 1);
-    return { error };
+    if(error) return {error};
+    revalidatePath('/dashboard/pengaturan');
+    revalidatePath('/kontak');
+    return { error: null };
 }
 
 async function updateTermsContent(data: TermsContent) {
     const supabase = createClient();
     const { error } = await supabase.from('terms_content').update(data).eq('id', 1);
-    return { error };
+    if(error) return {error};
+    revalidatePath('/dashboard/pengaturan');
+    revalidatePath('/syarat-ketentuan');
+    return { error: null };
 }
 
 
@@ -110,6 +118,7 @@ export default function PengaturanPage() {
 
   const handleSaveChanges = (type: 'Kontak' | 'S&K') => {
     startSavingTransition(async () => {
+        let result: { error: any } | null = null;
         if (type === 'Kontak' && contactInfo) {
             const newContactInfo: Partial<ContactInfo> = { ...contactInfo };
             // Reset all social fields first
@@ -121,23 +130,20 @@ export default function PengaturanPage() {
                 }
             });
             
-            const { error } = await updateContactInfo(newContactInfo as ContactInfo);
-            if (error) {
-                toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: error.message });
-                return;
-            }
+            result = await updateContactInfo(newContactInfo as ContactInfo);
+
         } else if (type === 'S&K' && terms) {
-             const { error } = await updateTermsContent(terms);
-            if (error) {
-                toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: error.message });
-                return;
-            }
+             result = await updateTermsContent(terms);
         }
         
-        toast({
-            title: "Perubahan Disimpan",
-            description: `Informasi ${type} telah berhasil diperbarui.`
-        });
+        if (result?.error) {
+            toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: result.error.message });
+        } else {
+             toast({
+                title: "Perubahan Disimpan",
+                description: `Informasi ${type} telah berhasil diperbarui.`
+            });
+        }
     });
   }
 

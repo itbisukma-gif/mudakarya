@@ -195,7 +195,7 @@ function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | nu
     );
 }
 
-function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
+function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onDataChange: () => void }) {
     const [gallery, setGallery] = useState<GalleryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAddPhotoOpen, setAddPhotoOpen] = useState(false);
@@ -254,6 +254,7 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
                 setAddPhotoOpen(false);
                 setPreviewUrl(null);
                 setSelectedVehicleName(undefined);
+                onDataChange();
             }
         });
     };
@@ -265,6 +266,7 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
                 toast({ variant: 'destructive', title: 'Gagal menghapus foto', description: result.error.message });
             } else {
                 toast({ variant: "destructive", title: "Foto Dihapus" });
+                onDataChange();
             }
         });
     };
@@ -382,7 +384,7 @@ function GalleryEditor({ vehicles }: { vehicles: Vehicle[] }) {
     );
 }
 
-function FeatureEditor() {
+function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
     const [features, setFeatures] = useState<FeatureItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -425,6 +427,7 @@ function FeatureEditor() {
     const handleFormSave = () => {
         setIsFormOpen(false);
         setSelectedFeature(null);
+        onDataChange();
     };
 
     const handleDelete = (featureId: string) => {
@@ -434,6 +437,7 @@ function FeatureEditor() {
                  toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
             } else {
                 toast({ variant: "destructive", title: "Keunggulan Dihapus" });
+                onDataChange();
             }
         });
     };
@@ -593,6 +597,7 @@ export default function TestimoniPage() {
             toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
         } else {
             toast({ variant: "destructive", title: "Testimoni Dihapus" });
+            fetchData();
         }
     });
   };
@@ -600,6 +605,7 @@ export default function TestimoniPage() {
   const handleFormSave = () => {
     setFormOpen(false);
     setSelectedTestimonial(null);
+    fetchData();
   };
 
   const dialogTitle = selectedTestimonial ? "Edit Testimoni" : "Tambahkan Testimoni Baru";
@@ -747,11 +753,11 @@ export default function TestimoniPage() {
             </TabsContent>
 
              <TabsContent value="gallery" className="mt-6">
-                <GalleryEditor vehicles={vehicles} />
+                <GalleryEditor vehicles={vehicles} onDataChange={fetchData} />
             </TabsContent>
 
              <TabsContent value="features" className="mt-6">
-                <FeatureEditor />
+                <FeatureEditor onDataChange={fetchData} />
             </TabsContent>
 
        </Tabs>

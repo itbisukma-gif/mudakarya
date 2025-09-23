@@ -15,7 +15,8 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
         return { data: null, error };
     }
     revalidatePath('/dashboard/testimoni');
-    revalidatePath(`/mobil/${data.vehicleName}`); // Revalidate specific car page
+    // Revalidating a dynamic path like this is problematic. Let client-side refetch handle it.
+    // revalidatePath(`/mobil/${data.vehicleName}`); 
     return { data, error: null };
 }
 
@@ -70,14 +71,12 @@ export async function deleteGalleryItem(id: string) {
     }
 
     // If DB deletion is successful, delete from storage
-    const bucketName = 'mudakarya-bucket';
-    const filePath = itemData.url.substring(itemData.url.indexOf(bucketName) + bucketName.length + 1);
-    const { error: deleteStorageError } = await supabase.storage.from(bucketName).remove([filePath]);
-
-    if (deleteStorageError) {
-        console.error("Error deleting gallery item from Storage:", deleteStorageError);
-        // We don't return an error here because the DB record is already gone, which is the main goal.
+    if (itemData.url) {
+        const bucketName = 'mudakarya-bucket';
+        const filePath = itemData.url.substring(itemData.url.indexOf(bucketName) + bucketName.length + 1);
+        await supabase.storage.from(bucketName).remove([filePath]);
     }
+
 
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
