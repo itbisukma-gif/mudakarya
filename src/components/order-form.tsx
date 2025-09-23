@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, forwardRef } from 'react';
@@ -7,6 +8,7 @@ import Image from 'next/image';
 import {
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
@@ -42,7 +44,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
     const { dictionary, language } = useLanguage();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-    const [activeTab, setActiveTab] = useState('reservation');
+    const [activeTab, setActiveTab] = useState('direct');
     const [rentalDays, setRentalDays] = useState(1);
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -240,20 +242,24 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
       <div className="flex flex-col h-full" ref={ref}>
         <SheetHeader className="p-6 border-b flex-shrink-0">
           <SheetTitle>{dictionary.orderForm.title}</SheetTitle>
+          <SheetDescription>
+            Pilih jenis dan durasi sewa, lalu lanjutkan ke pembayaran.
+          </SheetDescription>
         </SheetHeader>
         
         <div className="p-6 border-b flex-shrink-0">
             <div className="flex items-center gap-4">
-                <Image src={representativeVehicle.photo || ''} alt={representativeVehicle.name} width={120} height={80} className="rounded-lg object-cover" data-ai-hint={representativeVehicle.dataAiHint || ''} />
+                <Image src={representativeVehicle.photo || ''} alt={representativeVehicle.name} width={120} height={80} className="rounded-lg object-cover aspect-3/2" data-ai-hint={representativeVehicle.dataAiHint || ''} />
                 <div>
-                    <h3 className="font-bold text-lg">{representativeVehicle.brand} {representativeVehicle.name}</h3>
+                    <p className="text-base font-light text-muted-foreground">{representativeVehicle.brand}</p>
+                    <h3 className="font-bold text-lg -mt-1">{representativeVehicle.name}</h3>
                     <p className="text-sm text-muted-foreground">{representativeVehicle.type}</p>
                 </div>
             </div>
         </div>
         
         <div className="flex-grow overflow-y-auto p-6">
-            <Tabs defaultValue="reservation" className="w-full" onValueChange={setActiveTab}>
+            <Tabs defaultValue="direct" className="w-full" onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="direct">{dictionary.orderForm.tabs.direct.title}</TabsTrigger>
                     <TabsTrigger value="reservation">{dictionary.orderForm.tabs.reservation.title}</TabsTrigger>
