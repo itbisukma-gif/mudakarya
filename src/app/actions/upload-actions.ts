@@ -9,7 +9,7 @@ import { createServiceRoleClient } from '@/utils/supabase/server';
  * @returns An object containing the signed URL, the token, and the path.
  */
 export async function createSignedUploadUrl(filePath: string) {
-    const supabase = createServiceRole-RoleClient();
+    const supabase = createServiceRoleClient();
     try {
         const { data, error } = await supabase.storage
             .from('mudakarya-bucket')
