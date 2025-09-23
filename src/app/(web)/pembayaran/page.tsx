@@ -76,8 +76,7 @@ function PembayaranComponent() {
         };
 
         fetchVehicle();
-    }, [vehicleId, supabase]);
-
+    }, [vehicleId, supabase, notFound]);
 
     const { rentalPeriod, baseRentalCost, maticFee, driverFee, fuelFee, discountAmount, totalCost } = useMemo(() => {
         if (!vehicle) {
@@ -121,9 +120,6 @@ function PembayaranComponent() {
         };
     }, [vehicle, days, service, startDateStr, endDateStr, dictionary, language]);
 
-
-    const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
-
     const isFormValid = useMemo(() => {
         return fullName.trim() !== '' && phone.trim() !== '';
     }, [fullName, phone]);
@@ -139,6 +135,9 @@ function PembayaranComponent() {
 
         return url;
     }, [isFormValid, paymentMethod, totalCost, vehicle, days, service, startDateStr, endDateStr, maticFee, discountAmount, fullName, phone, driverId]);
+
+
+    const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
     const handleConfirmAndPay = () => {
         if (isFormValid) {
@@ -312,3 +311,5 @@ export default function PembayaranPage() {
         </Suspense>
     )
 }
+
+    
