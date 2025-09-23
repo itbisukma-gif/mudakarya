@@ -22,7 +22,7 @@ export type Vehicle = {
   rating: number | null;
   dataAiHint: string | null;
   discountPercentage: number | null;
-  photo: string;
+  photo: string | null;
   unitType: 'biasa' | 'khusus' | null;
   stock: number | null;
   status: 'tersedia' | 'dipesan' | 'disewa' | null;

@@ -14,8 +14,18 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
         console.error('Error upserting testimonial:', error);
         return { data: null, error };
     }
+    // Revalidate paths that display testimonials
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
+    
+    // Revalidate specific car detail pages if a vehicle is associated
+    if (testimonialData.vehicleName) {
+        const { data: vehicles } = await supabase.from('vehicles').select('id').eq('name', testimonialData.vehicleName.split(' ')[1]);
+        if (vehicles) {
+            vehicles.forEach(v => revalidatePath(`/mobil/${v.id}`));
+        }
+    }
+
     return { data, error: null };
 }
 
@@ -107,6 +117,7 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         return { data: null, error };
     }
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -129,5 +140,6 @@ export async function deleteFeature(id: string) {
     }
 
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { error: null };
 }

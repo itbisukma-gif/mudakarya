@@ -14,7 +14,7 @@ type BrandLogoKey = keyof typeof logos;
  * @param brandName The name of the vehicle brand.
  * @returns An object containing the `logoUrl` string or null if no valid logo is found.
  */
-export function useVehicleLogo(brandName: string) {
+export function useVehicleLogo(brandName?: string | null) {
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
     useEffect(() => {
