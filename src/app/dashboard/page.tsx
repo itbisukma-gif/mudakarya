@@ -184,22 +184,33 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [isProcessing, startTransition] = useTransition();
 
-   const fetchData = async () => {
+   const fetchData = React.useCallback(async () => {
         if (!supabase) return;
         setIsLoading(true);
         const { data: driverData, error: driverError } = await supabase.from('drivers').select('*').order('created_at', { ascending: false });
         const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
         const { data: orderData, error: orderError } = await supabase.from('orders').select('*');
 
-        if (driverError || vehicleError || orderError) {
-            toast({ variant: "destructive", title: "Gagal memuat data", description: driverError?.message || vehicleError?.message || orderError?.message });
+        if (driverError) {
+             toast({ variant: "destructive", title: "Gagal memuat driver", description: driverError.message });
         } else {
-            setDrivers(driverData || []);
+             setDrivers(driverData || []);
+        }
+
+        if (vehicleError) {
+             toast({ variant: "destructive", title: "Gagal memuat armada", description: vehicleError.message });
+        } else {
             setFleet(vehicleData || []);
+        }
+        
+        if (orderError) {
+             toast({ variant: "destructive", title: "Gagal memuat order", description: orderError.message });
+        } else {
             setOrders(orderData || []);
         }
+        
         setIsLoading(false);
-    };
+    }, [supabase, toast]);
 
     useEffect(() => {
       const supabaseClient = createClient();
@@ -214,7 +225,7 @@ export default function DashboardPage() {
         if(supabase) {
             fetchData();
         }
-    }, [supabase]);
+    }, [supabase, fetchData]);
   
   const stats = useMemo(() => {
     const pendingOrders = orders.filter(o => o.status === 'pending').length;

@@ -87,7 +87,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Anda Yakin?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Tindakan ini tidak dapat diurungkan. Ini akan menghapus data kendaraan <span className="font-bold">{vehicle.brand} {vehicle.name} ({vehicle.code})</span> secara permanen.
+                                            Tindakan ini akan menghapus data kendaraan <span className="font-bold">{vehicle.brand} {vehicle.name} ({vehicle.code})</span> secara permanen.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -394,7 +394,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                 </div>
             </div>
              <DialogFooter className="pt-4 border-t px-6 pb-6 bg-background rounded-b-lg">
-                <Button variant="outline" onClick={onCancel}>Batal</Button>
+                <Button variant="outline" onClick={onCancel} disabled={isPending}>Batal</Button>
                 <Button type="submit" disabled={isPending}>
                     {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {isPending ? "Menyimpan..." : vehicle ? "Simpan Perubahan" : "Simpan Kendaraan"}

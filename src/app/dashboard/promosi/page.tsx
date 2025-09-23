@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { PlusCircle, Edit, Trash2, Upload, Eye, Car, Loader2 } from "lucide-react";
-import { useToast } from '@/hooks/use-toast";
-import { cn } from '@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import type { Promotion, Vehicle } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@/utils/supabase/client';
@@ -204,12 +204,12 @@ export default function PromosiPage() {
         const { data: promoData, error: promoError } = await supabase.from('promotions').select('*');
         const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
 
-        if (promoError || vehicleError) {
-            toast({ variant: 'destructive', title: 'Gagal memuat data', description: promoError?.message || vehicleError?.message });
-        } else {
-            setPromotions(promoData || []);
-            setVehicles(vehicleData || []);
-        }
+        if (promoError) toast({ variant: 'destructive', title: 'Gagal memuat promosi', description: promoError.message });
+        else setPromotions(promoData || []);
+
+        if (vehicleError) toast({ variant: 'destructive', title: 'Gagal memuat kendaraan', description: vehicleError.message });
+        else setVehicles(vehicleData || []);
+        
         setIsLoading(false);
     }
 
@@ -222,7 +222,7 @@ export default function PromosiPage() {
         if (supabase) {
             fetchData();
         }
-    }, [supabase, toast]);
+    }, [supabase]);
 
     const handleAddClick = () => {
         setSelectedPromo(null);
@@ -236,9 +236,9 @@ export default function PromosiPage() {
 
     const handleDelete = (promo: Promotion) => {
         startDeleteTransition(async () => {
-            const { error } = await deletePromotion(promo.id);
-            if (error) {
-                toast({ variant: 'destructive', title: 'Gagal menghapus promosi', description: error.message });
+            const result = await deletePromotion(promo.id);
+            if (result.error) {
+                toast({ variant: 'destructive', title: 'Gagal menghapus promosi', description: result.error.message });
                 return;
             }
 

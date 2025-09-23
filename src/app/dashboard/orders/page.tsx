@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useTransition } from 'react';
@@ -105,7 +104,10 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
 
         startTransition(async () => {
             if (order.driverId) {
-                await updateDriverStatus(order.driverId, 'Tersedia');
+                const { error: oldDriverError } = await updateDriverStatus(order.driverId, 'Tersedia');
+                 if (oldDriverError) {
+                    toast({ variant: 'destructive', title: 'Gagal Melepas Driver Lama', description: oldDriverError.message });
+                 }
             }
 
             const { error: orderError } = await updateOrderDriver(order.id, driverName, driverId);
@@ -117,6 +119,7 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
             const { error: driverError } = await updateDriverStatus(driverId, 'Bertugas');
             if (driverError) {
                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Driver', description: driverError.message });
+                 // Optionally, try to revert the order change
             } else {
                 toast({ title: "Driver Ditugaskan", description: `${driverName} telah ditugaskan ke pesanan ${order.id}.` });
             }
@@ -336,7 +339,7 @@ export default function OrdersPage() {
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-    const fetchOrderData = async () => {
+    const fetchOrderData = useCallback(async () => {
         if (!supabase) return;
         setIsLoading(true);
         const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
@@ -355,7 +358,7 @@ export default function OrdersPage() {
         }
 
         setIsLoading(false);
-    }
+    }, [supabase, toast])
     
     useEffect(() => {
         const supabaseClient = createClient();
@@ -366,7 +369,7 @@ export default function OrdersPage() {
         if (supabase) {
             fetchOrderData();
         }
-    }, [supabase]);
+    }, [supabase, fetchOrderData]);
 
     const { pendingOrders, approvedOrders, completedOrders } = useMemo(() => {
         return {

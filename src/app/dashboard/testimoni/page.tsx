@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useMemo, useEffect, useTransition } from 'react';
+import { useState, ChangeEvent, useMemo, useEffect, useTransition, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { MoreHorizontal, PlusCircle, Star, Trash2, Upload, Edit, Loader2 } from 
 import type { Testimonial, GalleryItem, FeatureItem, Vehicle } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from '@/lib/utils";
+import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StarRating } from '@/components/star-rating';
 import { LanguageProvider } from '@/app/language-provider';
@@ -204,14 +204,14 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
     const [isPending, startTransition] = useTransition();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-    const fetchGallery = async () => {
+    const fetchGallery = useCallback(async () => {
         if (!supabase) return;
         setIsLoading(true);
         const { data, error } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
         if (error) toast({ variant: 'destructive', title: 'Gagal memuat galeri', description: error.message });
         else setGallery(data || []);
         setIsLoading(false);
-    }
+    }, [supabase, toast]);
 
     useEffect(() => {
         const supabaseClient = createClient();
@@ -222,7 +222,7 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
         if (supabase) {
             fetchGallery();
         }
-    }, [supabase, toast]);
+    }, [supabase, fetchGallery]);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -392,14 +392,14 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
     const [isPending, startTransition] = useTransition();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-    const fetchFeatures = async () => {
+    const fetchFeatures = useCallback(async () => {
         if (!supabase) return;
         setIsLoading(true);
         const { data, error } = await supabase.from('features').select('*').order('created_at', { ascending: false });
         if (error) toast({ variant: 'destructive', title: 'Gagal memuat keunggulan', description: error.message });
         else setFeatures(data || []);
         setIsLoading(false);
-    }
+    }, [supabase, toast]);
 
     useEffect(() => {
         const supabaseClient = createClient();
@@ -410,7 +410,7 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
         if (supabase) {
             fetchFeatures();
         }
-    }, [supabase, toast]);
+    }, [supabase, fetchFeatures]);
 
 
     const handleAddClick = () => {
@@ -527,7 +527,7 @@ export default function TestimoniPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!supabase) return;
     setIsLoading(true);
     const { data: testimonialsData, error: testimonialsError } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
@@ -540,7 +540,7 @@ export default function TestimoniPage() {
     else setVehicles(vehiclesData || []);
     
     setIsLoading(false);
-  }
+  }, [supabase, toast]);
 
   useEffect(() => {
     const supabaseClient = createClient();
@@ -551,7 +551,7 @@ export default function TestimoniPage() {
     if (supabase) {
         fetchData();
     }
-  }, [supabase, toast]);
+  }, [supabase, fetchData]);
 
   const filteredTestimonials = useMemo(() => {
     if (filter === 'all') {

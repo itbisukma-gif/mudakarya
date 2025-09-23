@@ -16,6 +16,7 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
     }
     
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/testimoni');
     return { data, error: null };
 }
 
@@ -27,6 +28,7 @@ export async function deleteTestimonial(id: string) {
         return { error };
     }
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/testimoni');
     return { error: null };
 }
 
@@ -105,6 +107,7 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         return { data: null, error };
     }
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -127,5 +130,6 @@ export async function deleteFeature(id: string) {
     }
     
     revalidatePath('/dashboard/testimoni');
+    revalidatePath('/');
     return { error: null };
 }

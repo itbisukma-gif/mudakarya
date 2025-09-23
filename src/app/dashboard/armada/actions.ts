@@ -75,5 +75,6 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
     }
 
     revalidatePath('/dashboard/armada');
+    revalidatePath('/dashboard/orders');
     return { error: null };
 }

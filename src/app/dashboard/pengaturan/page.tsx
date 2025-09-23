@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache";
+import { updateContactInfo, updateTermsContent } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,25 +30,6 @@ type SocialPlatformKey = typeof socialPlatforms[number]['value'];
 type SocialLinkItem = {
     platform: SocialPlatformKey;
     url: string;
-}
-
-// Server Actions
-async function updateContactInfo(data: ContactInfo) {
-    const supabase = createClient();
-    const { error } = await supabase.from('contact_info').update(data).eq('id', 1);
-    if(error) return {error};
-    revalidatePath('/dashboard/pengaturan');
-    revalidatePath('/kontak');
-    return { error: null };
-}
-
-async function updateTermsContent(data: TermsContent) {
-    const supabase = createClient();
-    const { error } = await supabase.from('terms_content').update(data).eq('id', 1);
-    if(error) return {error};
-    revalidatePath('/dashboard/pengaturan');
-    revalidatePath('/syarat-ketentuan');
-    return { error: null };
 }
 
 
