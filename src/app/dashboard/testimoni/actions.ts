@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
@@ -15,10 +16,6 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
     }
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    if (data.vehicleName) {
-        // Revalidate the home page as vehicle ratings might be aggregated there
-        revalidatePath('/');
-    }
     return { data, error: null };
 }
 
@@ -29,7 +26,6 @@ export async function deleteTestimonial(id: string) {
     if (error) return { error };
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/');
     return { error: null };
 }
 
@@ -54,7 +50,6 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
     }
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -88,7 +83,6 @@ export async function deleteGalleryItem(id: string) {
 
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
-    revalidatePath('/');
     return { error: null };
 }
 
@@ -113,7 +107,6 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         return { data: null, error };
     }
     revalidatePath('/dashboard/testimoni');
-    revalidatePath('/'); // Revalidate home page where features are shown
     return { data, error: null };
 }
 
@@ -136,6 +129,5 @@ export async function deleteFeature(id: string) {
     }
 
     revalidatePath('/dashboard/testimoni');
-    revalidatePath('/'); // Revalidate home page
     return { error: null };
 }
