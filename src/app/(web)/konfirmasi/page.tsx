@@ -351,6 +351,19 @@ function KonfirmasiComponent() {
                                     <span className="font-semibold">{driver.name}</span>
                                 </div>
                             )}
+                            {maticFee && Number(maticFee) > 0 && (
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Biaya Tambahan Matic</span>
+                                    <span className="font-semibold">{formatCurrency(Number(maticFee))}</span>
+                                </div>
+                            )}
+                            {discount && Number(discount) > 0 && (
+                                <div className="flex justify-between text-green-600">
+                                    <span className="font-medium">Diskon</span>
+                                    <span className="font-semibold">- {formatCurrency(Number(discount))}</span>
+                                </div>
+                            )}
+                            <Separator />
                              <div className="flex justify-between items-baseline">
                                 <span className="text-muted-foreground">{dictionary.confirmation.totalPayment}:</span>
                                 <span className="font-semibold text-primary">{total ? formatCurrency(Number(total)) : '-'}</span>
