@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import Link from 'next/link';
@@ -109,7 +110,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 <Cog className="h-4 w-4" />
                 <span>{availableTransmissionsText}</span>
               </div>
-              <div className="flex items-center gap-1.5 col-span-2">
+              <div className="flex items-center gap-1.5">
                 <Fuel className="h-4 w-4" />
                 <span>{displayVehicle.fuel || '-'}</span>
               </div>
@@ -145,3 +146,4 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       </Card>
   );
 }
+
