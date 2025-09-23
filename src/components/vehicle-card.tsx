@@ -101,16 +101,16 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <p className="text-xs text-muted-foreground">{displayVehicle.type}</p>
                 </Link>
             </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
-              <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-3 items-center text-xs text-muted-foreground mt-3">
+              <div className="flex items-center gap-1.5 justify-start">
                 <Users className="h-4 w-4 flex-shrink-0" />
                 <span className="truncate">{displayVehicle.passengers || '-'}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 justify-center">
                 <Cog className="h-4 w-4 flex-shrink-0" />
                 <span className="truncate">{availableTransmissionsText}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 justify-end">
                 <Fuel className="h-4 w-4 flex-shrink-0" />
                 <span className="truncate">{displayVehicle.fuel || '-'}</span>
               </div>
