@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useTransition } from 'react';
+import { useState, useMemo, useEffect, useTransition, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,24 +24,7 @@ import { updateDriverStatus } from '../actions';
 import { updateVehicleStatus } from '../armada/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { WhatsAppIcon } from '@/components/icons';
-
-async function updateOrderStatus(orderId: string, status: OrderStatus) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-        .from('orders')
-        .update({ status })
-        .eq('id', orderId);
-    return { data, error };
-}
-
-async function updateOrderDriver(orderId: string, driverName: string, driverId: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-        .from('orders')
-        .update({ driver: driverName, driverId: driverId })
-        .eq('id', orderId);
-    return { data, error };
-}
+import { updateOrderDriver, updateOrderStatus } from './actions';
 
 
 const getStatusInfo = (status: OrderStatus | null) => {
@@ -78,18 +61,28 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
 
     const handleStatusChange = (newStatus: OrderStatus) => {
         startTransition(async () => {
-            const { error } = await updateOrderStatus(order.id, newStatus);
-            if (error) {
-                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: error.message });
+            const { error: orderError } = await updateOrderStatus(order.id, newStatus);
+            if (orderError) {
+                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: orderError.message });
                 return;
             }
 
             if (newStatus === 'disetujui' && !order.isPartnerUnit) {
-                await updateVehicleStatus(order.vehicleId, 'disewa');
+                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'disewa');
+                 if (vehicleError) {
+                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
+                 }
             } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && !order.isPartnerUnit) {
-                await updateVehicleStatus(order.vehicleId, 'tersedia');
+                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'tersedia');
+                 if (vehicleError) {
+                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
+                 }
+
                 if (order.driverId) {
-                    await updateDriverStatus(order.driverId, 'Tersedia');
+                    const { error: driverError } = await updateDriverStatus(order.driverId, 'Tersedia');
+                    if (driverError) {
+                        toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: driverError.message });
+                    }
                 }
             }
 
@@ -119,7 +112,6 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
             const { error: driverError } = await updateDriverStatus(driverId, 'Bertugas');
             if (driverError) {
                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Driver', description: driverError.message });
-                 // Optionally, try to revert the order change
             } else {
                 toast({ title: "Driver Ditugaskan", description: `${driverName} telah ditugaskan ke pesanan ${order.id}.` });
             }
@@ -133,9 +125,6 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
     };
 
     const invoiceUrl = useMemo(() => {
-        // Since we don't have start/end dates in the order object,
-        // we can't reliably add them here for now.
-        // The link will still work, just without the period displayed on the invoice page.
         return `/invoice/${order.id}`;
     }, [order.id]);
 
@@ -147,7 +136,6 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
         
         const message = `Halo ${order.customerName}, terima kasih telah memesan di MudaKarya CarRent. Pembayaran Anda telah kami konfirmasi. Berikut adalah rincian invoice untuk pesanan Anda: ${shareableInvoiceUrl}`;
         
-        // Basic phone number cleaning and formatting for Indonesia
         let formattedPhone = order.customerPhone.replace(/\D/g, '');
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '62' + formattedPhone.substring(1);
