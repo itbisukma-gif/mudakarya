@@ -72,7 +72,7 @@ function BankAccountDetails({ bank }: { bank: BankAccount }) {
     );
 }
 
-function UploadProof({ onUpload, orderId }: { onUpload: (proofUrl: string) => void, orderId: string }) {
+function UploadProof({ onUpload, orderId, isBankTransfer, isBankSelected }: { onUpload: (proofUrl: string) => void, orderId: string, isBankTransfer: boolean, isBankSelected: boolean }) {
     const { dictionary } = useLanguage();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -110,7 +110,7 @@ function UploadProof({ onUpload, orderId }: { onUpload: (proofUrl: string) => vo
         }
     };
 
-    const isSubmitDisabled = !selectedFile || uploadState === 'uploading' || !orderId;
+    const isSubmitDisabled = !selectedFile || uploadState === 'uploading' || !orderId || (isBankTransfer && !isBankSelected);
     
     return (
         <Card className="mt-8">
@@ -146,6 +146,11 @@ function UploadProof({ onUpload, orderId }: { onUpload: (proofUrl: string) => vo
                         ) : dictionary.confirmation.upload.submit}
                     </Button>
                 </div>
+                 {isBankTransfer && !isBankSelected && (
+                    <p className="text-xs text-destructive mt-2">
+                        Silakan pilih bank tujuan terlebih dahulu sebelum mengirim bukti pembayaran.
+                    </p>
+                )}
                 <Input
                     id="proof-upload"
                     type="file"
@@ -157,7 +162,7 @@ function UploadProof({ onUpload, orderId }: { onUpload: (proofUrl: string) => vo
                 {previewUrl && selectedFile && (
                     <div className="mt-4 border rounded-md p-3">
                         <p className="text-sm font-medium mb-2">{dictionary.confirmation.upload.preview}</p>
-                         <div className="relative aspect-video max-h-64 w-full mx-auto">
+                         <div className="relative aspect-3/2 w-full mx-auto">
                            <Image
                                 src={previewUrl}
                                 alt={`${dictionary.confirmation.upload.preview} ${selectedFile.name}`}
@@ -344,7 +349,10 @@ function KonfirmasiComponent() {
                             <Separator />
                              <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">{dictionary.confirmation.vehicle}:</span>
-                                <span className="font-semibold">{vehicle.brand} {vehicle.name}</span>
+                                <div>
+                                    <p className="text-xs text-right font-light text-muted-foreground">{vehicle.brand}</p>
+                                    <p className="font-semibold text-right -mt-1">{vehicle.name}</p>
+                                </div>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-muted-foreground">{dictionary.confirmation.rentalPeriod}:</span>
@@ -456,7 +464,10 @@ function KonfirmasiComponent() {
                             <Separator className="my-1"/>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">{dictionary.confirmation.vehicle}:</span>
-                                <span className="font-semibold text-sm">{vehicle.brand} {vehicle.name}</span>
+                                <div>
+                                    <p className="text-xs text-right font-light text-muted-foreground">{vehicle.brand}</p>
+                                    <p className="font-semibold text-sm text-right -mt-1">{vehicle.name}</p>
+                                </div>
                             </div>
                              <div className="flex justify-between">
                                 <span className="text-sm text-muted-foreground">{dictionary.confirmation.rentalPeriod}:</span>
@@ -560,6 +571,8 @@ function KonfirmasiComponent() {
                 <UploadProof 
                     onUpload={handleUploadSuccess}
                     orderId={orderId}
+                    isBankTransfer={paymentMethod === 'bank'}
+                    isBankSelected={!!selectedBankId}
                 />
                 
         </div>
