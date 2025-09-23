@@ -3,7 +3,6 @@
 
 import { createServiceRoleClient, uploadImageFromDataUri } from '@/utils/supabase/server';
 import type { Testimonial, GalleryItem, FeatureItem } from '@/lib/types';
-import { revalidatePath } from 'next/cache';
 
 // --- Testimonial Actions ---
 
@@ -14,18 +13,6 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
         console.error('Error upserting testimonial:', error);
         return { data: null, error };
     }
-    // Revalidate paths that display testimonials
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/testimoni');
-    
-    // Revalidate specific car detail pages if a vehicle is associated
-    if (testimonialData.vehicleName) {
-        const { data: vehicles } = await supabase.from('vehicles').select('id').eq('name', testimonialData.vehicleName.split(' ')[1]);
-        if (vehicles) {
-            vehicles.forEach(v => revalidatePath(`/mobil/${v.id}`));
-        }
-    }
-
     return { data, error: null };
 }
 
@@ -34,8 +21,6 @@ export async function deleteTestimonial(id: string) {
     const supabase = createServiceRoleClient();
     const { error } = await supabase.from('testimonials').delete().eq('id', id);
     if (error) return { error };
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/testimoni');
     return { error: null };
 }
 
@@ -58,8 +43,6 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
         console.error('Error adding gallery item:', error);
         return { data: null, error };
     }
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/testimoni');
     return { data, error: null };
 }
 
@@ -90,9 +73,6 @@ export async function deleteGalleryItem(id: string) {
         // We don't return an error here because the DB record is already gone, which is the main goal.
     }
 
-
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/testimoni');
     return { error: null };
 }
 
@@ -116,8 +96,6 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
         console.error('Error upserting feature:', error);
         return { data: null, error };
     }
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/');
     return { data, error: null };
 }
 
@@ -138,8 +116,6 @@ export async function deleteFeature(id: string) {
         const filePath = itemData.imageUrl.substring(itemData.imageUrl.indexOf(bucketName) + bucketName.length + 1);
         await supabase.storage.from(bucketName).remove([filePath]);
     }
-
-    revalidatePath('/dashboard/testimoni');
-    revalidatePath('/');
+    
     return { error: null };
 }
