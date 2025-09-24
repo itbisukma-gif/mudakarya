@@ -53,8 +53,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     const [driverId, setDriverId] = useState<string | undefined>(undefined);
     const [availableDrivers, setAvailableDrivers] = useState<Driver[]>([]);
     const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(variants[0]?.id);
-    const [finalVehicleId, setFinalVehicleId] = useState<string | undefined>(undefined);
-    const [isPartnerUnit, setIsPartnerUnit] = useState(false);
 
     const [isStartCalendarOpen, setStartCalendarOpen] = useState(false);
     const [isEndCalendarOpen, setEndCalendarOpen] = useState(false);
@@ -93,7 +91,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 .eq('status', 'Tersedia');
             if (driverData) {
                 setAvailableDrivers(driverData);
-                // Auto-select the first available driver if service requires one and there is no driver selected yet
                 if (showDriverSelection && driverData.length > 0) {
                     setDriverId(driverData[0].id);
                 }
@@ -111,66 +108,15 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         fetchInitialData();
     }, [supabase]);
     
-    // Auto-select driver when service changes
     useEffect(() => {
         if (showDriverSelection && availableDrivers.length > 0) {
-            setDriverId(availableDrivers[0].id);
+            if (!driverId) {
+                setDriverId(availableDrivers[0].id);
+            }
         } else {
             setDriverId(undefined);
         }
-    }, [showDriverSelection, availableDrivers]);
-
-
-    // This effect determines the actual vehicle to be booked
-    useEffect(() => {
-      const determineVehicle = async () => {
-        if (!selectedVehicle || !supabase) return;
-
-        // 1. Find a physical, available unit first
-        const { data: availablePhysicalUnit } = await supabase
-          .from('vehicles')
-          .select('id')
-          .eq('brand', selectedVehicle.brand)
-          .eq('name', selectedVehicle.name)
-          .eq('transmission', selectedVehicle.transmission)
-          .eq('fuel', selectedVehicle.fuel)
-          .eq('status', 'tersedia')
-          .eq('unitType', 'biasa')
-          .order('created_at', { ascending: true }) // To cycle through units
-          .limit(1)
-          .single();
-
-        if (availablePhysicalUnit) {
-          setFinalVehicleId(availablePhysicalUnit.id);
-          setIsPartnerUnit(false);
-          return;
-        }
-
-        // 2. If no physical unit, find a partner unit ('khusus')
-        const { data: partnerUnit } = await supabase
-          .from('vehicles')
-          .select('id')
-          .eq('brand', selectedVehicle.brand)
-          .eq('name', selectedVehicle.name)
-          .eq('transmission', selectedVehicle.transmission)
-          .eq('fuel', selectedVehicle.fuel)
-          .eq('unitType', 'khusus')
-          .limit(1)
-          .single();
-
-        if (partnerUnit) {
-          setFinalVehicleId(partnerUnit.id);
-          setIsPartnerUnit(true);
-        } else {
-          // Should not happen if data is set up correctly, but as a fallback
-          setFinalVehicleId(selectedVehicle.id);
-          setIsPartnerUnit(selectedVehicle.unitType === 'khusus');
-        }
-      };
-
-      determineVehicle();
-    }, [selectedVehicle, supabase]);
-
+    }, [showDriverSelection, availableDrivers, driverId]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
@@ -193,7 +139,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         const rental = (selectedVehicle.price || 0) * calculatedDuration;
         const mFee = selectedVehicle.transmission === 'Matic' ? serviceCosts.matic * calculatedDuration : 0;
         const dFee = (service === 'dengan-supir' || service === 'all-include') ? serviceCosts.driver * calculatedDuration : 0;
-        
         const fFee = (service === 'all-include') ? serviceCosts.fuel * calculatedDuration : 0;
 
         const subtotal = rental + mFee + dFee + fFee;
@@ -238,18 +183,18 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !finalVehicleId || !serviceCosts;
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || !serviceCosts;
 
     const paymentUrl = useMemo(() => {
-        if (isBookingDisabled || !finalVehicleId) return '#';
+        if (isBookingDisabled || !selectedVehicle) return '#';
         
         const params = new URLSearchParams({
-            vehicleId: finalVehicleId,
+            vehicleId: selectedVehicle.id,
             days: String(calculatedDuration),
             service: service,
-            isPartnerUnit: String(isPartnerUnit),
             baseCost: String(baseRentalCost),
-            totalCost: String(totalCost)
+            totalCost: String(totalCost),
+            isPartnerUnit: String(selectedVehicle.unitType === 'khusus'),
         });
 
         if (activeTab === 'reservation' && startDate && endDate) {
@@ -274,11 +219,11 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
         return `/pembayaran?${params.toString()}`;
 
-    }, [finalVehicleId, calculatedDuration, service, activeTab, startDate, endDate, driverId, isBookingDisabled, isPartnerUnit, baseRentalCost, totalCost, maticFee, driverFee, fuelFee, discountAmount]);
+    }, [isBookingDisabled, selectedVehicle, calculatedDuration, service, activeTab, startDate, endDate, driverId, baseRentalCost, totalCost, maticFee, driverFee, fuelFee, discountAmount]);
 
     const locale = language === 'id' ? id : undefined;
 
-    if (!representativeVehicle) {
+    if (!representativeVehicle || !serviceCosts) {
         return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>
     }
 

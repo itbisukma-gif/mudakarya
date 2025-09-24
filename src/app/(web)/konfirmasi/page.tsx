@@ -236,7 +236,7 @@ function KonfirmasiComponent() {
     const customerName = searchParams.get('name');
     const customerPhone = searchParams.get('phone');
     const driverId = searchParams.get('driverId');
-    const isPartnerUnit = searchParams.get('isPartnerUnit') === 'true';
+    const isPartnerUnitParam = searchParams.get('isPartnerUnit') === 'true';
     
     const { dictionary } = useLanguage();
 
@@ -245,6 +245,8 @@ function KonfirmasiComponent() {
     const [orderId, setOrderId] = useState('');
     const [selectedBankId, setSelectedBankId] = useState<string | undefined>(undefined);
     const [isSavingOrder, setIsSavingOrder] = useState(false);
+    const [finalVehicleId, setFinalVehicleId] = useState<string | null>(null);
+    const [isPartnerUnit, setIsPartnerUnit] = useState(false);
 
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
@@ -294,23 +296,51 @@ function KonfirmasiComponent() {
     }, [toast]);
 
     useEffect(() => {
-        if (!supabase) return;
+        if (!supabase || !vehicleId) return;
         
         const fetchVehicleAndDriver = async () => {
-            if (vehicleId) {
-                const { data: vehicleData } = await supabase.from('vehicles').select('*').eq('id', vehicleId).single();
-                setVehicle(vehicleData);
-            }
+            const { data: vehicleData } = await supabase.from('vehicles').select('*').eq('id', vehicleId).single();
+            setVehicle(vehicleData);
+            
             if (driverId) {
                  const { data: driverData } = await supabase.from('drivers').select('*').eq('id', driverId).single();
                  setDriver(driverData);
             }
+
+            if (vehicleData) {
+                // Logic to determine the actual physical unit to book
+                if (isPartnerUnitParam) {
+                    setFinalVehicleId(vehicleData.id);
+                    setIsPartnerUnit(true);
+                } else {
+                    const { data: availableUnit } = await supabase
+                        .from('vehicles')
+                        .select('id, unitType')
+                        .eq('brand', vehicleData.brand)
+                        .eq('name', vehicleData.name)
+                        .eq('transmission', vehicleData.transmission)
+                        .eq('fuel', vehicleData.fuel)
+                        .eq('status', 'tersedia')
+                        .eq('unitType', 'biasa')
+                        .limit(1)
+                        .single();
+
+                    if (availableUnit) {
+                        setFinalVehicleId(availableUnit.id);
+                        setIsPartnerUnit(false);
+                    } else {
+                        // Fallback to the partner unit ID if no regular unit is available
+                        setFinalVehicleId(vehicleData.id);
+                        setIsPartnerUnit(true);
+                    }
+                }
+            }
         };
         fetchVehicleAndDriver();
-    }, [vehicleId, driverId, supabase]);
+    }, [vehicleId, driverId, supabase, isPartnerUnitParam]);
 
     const handleUploadSuccess = async (proofUrl: string) => {
-        if (!supabase || !vehicleId || !vehicle || isSavingOrder) return;
+        if (!supabase || !finalVehicleId || !vehicle || isSavingOrder) return;
         setIsSavingOrder(true);
 
         try {
@@ -326,7 +356,7 @@ function KonfirmasiComponent() {
                 service: service?.replace('-', ' ') || null,
                 driver: driver ? driver.name : null,
                 driverId: driverId,
-                vehicleId: vehicleId,
+                vehicleId: finalVehicleId,
                 paymentProof: proofUrl,
                 status: 'pending',
                 paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
@@ -341,7 +371,7 @@ function KonfirmasiComponent() {
             }
 
             if (!isPartnerUnit) {
-                await updateVehicleStatus(vehicleId, 'dipesan');
+                await updateVehicleStatus(finalVehicleId, 'dipesan');
             }
 
             setUploadSuccess(true);
@@ -370,7 +400,7 @@ function KonfirmasiComponent() {
         )
     }
     
-    if (!vehicle) {
+    if (!vehicle || !finalVehicleId) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin"/>
