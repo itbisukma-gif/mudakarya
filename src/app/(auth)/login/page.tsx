@@ -54,29 +54,30 @@ export default function LoginPage() {
 
   return (
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
-      <div className="relative hidden bg-primary/90 lg:flex flex-col items-center justify-center text-center p-12">
+      <div className="relative hidden lg:flex flex-col items-center justify-center text-center p-12 bg-black">
         <Image
           src="/login_banner.jpg"
           alt="Banner Armada MudaKarya"
           fill
-          className="object-cover opacity-20"
+          className="object-cover opacity-40"
           data-ai-hint="car fleet background"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
         <div className="relative z-10">
           <div className="flex justify-center items-center gap-2.5 mb-4">
               <Logo className="w-10 h-10 text-primary-foreground" />
-              <span className="text-3xl font-bold tracking-tight text-primary-foreground">MudaKarya RentCar</span>
+              <span className="text-3xl font-bold tracking-tight text-white">MudaKarya RentCar</span>
           </div>
           <h1 className="text-4xl font-bold text-white mt-8">Selamat Datang Kembali!</h1>
-          <p className="mt-4 text-primary-foreground/80 max-w-sm mx-auto">
+          <p className="mt-4 text-white/80 max-w-sm mx-auto">
             Masuk untuk mengelola armada, pesanan, dan seluruh operasional rental mobil Anda.
           </p>
         </div>
-        <div className="absolute bottom-6 text-xs text-primary-foreground/50">
+        <div className="absolute bottom-6 text-xs text-white/50 z-10">
             &copy; {new Date().getFullYear()} MudaKarya RentCar. All rights reserved.
         </div>
       </div>
-      <div className="flex items-center justify-center py-12 px-4">
+      <div className="flex items-center justify-center py-12 px-4 bg-background">
         <div className="mx-auto grid w-[380px] gap-6">
            <div className="grid gap-2 text-center">
             <h1 className="text-3xl font-bold">Sign In</h1>
