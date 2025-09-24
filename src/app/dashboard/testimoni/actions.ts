@@ -4,14 +4,20 @@
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Testimonial, GalleryItem, FeatureItem } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Helper to safely create a client
+let supabase: SupabaseClient | null = null;
+
 function getSupabase() {
-    try {
-        return createServiceRoleClient();
-    } catch (e) {
-        return null;
+    if (!supabase) {
+        try {
+            supabase = createServiceRoleClient();
+        } catch (e) {
+            console.log('Supabase client could not be created, likely during build time.');
+            return null;
+        }
     }
+    return supabase;
 }
 
 // --- Testimonial Actions ---

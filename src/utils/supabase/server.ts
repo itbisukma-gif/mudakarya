@@ -1,8 +1,8 @@
+
 'use server';
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Buffer } from 'buffer';
 
 export const createClient = () => {
   const cookieStore = cookies();
@@ -11,8 +11,6 @@ export const createClient = () => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!supabaseUrl || !supabaseKey) {
-    // This can happen during build time, return a dummy or handle it gracefully.
-    // For now, throwing an error on server-side usage is fine if env vars are expected.
     throw new Error("Supabase URL and Anon Key are required for server-side client.");
   }
 
@@ -53,8 +51,6 @@ export const createServiceRoleClient = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    // During the build process, these variables might be undefined.
-    // Throw an error to indicate that the environment variables are missing.
     throw new Error("Supabase URL and Service Role Key are required for admin operations.");
   }
 

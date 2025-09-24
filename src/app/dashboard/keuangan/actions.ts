@@ -4,17 +4,20 @@
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { BankAccount } from '@/lib/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Helper to create client and handle build-time errors
+let supabase: SupabaseClient | null = null;
+
 function getSupabase() {
-    try {
-        return createServiceRoleClient();
-    } catch (e) {
-        if (process.env.NODE_ENV !== 'production') {
+    if (!supabase) {
+        try {
+            supabase = createServiceRoleClient();
+        } catch (e) {
             console.log('Supabase client could not be created, likely during build time.');
+            return null;
         }
-        return null;
     }
+    return supabase;
 }
 
 export async function getServiceCosts() {

@@ -2,14 +2,22 @@
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabase: SupabaseClient | null = null;
 
 function getSupabase() {
-    try {
-        return createServiceRoleClient();
-    } catch (e) {
-        return null;
+    if (!supabase) {
+        try {
+            supabase = createServiceRoleClient();
+        } catch (e) {
+            console.log('Supabase client could not be created, likely during build time.');
+            return null;
+        }
     }
+    return supabase;
 }
+
 
 /**
  * Creates a signed upload URL for the client to upload a file directly to Supabase Storage.

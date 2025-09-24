@@ -4,9 +4,24 @@
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Driver } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabase: SupabaseClient | null = null;
+
+function getSupabase() {
+    if (!supabase) {
+        try {
+            supabase = createServiceRoleClient();
+        } catch (e) {
+            console.log('Supabase client could not be created, likely during build time.');
+            return null;
+        }
+    }
+    return supabase;
+}
 
 export async function upsertDriver(driverData: Omit<Driver, 'created_at'>) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
     const { data, error } = await supabase
         .from('drivers')
@@ -25,7 +40,7 @@ export async function upsertDriver(driverData: Omit<Driver, 'created_at'>) {
 
 
 export async function deleteDriver(driverId: string) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { error: { message: "Supabase client not available." } };
     
     const { error } = await supabase
@@ -43,7 +58,7 @@ export async function deleteDriver(driverId: string) {
 }
 
 export async function updateDriverStatus(driverId: string, status: 'Tersedia' | 'Bertugas') {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { error: { message: "Supabase client not available." } };
 
     const { error } = await supabase

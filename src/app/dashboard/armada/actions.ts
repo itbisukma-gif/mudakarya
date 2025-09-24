@@ -4,9 +4,24 @@
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Vehicle } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabase: SupabaseClient | null = null;
+
+function getSupabase() {
+    if (!supabase) {
+        try {
+            supabase = createServiceRoleClient();
+        } catch (e) {
+            console.log('Supabase client could not be created, likely during build time.');
+            return null;
+        }
+    }
+    return supabase;
+}
 
 export async function upsertVehicle(vehicleData: Vehicle) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
 
     // The image URL should already be a public Supabase URL, no upload logic here.
@@ -26,7 +41,7 @@ export async function upsertVehicle(vehicleData: Vehicle) {
 }
 
 export async function deleteVehicle(vehicleId: string) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { error: { message: "Supabase client not available." } };
     
     const { data: itemData, error: fetchError } = await supabase.from('vehicles').select('photo').eq('id', vehicleId).single();
@@ -56,7 +71,7 @@ export async function deleteVehicle(vehicleId: string) {
 }
 
 export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' | 'dipesan' | 'disewa') {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
     if (!supabase) return { error: { message: "Supabase client not available." } };
 
     const { error } = await supabase
