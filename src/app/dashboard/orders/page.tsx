@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useTransition, useCallback } from 'react';
@@ -224,7 +225,7 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
             <CardFooter className="flex-col sm:flex-row gap-2 justify-between items-center">
                 <Dialog>
                     <DialogTrigger asChild>
-                         <Button variant="ghost" size="sm" className="w-full sm:w-auto justify-start text-muted-foreground hover:text-primary">
+                         <Button variant="outline" size="sm" className="w-full sm:w-auto justify-start">
                             <Eye className="h-4 w-4 mr-2" />
                             Bukti Bayar
                         </Button>
