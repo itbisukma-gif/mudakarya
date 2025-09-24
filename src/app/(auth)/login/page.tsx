@@ -54,25 +54,30 @@ export default function LoginPage() {
 
   return (
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
-      <div className="relative hidden bg-primary/90 lg:flex flex-col items-center justify-center text-center p-12">
+      <div className="relative hidden lg:flex flex-col items-center justify-between text-center p-12">
         <Image
           src="/login_banner.jpg"
           alt="Banner Armada MudaKarya"
           fill
-          className="object-cover opacity-20"
+          className="object-cover"
           data-ai-hint="car fleet background"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+        
+        <div className="relative z-10 w-full flex justify-start items-start">
+            <Link href="/" className="flex items-center gap-2.5">
+                <Logo className="w-8 h-8 text-white" />
+                <span className="text-xl font-bold tracking-tight text-white">MudaKarya RentCar</span>
+            </Link>
+        </div>
+
         <div className="relative z-10">
-          <div className="flex justify-center items-center gap-2.5 mb-4">
-              <Logo className="w-10 h-10 text-primary-foreground" />
-              <span className="text-3xl font-bold tracking-tight text-primary-foreground">MudaKarya RentCar</span>
-          </div>
           <h1 className="text-4xl font-bold text-white mt-8">Selamat Datang Kembali!</h1>
-          <p className="mt-4 text-primary-foreground/80 max-w-sm mx-auto">
+          <p className="mt-4 text-white/80 max-w-sm mx-auto">
             Masuk untuk mengelola armada, pesanan, dan seluruh operasional rental mobil Anda.
           </p>
         </div>
-        <div className="absolute bottom-6 text-xs text-primary-foreground/50">
+        <div className="relative z-10 text-xs text-white/50">
             &copy; {new Date().getFullYear()} MudaKarya RentCar. All rights reserved.
         </div>
       </div>
