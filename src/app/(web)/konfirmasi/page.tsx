@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { Suspense, useEffect, useState, ChangeEvent, useMemo } from "react";
@@ -368,9 +369,8 @@ function KonfirmasiComponent() {
                 throw new Error(insertError.message);
             }
 
-            if (!isPartnerUnit) {
-                await updateVehicleStatus(finalVehicleId, 'dipesan');
-            }
+            // This will now run for both regular and special units
+            await updateVehicleStatus(finalVehicleId, 'dipesan');
 
             setUploadSuccess(true);
         } catch (error) {
@@ -630,3 +630,5 @@ export default function KonfirmasiPage() {
         </Suspense>
     )
 }
+
+    
