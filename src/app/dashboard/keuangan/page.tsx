@@ -18,11 +18,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import type { ComboboxItem } from '@/components/ui/combobox';
-import { bankAccounts as initialBankAccounts } from '@/lib/data';
 import logos from '@/lib/logo-urls.json';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getServiceCosts, updateServiceCost } from './actions';
+import { getServiceCosts, updateServiceCost, addBankAccount, deleteBankAccount } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +31,9 @@ export default function KeuanganPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingPrices, startPriceSaveTransition] = useTransition();
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(initialBankAccounts);
+  const [isSavingAccount, startAccountSaveTransition] = useTransition();
+
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
@@ -49,33 +50,41 @@ export default function KeuanganPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
 
+  const fetchFinancialData = async () => {
+    if (!supabase) return;
+    setIsLoading(true);
+    const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (orderError) {
+        toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
+    } else {
+        setOrders(orderData || []);
+    }
+
+    const { data: costData, error: costError } = await getServiceCosts();
+    if(costError) {
+        toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
+    } else {
+        setServiceCosts(costData as any);
+    }
+    
+    const { data: bankData, error: bankError } = await supabase.from('bank_accounts').select('*');
+    if (bankError) {
+      toast({ variant: 'destructive', title: 'Gagal memuat rekening bank', description: bankError.message });
+    } else {
+      setBankAccounts(bankData || []);
+    }
+
+    setIsLoading(false);
+  }
+
   useEffect(() => {
     const supabaseClient = createClient();
     setSupabase(supabaseClient);
   }, []);
 
   useEffect(() => {
-    if (!supabase) return;
-    const fetchInitialData = async () => {
-        setIsLoading(true);
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (orderError) {
-            toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
-        } else {
-            setOrders(orderData || []);
-        }
-
-        const { data: costData, error: costError } = await getServiceCosts();
-        if(costError) {
-            toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
-        } else {
-            setServiceCosts(costData as any);
-        }
-
-        setIsLoading(false);
-    }
-    fetchInitialData();
-  }, [toast, supabase]);
+    fetchFinancialData();
+  }, [supabase]);
 
 
   const financialReport = orders.map((order, index) => ({
@@ -170,38 +179,45 @@ export default function KeuanganPage() {
   };
 
   const handleAddAccount = () => {
-    if (!selectedBank || !accountNumber || !accountName) {
-        toast({ variant: 'destructive', title: 'Formulir tidak lengkap' });
-        return;
-    }
-    
-    const bankDetails = bankList.find(b => b.value === selectedBank);
-    if (!bankDetails) return;
+    startAccountSaveTransition(async () => {
+      if (!selectedBank || !accountNumber || !accountName) {
+          toast({ variant: 'destructive', title: 'Formulir tidak lengkap' });
+          return;
+      }
+      
+      const bankDetails = bankList.find(b => b.value === selectedBank);
+      if (!bankDetails) return;
 
-    const newAccount: BankAccount = {
-        bankName: bankDetails.label,
-        accountNumber,
-        accountName,
-        logoUrl: logos[bankDetails.value as BankNameKey] || ''
-    };
+      const newAccount: Omit<BankAccount, 'id'> = {
+          bankName: bankDetails.label,
+          accountNumber,
+          accountName,
+          logoUrl: logos[bankDetails.value as BankNameKey] || ''
+      };
+      
+      const { error } = await addBankAccount(newAccount);
 
-    setBankAccounts(prev => [...prev, newAccount]);
-
-    toast({
-        title: "Rekening Ditambahkan",
-        description: "Rekening bank baru telah disimpan."
+      if (error) {
+        toast({ variant: 'destructive', title: 'Gagal Menambah Rekening', description: error.message });
+      } else {
+        toast({ title: "Rekening Ditambahkan" });
+        setSelectedBank("");
+        setAccountNumber("");
+        setAccountName("");
+        fetchFinancialData(); // Refresh data
+      }
     });
-    setSelectedBank("");
-    setAccountNumber("");
-    setAccountName("");
   };
   
-  const handleDeleteAccount = (account: BankAccount) => {
-      setBankAccounts(prev => prev.filter(acc => acc.accountNumber !== account.accountNumber));
-      toast({
-        variant: "destructive",
-        title: "Rekening Dihapus",
-        description: `Rekening ${account.bankName} (${account.accountNumber}) telah dihapus.`
+  const handleDeleteAccount = (id: number) => {
+    startAccountSaveTransition(async () => {
+      const { error } = await deleteBankAccount(id);
+       if (error) {
+        toast({ variant: "destructive", title: "Gagal Menghapus Rekening", description: error.message });
+      } else {
+        toast({ variant: "destructive", title: "Rekening Dihapus" });
+        fetchFinancialData(); // Refresh data
+      }
     });
   }
   
@@ -315,11 +331,14 @@ export default function KeuanganPage() {
                                         <Input placeholder="Nomor Rekening" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
                                         <Input placeholder="Atas Nama" value={accountName} onChange={(e) => setAccountName(e.target.value)} />
                                     </div>
-                                    <Button onClick={handleAddAccount}>Tambah Rekening</Button>
+                                    <Button onClick={handleAddAccount} disabled={isSavingAccount}>
+                                      {isSavingAccount && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                      Tambah Rekening
+                                    </Button>
                                     <div className="space-y-4 pt-6">
                                         <h4 className="font-medium text-lg">Daftar Rekening</h4>
                                         {bankAccounts.length > 0 ? bankAccounts.map(acc => (
-                                            <div key={acc.accountNumber} className="rounded-md border p-4 flex items-center justify-between">
+                                            <div key={acc.id} className="rounded-md border p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                 <div className="relative h-8 w-12">
                                                     <Image src={acc.logoUrl} alt={`${acc.bankName} logo`} fill className="object-contain" />
@@ -331,7 +350,7 @@ export default function KeuanganPage() {
                                                 </div>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                                        <Button variant="ghost" size="icon" disabled={isSavingAccount}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
@@ -342,7 +361,7 @@ export default function KeuanganPage() {
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
                                                             <AlertDialogCancel>Batal</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteAccount(acc)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
+                                                            <AlertDialogAction onClick={() => handleDeleteAccount(acc.id!)} disabled={isSavingAccount} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
                                                         </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
@@ -390,7 +409,7 @@ export default function KeuanganPage() {
                                             </div>
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => setQrisUploadOpen(false)}>Batal</Button>
-                                                <Button onClick={handleQrisSave} disabled={!previewUrl}>Upload & Simpan</Button>
+                                                <Button onClick={handleQrisSave} disabled={!previewUrl}>Upload &amp; Simpan</Button>
                                             </DialogFooter>
                                         </DialogContent>
                                      </Dialog>

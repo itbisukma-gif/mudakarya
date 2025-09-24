@@ -54,6 +54,7 @@ export type FeatureItem = {
 }
 
 export type BankAccount = {
+    id?: number;
     bankName: string;
     accountNumber: string;
     accountName: string;

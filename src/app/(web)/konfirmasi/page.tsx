@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, Loader2, ClipboardCopy, Paperclip, AlertCircle, ArrowLeft, FileCheck, Download } from "lucide-react";
-import { bankAccounts } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -224,6 +223,7 @@ function KonfirmasiComponent() {
     const [vehicle, setVehicle] = useState<Vehicle | null>(null);
     const [driver, setDriver] = useState<Driver | null>(null);
     const [uploadSuccess, setUploadSuccess] = useState(false);
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
     
     const paymentMethod = searchParams.get('paymentMethod');
     const total = searchParams.get('total');
@@ -248,7 +248,7 @@ function KonfirmasiComponent() {
 
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
-    }, [selectedBankId]);
+    }, [selectedBankId, bankAccounts]);
     
     const formattedRentalPeriod = useMemo(() => {
         if (startDateStr && endDateStr) {
@@ -277,10 +277,21 @@ function KonfirmasiComponent() {
     }, [orderId, startDateStr, endDateStr, searchParams]);
 
     useEffect(() => {
-        setSupabase(createClient());
+        const supabaseClient = createClient();
+        setSupabase(supabaseClient);
         const randomOrderId = `ORD-${Math.floor(Math.random() * 90000) + 10000}`;
         setOrderId(randomOrderId);
-    }, []);
+
+        const fetchBankAccounts = async () => {
+            const { data, error } = await supabaseClient.from('bank_accounts').select('*');
+            if (error) {
+                toast({ variant: 'destructive', title: 'Gagal memuat rekening bank' });
+            } else {
+                setBankAccounts(data || []);
+            }
+        };
+        fetchBankAccounts();
+    }, [toast]);
 
     useEffect(() => {
         if (!supabase) return;
