@@ -37,7 +37,6 @@ import { useToast } from '@/hooks/use-toast';
 import { upsertTestimonial } from '@/app/dashboard/testimoni/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic';
 
 function VehicleDetail() {
   const params = useParams();
@@ -398,5 +397,3 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
-
-    

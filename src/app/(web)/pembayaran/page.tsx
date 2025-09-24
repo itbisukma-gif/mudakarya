@@ -20,7 +20,6 @@ import { createClient } from '@/utils/supabase/client';
 import type { Vehicle } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic';
 
 function PembayaranComponent() {
     const { dictionary, language } = useLanguage();

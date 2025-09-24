@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import * as React from 'react'
@@ -76,7 +77,6 @@ import { createClient } from '@/utils/supabase/client';
 import { upsertDriver, deleteDriver, updateDriverStatus } from './actions'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-dynamic';
 
 // Function to generate mock data for comparison
 const generatePreviousWeekData = (baseData: typeof initialChartData) => {

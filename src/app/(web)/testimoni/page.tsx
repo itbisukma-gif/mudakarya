@@ -14,7 +14,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { StarRating } from "@/components/star-rating";
 import { FeaturesSection } from "@/components/features-section";
 
-export const dynamic = 'force-dynamic';
 
 function TestimonialsPageContent() {
     const { dictionary } = useLanguage();

@@ -24,7 +24,6 @@ import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
-export const dynamic = 'force-dynamic';
 
 // Form component for adding/editing a promotion
 function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: Promotion | null; vehicles: Vehicle[]; onSave: () => void; onCancel: () => void; }) {
