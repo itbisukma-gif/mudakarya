@@ -114,8 +114,8 @@ function VehicleDetail() {
         
         // Post-process to get unique recommendations by name
         if (otherVehiclesData) {
-            const uniqueRecs = otherVehiclesData.reduce((acc, current) => {
-                if (!acc.some(item => item.name === current.name)) {
+            const uniqueRecs = otherVehiclesData.reduce((acc: Vehicle[], current: Vehicle) => {
+                if (!acc.some((item: Vehicle) => item.name === current.name)) {
                     acc.push(current);
                 }
                 return acc;
