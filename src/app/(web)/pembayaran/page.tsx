@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import { useSearchParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { serviceCosts } from '@/lib/data';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +27,7 @@ function PembayaranComponent() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+    const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
     
     const vehicleId = searchParams.get('vehicleId');
     const daysStr = searchParams.get('days');
@@ -41,6 +41,7 @@ function PembayaranComponent() {
     const [paymentMethod, setPaymentMethod] = useState('bank');
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     
     const days = useMemo(() => {
         if (startDateStr && endDateStr) {
@@ -50,7 +51,7 @@ function PembayaranComponent() {
     }, [startDateStr, endDateStr, daysStr]);
     
     const { rentalPeriod, baseRentalCost, maticFee, driverFee, fuelFee, discountAmount, totalCost } = useMemo(() => {
-        if (!vehicle) {
+        if (!vehicle || !serviceCosts) {
             return { rentalPeriod: '', baseRentalCost: 0, maticFee: 0, driverFee: 0, fuelFee: 0, discountAmount: 0, totalCost: 0 };
         }
         
@@ -89,7 +90,7 @@ function PembayaranComponent() {
             discountAmount: discAmount,
             totalCost: total 
         };
-    }, [vehicle, days, service, startDateStr, endDateStr, dictionary, language]);
+    }, [vehicle, days, service, startDateStr, endDateStr, dictionary, language, serviceCosts]);
     
     const isFormValid = useMemo(() => {
         return fullName.trim() !== '' && phone.trim() !== '';
@@ -118,23 +119,37 @@ function PembayaranComponent() {
             return;
         };
         
-        const fetchVehicle = async () => {
-            const { data, error } = await supabase
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+            const { data: vehicleData, error: vehicleError } = await supabase
                 .from('vehicles')
                 .select('*')
                 .eq('id', vehicleId)
                 .single();
             
-            if (error || !data) {
-                console.error('Vehicle not found:', error);
+            if (vehicleError || !vehicleData) {
+                console.error('Vehicle not found:', vehicleError);
                 notFound();
+                return;
             } else {
-                setVehicle(data);
+                setVehicle(vehicleData);
             }
+
+            const { data: costsData, error: costsError } = await supabase.from('service_costs').select('*');
+            if (costsError) {
+                 toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costsError.message });
+            } else {
+                 const costs = costsData.reduce((acc, item) => {
+                    acc[item.name] = item.cost;
+                    return acc;
+                }, {} as { [key: string]: number });
+                setServiceCosts(costs as any);
+            }
+            setIsLoading(false);
         };
 
-        fetchVehicle();
-    }, [vehicleId, supabase]);
+        fetchInitialData();
+    }, [vehicleId, supabase, toast]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
@@ -150,7 +165,7 @@ function PembayaranComponent() {
         }
     }
     
-    if (!vehicle) {
+    if (isLoading || !vehicle) {
         return <div className="flex h-screen items-center justify-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{dictionary.loading}...</div>;
     }
 

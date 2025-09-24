@@ -4,12 +4,6 @@ import logos from './logo-urls.json';
 // This file contains dummy data for demonstration purposes.
 // In a real application, this data would be fetched from a database or API.
 
-export let serviceCosts = {
-    driver: 150000,
-    matic: 50000,
-    fuel: 200000,
-};
-
 export let bankAccounts: BankAccount[] = [
     { 
         bankName: 'BCA', 

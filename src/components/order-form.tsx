@@ -31,7 +31,6 @@ import {
 
 
 import type { Vehicle, Driver } from '@/lib/types';
-import { serviceCosts } from '@/lib/data';
 import { Minus, Plus, CalendarIcon, ChevronDown, Loader2 } from 'lucide-react';
 import { format, addDays, differenceInCalendarDays, isBefore, startOfDay } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -44,6 +43,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
     const { dictionary, language } = useLanguage();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+    const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
+
     const [activeTab, setActiveTab] = useState('direct');
     const [rentalDays, setRentalDays] = useState(1);
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -85,20 +86,29 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     useEffect(() => {
         if (!supabase) return;
         
-        const fetchDrivers = async () => {
-            const { data } = await supabase
+        const fetchInitialData = async () => {
+            const { data: driverData } = await supabase
                 .from('drivers')
                 .select('*')
                 .eq('status', 'Tersedia');
-            if (data) {
-                setAvailableDrivers(data);
+            if (driverData) {
+                setAvailableDrivers(driverData);
                 // Auto-select the first available driver if service requires one and there is no driver selected yet
-                if (showDriverSelection && data.length > 0) {
-                    setDriverId(data[0].id);
+                if (showDriverSelection && driverData.length > 0) {
+                    setDriverId(driverData[0].id);
                 }
             }
+
+            const { data: costsData } = await supabase.from('service_costs').select('*');
+            if (costsData) {
+                 const costs = costsData.reduce((acc, item) => {
+                    acc[item.name] = item.cost;
+                    return acc;
+                }, {} as { [key: string]: number });
+                setServiceCosts(costs as any);
+            }
         };
-        fetchDrivers();
+        fetchInitialData();
     }, [supabase]);
     
     // Auto-select driver when service changes
@@ -176,7 +186,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     }, [startDate, endDate, rentalDays, activeTab]);
 
     const { totalCost, discountAmount, baseRentalCost, maticFee, driverFee, fuelFee } = useMemo(() => {
-        if (!selectedVehicle || calculatedDuration <= 0) {
+        if (!selectedVehicle || calculatedDuration <= 0 || !serviceCosts) {
             return { totalCost: 0, discountAmount: 0, baseRentalCost: 0, maticFee: 0, driverFee: 0, fuelFee: 0 };
         }
         
@@ -202,7 +212,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             driverFee: dFee,
             fuelFee: fFee,
         };
-    }, [selectedVehicle, calculatedDuration, service]);
+    }, [selectedVehicle, calculatedDuration, service, serviceCosts]);
     
     const handleStartDateChange = (date: Date | undefined) => {
         if (!date) return;

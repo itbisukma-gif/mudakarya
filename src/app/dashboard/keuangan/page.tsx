@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, ChangeEvent, useEffect, useTransition } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,10 +18,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import type { ComboboxItem } from '@/components/ui/combobox';
-import { bankAccounts as initialBankAccounts, serviceCosts as initialServiceCosts } from '@/lib/data';
+import { bankAccounts as initialBankAccounts } from '@/lib/data';
 import logos from '@/lib/logo-urls.json';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceCosts, updateServiceCost } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +31,9 @@ type BankNameKey = keyof typeof logos;
 export default function KeuanganPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingPrices, startPriceSaveTransition] = useTransition();
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(initialBankAccounts);
-  const [serviceCosts, setServiceCosts] = useState(initialServiceCosts);
+  const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
 
@@ -54,17 +56,25 @@ export default function KeuanganPage() {
 
   useEffect(() => {
     if (!supabase) return;
-    const fetchOrders = async () => {
+    const fetchInitialData = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (error) {
-            toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: error.message });
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (orderError) {
+            toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
         } else {
-            setOrders(data || []);
+            setOrders(orderData || []);
         }
+
+        const { data: costData, error: costError } = await getServiceCosts();
+        if(costError) {
+            toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
+        } else {
+            setServiceCosts(costData as any);
+        }
+
         setIsLoading(false);
     }
-    fetchOrders();
+    fetchInitialData();
   }, [toast, supabase]);
 
 
@@ -134,17 +144,29 @@ export default function KeuanganPage() {
   };
 
   const handleSavePrices = () => {
-    // In a real app, this would be an API call to update the service costs.
-    // For this simulation, we're mutating the imported object directly.
-    initialServiceCosts.matic = serviceCosts.matic;
-    initialServiceCosts.driver = serviceCosts.driver;
-    initialServiceCosts.fuel = serviceCosts.fuel;
-    
-    toast({
-        title: "Harga Disimpan",
-        description: "Harga layanan telah berhasil diperbarui."
+    startPriceSaveTransition(async () => {
+        const results = await Promise.all([
+            updateServiceCost('driver', serviceCosts.driver),
+            updateServiceCost('matic', serviceCosts.matic),
+            updateServiceCost('fuel', serviceCosts.fuel)
+        ]);
+
+        const hasError = results.some(r => r.error);
+
+        if (hasError) {
+             toast({
+                variant: 'destructive',
+                title: "Gagal Menyimpan",
+                description: "Sebagian atau semua harga gagal diperbarui. Silakan coba lagi.",
+            });
+        } else {
+             toast({
+                title: "Harga Disimpan",
+                description: "Harga layanan telah berhasil diperbarui."
+            });
+            setIsPricesOpen(false);
+        }
     });
-    setIsPricesOpen(false);
   };
 
   const handleAddAccount = () => {
@@ -252,7 +274,10 @@ export default function KeuanganPage() {
                         <p className='text-xs text-muted-foreground text-center pt-2'>Harga BBM hanya akan ditambahkan untuk layanan "All Include".</p>
                     </div>
                     <DialogFooter>
-                        <Button type="submit" onClick={handleSavePrices}>Simpan Harga</Button>
+                        <Button type="submit" onClick={handleSavePrices} disabled={isSavingPrices}>
+                            {isSavingPrices && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Simpan Harga
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
