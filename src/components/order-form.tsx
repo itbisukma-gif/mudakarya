@@ -144,7 +144,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
         const subtotal = rental + mFee + dFee + fFee;
 
-        const discAmount = selectedVehicle.discountPercentage && selectedVehicle.price
+        const discAmount = selectedVehicle.discountPercentage
             ? (rental * selectedVehicle.discountPercentage) / 100 
             : 0;
         
