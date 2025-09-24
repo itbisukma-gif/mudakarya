@@ -9,15 +9,13 @@ export default function SharedInvoiceWebLayout({
 }) {
   return (
     <LanguageProvider>
-      <main id="printable-area">
+      <div className="flex flex-col min-h-screen">
         <WebHeader className="no-print" />
-        <div className="flex flex-col min-h-screen">
-            <main className="flex-1 flex items-center justify-center bg-muted/40 p-4">
-                {children}
-            </main>
-        </div>
+        <main className="flex-1 flex items-center justify-center bg-muted/40 p-4 printable-area">
+            {children}
+        </main>
         <WebFooter className="no-print" />
-      </main>
+      </div>
     </LanguageProvider>
   );
 }

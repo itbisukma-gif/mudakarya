@@ -16,19 +16,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import type { Html2PdfOptions } from 'html2pdf.js';
-
-const getStatusVariant = (status: string): "default" | "secondary" | "destructive" => {
-    switch (status) {
-        case 'Lunas':
-            return 'default';
-        case 'pending':
-            return 'secondary';
-        case 'tidak disetujui':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-}
+import { InvoiceTemplate } from '@/components/invoice-template';
 
 function InvoiceComponent() {
     const params = useParams();
@@ -98,6 +86,45 @@ function InvoiceComponent() {
         return days ? `${days} hari` : '-';
     }, [startDateStr, endDateStr, days]);
 
+    const handleDownload = async () => {
+        setIsDownloading(true);
+        const element = document.getElementById('invoice-pdf-container');
+        if (!element) {
+            toast({ variant: 'destructive', title: 'Terjadi Kesalahan', description: 'Elemen invoice tidak ditemukan.' });
+            setIsDownloading(false);
+            return;
+        }
+
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const opt: Html2PdfOptions = {
+              margin:       0.5,
+              filename:     `invoice-${order!.id}.pdf`,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, logging: false },
+              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            await html2pdf().set(opt).from(element).save();
+            toast({ title: 'Invoice Diunduh!', description: 'File PDF berhasil dibuat dan diunduh.' });
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Gagal Mengunduh', description: 'Terjadi kesalahan saat membuat file PDF.' });
+            console.error(err);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+    
+    const shareUrl = useMemo(() => {
+        if (!order) return '#';
+        let url = `/invoice/${order.id}/share`;
+        const params = new URLSearchParams();
+        if (startDateStr) params.append('startDate', startDateStr);
+        if (endDateStr) params.append('endDate', endDateStr);
+        if (days) params.append('days', days);
+        const queryString = params.toString();
+        return queryString ? `${url}?${queryString}` : url;
+    }, [order, startDateStr, endDateStr, days]);
+    
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -132,111 +159,13 @@ function InvoiceComponent() {
         )
     }
 
-    const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
-    
-    const displayStatus = order.status === 'disetujui' || order.status === 'selesai' ? 'Lunas' : order.status;
-
-
-    const handleDownload = async () => {
-        setIsDownloading(true);
-        const element = document.getElementById('invoice-card-for-pdf');
-        if (!element) {
-            toast({ variant: 'destructive', title: 'Terjadi Kesalahan', description: 'Elemen invoice tidak ditemukan.' });
-            setIsDownloading(false);
-            return;
-        }
-
-        try {
-            const html2pdf = (await import('html2pdf.js')).default;
-            const opt: Html2PdfOptions = {
-              margin:       0.5,
-              filename:     `invoice-${order.id}.pdf`,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2, useCORS: true },
-              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            await html2pdf().set(opt).from(element).save();
-            toast({ title: 'Invoice Diunduh!', description: 'File PDF berhasil dibuat dan diunduh.' });
-        } catch (err) {
-            toast({ variant: 'destructive', title: 'Gagal Mengunduh', description: 'Terjadi kesalahan saat membuat file PDF.' });
-            console.error(err);
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-    
-    const shareUrl = useMemo(() => {
-        let url = `/invoice/${order.id}/share`;
-        const params = new URLSearchParams();
-        if (startDateStr) params.append('startDate', startDateStr);
-        if (endDateStr) params.append('endDate', endDateStr);
-        if (days) params.append('days', days);
-        const queryString = params.toString();
-        return queryString ? `${url}?${queryString}` : url;
-    }, [order.id, startDateStr, endDateStr, days]);
-
-
     return (
-        <Card id="invoice-card-for-pdf" className="w-full max-w-md shadow-lg">
-            <CardHeader className="text-center">
-                <div className="flex justify-center items-center gap-2.5 mb-4">
-                    <Logo className="w-8 h-8 text-primary" />
-                    <span className="text-2xl font-bold tracking-tight">MudaKarya CarRent</span>
-                </div>
-                <CardTitle className="text-2xl">Rincian Pembayaran</CardTitle>
-                <CardDescription>Order ID: <span className='font-mono'>{order.id}</span></CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4 space-y-2.5 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Status Pembayaran</span>
-                        <Badge variant={getStatusVariant(displayStatus)} className="capitalize">{displayStatus}</Badge>
-                    </div>
-                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Pelanggan</span>
-                        <span className='font-medium'>{order.customerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Metode Pembayaran</span>
-                        <span className='font-medium'>{order.paymentMethod}</span>
-                    </div>
-                     <Separator />
-                     <h4 className='font-semibold pt-2'>Detail Sewa</h4>
-                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Kendaraan</span>
-                        <span className='font-medium'>{order.carName}</span>
-                    </div>
-                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Periode</span>
-                        <span className='font-medium'>{formattedRentalPeriod}</span>
-                    </div>
-                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Layanan</span>
-                        <span className='font-medium'>{order.service}</span>
-                    </div>
-                    <Separator />
-                    <h4 className='font-semibold pt-2'>Rincian Biaya</h4>
-                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Tagihan</span>
-                        <span className='font-medium'>{formatCurrency(order.total || 0)}</span>
-                    </div>
+        <div className="w-full max-w-md">
+            <div id="invoice-pdf-container">
+                 <InvoiceTemplate order={order} rentalPeriod={formattedRentalPeriod} isValidated={isAdmin} />
+            </div>
 
-                    <Separator className='my-2' />
-                     <div className="flex justify-between items-baseline pt-1">
-                        <span className="text-base font-bold">Total Lunas</span>
-                        <span className="text-xl font-bold text-primary">{formatCurrency(order.total || 0)}</span>
-                    </div>
-                </div>
-
-                {isAdmin && (
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground p-2 bg-blue-50 border border-blue-200 rounded-md">
-                        <UserCheck className="h-4 w-4 text-blue-600" />
-                        <span>Divalidasi oleh: <strong>Admin</strong></span>
-                    </div>
-                )}
-
-            </CardContent>
-            <CardFooter className='flex flex-col gap-4'>
+            <div className='flex flex-col gap-2 mt-4'>
                  <Button className="w-full" onClick={handleDownload} disabled={isDownloading}>
                     {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
                     {isDownloading ? 'Mengunduh...' : 'Download PDF'}
@@ -251,8 +180,8 @@ function InvoiceComponent() {
                     <ArrowLeft className="h-3 w-3 mr-1.5" />
                     Kembali ke Halaman Keuangan
                 </Button>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     );
 }
 
