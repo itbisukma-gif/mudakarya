@@ -238,19 +238,43 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !finalVehicleId;
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !finalVehicleId || !serviceCosts;
 
     const paymentUrl = useMemo(() => {
         if (isBookingDisabled || !finalVehicleId) return '#';
-        let url = `/pembayaran?vehicleId=${finalVehicleId}&days=${calculatedDuration}&service=${service}&isPartnerUnit=${isPartnerUnit}`;
+        
+        const params = new URLSearchParams({
+            vehicleId: finalVehicleId,
+            days: String(calculatedDuration),
+            service: service,
+            isPartnerUnit: String(isPartnerUnit),
+            baseCost: String(baseRentalCost),
+            totalCost: String(totalCost)
+        });
+
         if (activeTab === 'reservation' && startDate && endDate) {
-            url += `&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
+            params.append('startDate', startDate.toISOString());
+            params.append('endDate', endDate.toISOString());
         }
         if (driverId) {
-            url += `&driverId=${driverId}`;
+            params.append('driverId', driverId);
         }
-        return url;
-    }, [finalVehicleId, calculatedDuration, service, activeTab, startDate, endDate, driverId, isBookingDisabled, isPartnerUnit]);
+        if (maticFee > 0) {
+            params.append('maticFee', String(maticFee));
+        }
+        if (driverFee > 0) {
+            params.append('driverFee', String(driverFee));
+        }
+        if (fuelFee > 0) {
+            params.append('fuelFee', String(fuelFee));
+        }
+        if (discountAmount > 0) {
+            params.append('discount', String(discountAmount));
+        }
+
+        return `/pembayaran?${params.toString()}`;
+
+    }, [finalVehicleId, calculatedDuration, service, activeTab, startDate, endDate, driverId, isBookingDisabled, isPartnerUnit, baseRentalCost, totalCost, maticFee, driverFee, fuelFee, discountAmount]);
 
     const locale = language === 'id' ? id : undefined;
 

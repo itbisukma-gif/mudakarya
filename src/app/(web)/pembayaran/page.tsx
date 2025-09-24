@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Banknote, QrCode, ArrowLeft, Loader2 } from 'lucide-react';
-import { format, parseISO, differenceInCalendarDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useLanguage } from '@/hooks/use-language';
 import { useToast } from '@/hooks/use-toast';
@@ -28,15 +28,22 @@ function PembayaranComponent() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-    const [serviceCosts, setServiceCosts] = useState<{ driver: number, matic: number, fuel: number } | null>(null);
     
+    // Get all cost details from URL params
     const vehicleId = searchParams.get('vehicleId');
-    const daysStr = searchParams.get('days');
+    const days = parseInt(searchParams.get('days') || '1', 10);
     const service = searchParams.get('service');
     const startDateStr = searchParams.get('startDate');
     const endDateStr = searchParams.get('endDate');
     const driverId = searchParams.get('driverId');
     const isPartnerUnit = searchParams.get('isPartnerUnit') === 'true';
+
+    const baseRentalCost = parseFloat(searchParams.get('baseCost') || '0');
+    const totalCost = parseFloat(searchParams.get('totalCost') || '0');
+    const maticFee = parseFloat(searchParams.get('maticFee') || '0');
+    const driverFee = parseFloat(searchParams.get('driverFee') || '0');
+    const fuelFee = parseFloat(searchParams.get('fuelFee') || '0');
+    const discountAmount = parseFloat(searchParams.get('discount') || '0');
 
     const [vehicle, setVehicle] = useState<Vehicle | null>(null);
     const [paymentMethod, setPaymentMethod] = useState('bank');
@@ -44,54 +51,20 @@ function PembayaranComponent() {
     const [phone, setPhone] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     
-    const days = useMemo(() => {
-        if (startDateStr && endDateStr) {
-            return differenceInCalendarDays(new Date(endDateStr), new Date(startDateStr)) || 1;
-        }
-        return parseInt(daysStr || '1', 10);
-    }, [startDateStr, endDateStr, daysStr]);
-    
-    const { rentalPeriod, baseRentalCost, maticFee, driverFee, fuelFee, discountAmount, totalCost } = useMemo(() => {
-        if (!vehicle || !serviceCosts) {
-            return { rentalPeriod: '', baseRentalCost: 0, maticFee: 0, driverFee: 0, fuelFee: 0, discountAmount: 0, totalCost: 0 };
-        }
-        
-        let period = `${days} ${dictionary.payment.days}`;
+    const rentalPeriod = useMemo(() => {
         if (startDateStr && endDateStr) {
             try {
                 const start = parseISO(startDateStr);
                 const end = parseISO(endDateStr);
                 const locale = language === 'id' ? id : undefined;
-                period = `${format(start, 'd LLL yy', { locale })} - ${format(end, 'd LLL yy', { locale })}`;
+                return `${format(start, 'd LLL yy', { locale })} - ${format(end, 'd LLL yy', { locale })}`;
             } catch (error) {
                 console.error("Error parsing date strings:", error);
             }
         }
-        
-        const rentalCost = (vehicle.price || 0) * days;
-        const mFee = vehicle.transmission === 'Matic' ? serviceCosts.matic * days : 0;
-        const dFee = (service === 'dengan-supir' || service === 'all-include') ? serviceCosts.driver * days : 0;
-        
-        const fFee = (service === 'all-include') ? serviceCosts.fuel * days : 0;
-
-        const subtotal = rentalCost + mFee + dFee + fFee;
-        
-        const discAmount = vehicle.discountPercentage 
-            ? (rentalCost * vehicle.discountPercentage) / 100
-            : 0;
-
-        const total = subtotal - discAmount;
-
-        return { 
-            rentalPeriod: period,
-            baseRentalCost: rentalCost,
-            maticFee: mFee,
-            driverFee: dFee,
-            fuelFee: fFee,
-            discountAmount: discAmount,
-            totalCost: total 
-        };
-    }, [vehicle, days, service, startDateStr, endDateStr, dictionary, language, serviceCosts]);
+        return `${days} ${dictionary.payment.days}`;
+    }, [startDateStr, endDateStr, days, dictionary, language]);
+    
     
     const isFormValid = useMemo(() => {
         return fullName.trim() !== '' && phone.trim() !== '';
@@ -99,14 +72,25 @@ function PembayaranComponent() {
 
     const confirmationUrl = useMemo(() => {
         if (!isFormValid || !vehicle) return '#';
-        let url = `/konfirmasi?paymentMethod=${paymentMethod}&total=${totalCost}&vehicleId=${vehicle.id}&days=${days}&service=${service}&name=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&isPartnerUnit=${isPartnerUnit}`;
-        if (startDateStr) url += `&startDate=${startDateStr}`;
-        if (endDateStr) url += `&endDate=${endDateStr}`;
-        if (maticFee > 0) url += `&maticFee=${maticFee}`;
-        if (discountAmount > 0) url += `&discount=${discountAmount}`;
-        if (driverId) url += `&driverId=${driverId}`;
 
-        return url;
+        const params = new URLSearchParams({
+            paymentMethod: paymentMethod,
+            total: String(totalCost),
+            vehicleId: vehicle.id,
+            days: String(days),
+            service: service || '',
+            name: encodeURIComponent(fullName),
+            phone: encodeURIComponent(phone),
+            isPartnerUnit: String(isPartnerUnit),
+        });
+
+        if (startDateStr) params.append('startDate', startDateStr);
+        if (endDateStr) params.append('endDate', endDateStr);
+        if (maticFee > 0) params.append('maticFee', String(maticFee));
+        if (discountAmount > 0) params.append('discount', String(discountAmount));
+        if (driverId) params.append('driverId', driverId);
+
+        return `/konfirmasi?${params.toString()}`;
     }, [isFormValid, paymentMethod, totalCost, vehicle, days, service, startDateStr, endDateStr, maticFee, discountAmount, fullName, phone, driverId, isPartnerUnit]);
 
     useEffect(() => {
@@ -120,7 +104,7 @@ function PembayaranComponent() {
             return;
         };
         
-        const fetchInitialData = async () => {
+        const fetchVehicleData = async () => {
             setIsLoading(true);
             const { data: vehicleData, error: vehicleError } = await supabase
                 .from('vehicles')
@@ -131,26 +115,14 @@ function PembayaranComponent() {
             if (vehicleError || !vehicleData) {
                 console.error('Vehicle not found:', vehicleError);
                 notFound();
-                return;
             } else {
                 setVehicle(vehicleData);
-            }
-
-            const { data: costsData, error: costsError } = await supabase.from('service_costs').select('*');
-            if (costsError) {
-                 toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costsError.message });
-            } else if (costsData) {
-                 const costs = costsData.reduce((acc, item) => {
-                    acc[item.name] = item.cost;
-                    return acc;
-                }, {} as { [key: string]: number });
-                setServiceCosts(costs as any);
             }
             setIsLoading(false);
         };
 
-        fetchInitialData();
-    }, [vehicleId, supabase, toast]);
+        fetchVehicleData();
+    }, [vehicleId, supabase]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
@@ -166,7 +138,7 @@ function PembayaranComponent() {
         }
     }
     
-    if (isLoading || !vehicle || !serviceCosts) {
+    if (isLoading || !vehicle) {
         return <div className="flex h-screen items-center justify-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{dictionary.loading}...</div>;
     }
 
