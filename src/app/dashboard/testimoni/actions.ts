@@ -5,10 +5,20 @@ import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { Testimonial, GalleryItem, FeatureItem } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
+// Helper to safely create a client
+function getSupabase() {
+    try {
+        return createServiceRoleClient();
+    } catch (e) {
+        return null;
+    }
+}
+
 // --- Testimonial Actions ---
 
 export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'created_at'>) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { data: null, error: { message: "Server Actions not available at build time." } };
     const { data, error } = await supabase.from('testimonials').upsert(testimonialData, { onConflict: 'id' }).select().single();
     
     if (error) {
@@ -24,7 +34,8 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
 
 
 export async function deleteTestimonial(id: string) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { error: { message: "Server Actions not available at build time." } };
     const { error } = await supabase.from('testimonials').delete().eq('id', id);
     if (error) {
         return { error };
@@ -38,7 +49,8 @@ export async function deleteTestimonial(id: string) {
 // --- Gallery Actions ---
 
 export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'created_at'>) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { data: null, error: { message: "Server Actions not available at build time." } };
 
     // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('gallery').insert(galleryData).select().single();
@@ -53,7 +65,8 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
 }
 
 export async function deleteGalleryItem(id: string) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { error: { message: "Server Actions not available at build time." } };
     // First, get the path of the object to delete from storage
     const { data: itemData, error: fetchError } = await supabase.from('gallery').select('url').eq('id', id).single();
     
@@ -87,7 +100,8 @@ export async function deleteGalleryItem(id: string) {
 // --- Feature Actions ---
 
 export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { data: null, error: { message: "Server Actions not available at build time." } };
 
     // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('features').upsert(featureData, { onConflict: 'id' }).select().single();
@@ -101,7 +115,8 @@ export async function upsertFeature(featureData: Omit<FeatureItem, 'created_at'>
 }
 
 export async function deleteFeature(id: string) {
-    const supabase = createServiceRoleClient();
+    const supabase = getSupabase();
+    if (!supabase) return { error: { message: "Server Actions not available at build time." } };
 
     const { data: itemData, error: fetchError } = await supabase.from('features').select('imageUrl').eq('id', id).single();
     if (fetchError) {

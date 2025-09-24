@@ -54,11 +54,7 @@ export const createServiceRoleClient = () => {
 
   if (!supabaseUrl || !serviceRoleKey) {
     // During the build process, these variables might be undefined.
-    // We can return a mock or limited client, but for now, to fix the build,
-    // we'll throw an error only if it's not in a build-like environment,
-    // or just ensure this function isn't called during static generation.
-    // The safest bet is to check for existence and handle it in the calling action.
-    // For now, to prevent build crash, we'll throw. The calling actions should be guarded.
+    // Throw an error to indicate that the environment variables are missing.
     throw new Error("Supabase URL and Service Role Key are required for admin operations.");
   }
 

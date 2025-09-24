@@ -469,7 +469,6 @@ export default function ArmadaPage() {
     }, [supabase, debouncedSearchTerm, toast]);
 
     useEffect(() => {
-        // Initialize Supabase client on the client-side
         setSupabase(createClient());
     }, []);
 
