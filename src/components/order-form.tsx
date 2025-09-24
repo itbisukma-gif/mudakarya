@@ -107,7 +107,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             setIsLoading(false);
         };
         fetchInitialData();
-    }, [supabase]);
+    }, [supabase, showDriverSelection]);
     
     useEffect(() => {
         if (showDriverSelection && availableDrivers.length > 0) {
@@ -209,10 +209,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         if (driverId) {
             params.append('driverId', driverId);
         }
-        if (discountAmount > 0) {
-            params.append('discount', String(discountAmount));
-        }
-
+        
         return `/pembayaran?${params.toString()}`;
 
     }, [isBookingDisabled, selectedVehicle, calculatedDuration, service, activeTab, startDate, endDate, driverId, baseRentalCost, totalCost, maticFee, driverFee, fuelFee, discountAmount]);
@@ -405,3 +402,5 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     );
 });
 OrderForm.displayName = 'OrderForm';
+
+    

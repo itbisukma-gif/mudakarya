@@ -74,13 +74,12 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 return;
             }
 
-            // Handle stock and status changes for special units
+            // Handle stock and status changes
             if (vehicle?.unitType === 'khusus' && isBookingState(oldStatus) && !isBookingState(newStatus)) {
                 // If moving from a "booked" state to a "finished/cancelled" state, restore stock
                  await adjustVehicleStock(order.vehicleId, 1);
             }
             
-            // Handle status for regular units
             if (!order.isPartnerUnit) {
                  if (newStatus === 'disetujui') {
                     await updateVehicleStatus(order.vehicleId, 'disewa');
@@ -89,7 +88,6 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 }
             }
             
-            // Handle driver status
             if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
                 await updateDriverStatus(order.driverId, 'Tersedia');
             }
@@ -315,7 +313,7 @@ ${assignmentUrl}`;
                     {(order.status === 'pending' || order.status === 'dipesan') && (
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="default" size="sm" disabled={isPending || (requiresDriver && order.status === 'pending')}>
+                                <Button variant="default" size="sm" disabled={isPending || (requiresDriver && order.status === 'pending' && !order.driverId)}>
                                     {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                                     Verifikasi
                                 </Button>
@@ -330,8 +328,8 @@ ${assignmentUrl}`;
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
-                     {requiresDriver && order.status === 'pending' && (
-                        <p className="text-xs text-muted-foreground text-right">Menunggu konfirmasi driver</p>
+                     {requiresDriver && order.status === 'pending' && !order.driverId && (
+                        <p className="text-xs text-muted-foreground text-right">Pilih driver terlebih dahulu</p>
                     )}
                 </div>
             </CardFooter>
@@ -505,3 +503,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+    

@@ -94,7 +94,7 @@ function AssignmentComponent() {
             // 3. Update Vehicle Status/Stock
             if (vehicle.unitType === 'khusus') {
                 await adjustVehicleStock(vehicle.id, -1);
-            } else if (!order.isPartnerUnit) {
+            } else {
                 await updateVehicleStatus(order.vehicleId, 'dipesan');
             }
 
@@ -208,3 +208,5 @@ function AssignmentComponent() {
 export default function AssignmentPage() {
     return <AssignmentComponent />;
 }
+
+    
