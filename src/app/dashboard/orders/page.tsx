@@ -346,24 +346,28 @@ export default function OrdersPage() {
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-    const fetchOrderData = useCallback(async () => {
-        if (!supabase) return;
+    const fetchOrderData = useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-        const { data: driverData, error: driverError } = await supabase.from('drivers').select('*');
-        const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
+        const [orderRes, driverRes, vehicleRes] = await Promise.all([
+            supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('drivers').select('*'),
+            supabaseClient.from('vehicles').select('*')
+        ]);
 
+        const { data: orderData, error: orderError } = orderRes;
         if (orderError) toast({ variant: 'destructive', title: 'Gagal mengambil data pesanan', description: orderError.message });
         else setOrders(orderData || []);
         
+        const { data: driverData, error: driverError } = driverRes;
         if (driverError) toast({ variant: 'destructive', title: 'Gagal mengambil data driver', description: driverError.message });
         else setDrivers(driverData || []);
 
+        const { data: vehicleData, error: vehicleError } = vehicleRes;
         if (vehicleError) toast({ variant: 'destructive', title: 'Gagal mengambil data kendaraan', description: vehicleError.message });
         else setVehicles(vehicleData || []);
 
         setIsLoading(false);
-    }, [supabase, toast])
+    }, [toast])
     
     useEffect(() => {
         const supabaseClient = createClient();
@@ -372,7 +376,7 @@ export default function OrdersPage() {
 
     useEffect(() => {
         if (supabase) {
-            fetchOrderData();
+            fetchOrderData(supabase);
         }
     }, [supabase, fetchOrderData]);
 
@@ -448,7 +452,7 @@ export default function OrdersPage() {
                     order={order}
                     drivers={drivers}
                     vehicle={vehicles.find(v => v.id === order.vehicleId)}
-                    onDataChange={fetchOrderData}
+                    onDataChange={() => supabase && fetchOrderData(supabase)}
                    />
                 ))}
             </div>
@@ -468,7 +472,7 @@ export default function OrdersPage() {
                     order={order}
                     drivers={drivers}
                     vehicle={vehicles.find(v => v.id === order.vehicleId)}
-                    onDataChange={fetchOrderData}
+                    onDataChange={() => supabase && fetchOrderData(supabase)}
                    />
                 ))}
             </div>
@@ -488,7 +492,7 @@ export default function OrdersPage() {
                     order={order}
                     drivers={drivers}
                     vehicle={vehicles.find(v => v.id === order.vehicleId)}
-                    onDataChange={fetchOrderData}
+                    onDataChange={() => supabase && fetchOrderData(supabase)}
                    />
                 ))}
             </div>

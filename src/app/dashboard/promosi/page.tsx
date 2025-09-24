@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, ChangeEvent, useRef, useEffect, useTransition, useCallback } from 'react';
@@ -290,11 +291,15 @@ export default function PromosiPage() {
     const [isDeleting, startDeleteTransition] = useTransition();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
-    const fetchData = async () => {
-        if (!supabase) return;
+    const fetchData = useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
-        const { data: promoData, error: promoError } = await supabase.from('promotions').select('*');
-        const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
+        const [promoRes, vehicleRes] = await Promise.all([
+            supabaseClient.from('promotions').select('*'),
+            supabaseClient.from('vehicles').select('*')
+        ]);
+
+        const { data: promoData, error: promoError } = promoRes;
+        const { data: vehicleData, error: vehicleError } = vehicleRes;
 
         if (promoError) toast({ variant: 'destructive', title: 'Gagal memuat promosi', description: promoError.message });
         else setPromotions(promoData || []);
@@ -303,7 +308,7 @@ export default function PromosiPage() {
         else setVehicles(vehicleData || []);
         
         setIsLoading(false);
-    }
+    }, [toast]);
 
     useEffect(() => {
         const supabaseClient = createClient();
@@ -312,9 +317,9 @@ export default function PromosiPage() {
 
     useEffect(() => {
         if (supabase) {
-            fetchData();
+            fetchData(supabase);
         }
-    }, [supabase]);
+    }, [supabase, fetchData]);
 
     const handleAddClick = () => {
         setSelectedPromo(null);
@@ -344,14 +349,14 @@ export default function PromosiPage() {
             }
 
             toast({ title: "Promosi Dihapus" });
-            fetchData();
+            if (supabase) fetchData(supabase);
         });
     };
     
     const handleFormSave = () => {
         setFormOpen(false);
         setSelectedPromo(null);
-        fetchData();
+        if (supabase) fetchData(supabase);
     };
 
     const dialogTitle = selectedPromo ? "Edit Promosi" : "Tambahkan Promosi Baru";
@@ -488,3 +493,5 @@ export default function PromosiPage() {
         </div>
     );
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import * as React from 'react'
@@ -185,46 +186,42 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [isProcessing, startTransition] = useTransition();
 
-   const fetchData = React.useCallback(async () => {
-        if (!supabase) return;
+    useEffect(() => {
+        const supabaseClient = createClient();
+        setSupabase(supabaseClient);
+        setDate({
+            from: new Date(),
+            to: addDays(new Date(), 6),
+        });
+    }, []);
+  
+    const fetchData = React.useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
-        const { data: driverData, error: driverError } = await supabase.from('drivers').select('*').order('created_at', { ascending: false });
-        const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('*');
+        const [driverRes, vehicleRes, orderRes] = await Promise.all([
+            supabaseClient.from('drivers').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('vehicles').select('*'),
+            supabaseClient.from('orders').select('*')
+        ]);
 
-        if (driverError) {
-             toast({ variant: "destructive", title: "Gagal memuat driver", description: driverError.message });
-        } else {
-             setDrivers(driverData || []);
-        }
+        const { data: driverData, error: driverError } = driverRes;
+        const { data: vehicleData, error: vehicleError } = vehicleRes;
+        const { data: orderData, error: orderError } = orderRes;
 
-        if (vehicleError) {
-             toast({ variant: "destructive", title: "Gagal memuat armada", description: vehicleError.message });
-        } else {
-            setFleet(vehicleData || []);
-        }
+        if (driverError) toast({ variant: "destructive", title: "Gagal memuat driver", description: driverError.message });
+        else setDrivers(driverData || []);
+
+        if (vehicleError) toast({ variant: "destructive", title: "Gagal memuat armada", description: vehicleError.message });
+        else setFleet(vehicleData || []);
         
-        if (orderError) {
-             toast({ variant: "destructive", title: "Gagal memuat order", description: orderError.message });
-        } else {
-            setOrders(orderData || []);
-        }
+        if (orderError) toast({ variant: "destructive", title: "Gagal memuat order", description: orderError.message });
+        else setOrders(orderData || []);
         
         setIsLoading(false);
-    }, [supabase, toast]);
-
-    useEffect(() => {
-      const supabaseClient = createClient();
-      setSupabase(supabaseClient);
-      setDate({
-        from: new Date(),
-        to: addDays(new Date(), 6),
-      });
-    }, []);
+    }, [toast]);
   
     useEffect(() => {
         if(supabase) {
-            fetchData();
+            fetchData(supabase);
         }
     }, [supabase, fetchData]);
   
@@ -260,7 +257,7 @@ export default function DashboardPage() {
             toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
         } else {
             toast({ title: "Driver Dihapus", description: `Data driver telah berhasil dihapus.` });
-            fetchData();
+            if (supabase) fetchData(supabase);
         }
     });
   }
@@ -272,13 +269,13 @@ export default function DashboardPage() {
             toast({ variant: "destructive", title: "Gagal Memperbarui Status", description: result.error.message });
         } else {
             toast({ title: "Status Diperbarui", description: `Status driver telah berhasil diperbarui.` });
-            fetchData();
+            if (supabase) fetchData(supabase);
         }
     });
   };
   
   const handleFormSave = () => {
-    fetchData();
+    if (supabase) fetchData(supabase);
     setAddDialogOpen(false);
     setEditDialogOpen(false);
     setSelectedDriver(null);
@@ -584,3 +581,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+    

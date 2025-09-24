@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -72,10 +73,12 @@ function HomePageContent() {
         if (!supabase) return;
         const fetchData = async () => {
             setIsLoading(true);
-            const { data: fleetData } = await supabase.from('vehicles').select('*');
-            const { data: promotionsData } = await supabase.from('promotions').select('*');
-            setFleet(fleetData || []);
-            setPromotions(promotionsData || []);
+            const [fleetRes, promotionsRes] = await Promise.all([
+                supabase.from('vehicles').select('*'),
+                supabase.from('promotions').select('*')
+            ]);
+            setFleet(fleetRes.data || []);
+            setPromotions(promotionsRes.data || []);
             setIsLoading(false);
         }
         fetchData();
@@ -353,3 +356,5 @@ export default function HomePage() {
       <HomePageContent />
   )
 }
+
+    

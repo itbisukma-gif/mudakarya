@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, ChangeEvent, useEffect, useTransition } from 'react';
@@ -54,27 +55,26 @@ export default function KeuanganPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
 
-  const fetchFinancialData = async () => {
-    if (!supabase) return;
+  const fetchFinancialData = async (supabaseClient: SupabaseClient) => {
     setIsLoading(true);
-    const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-    if (orderError) {
-        toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
-    } else {
-        setOrders(orderData || []);
-    }
-    
-    const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
-    if (vehicleError) {
-      toast({ variant: 'destructive', title: 'Gagal memuat data kendaraan' });
-    } else {
-      setVehicles(vehicleData || []);
-    }
+    const [orderRes, vehicleRes, costRes, bankRes] = await Promise.all([
+      supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
+      supabaseClient.from('vehicles').select('*'),
+      getServiceCosts(),
+      supabaseClient.from('bank_accounts').select('*')
+    ]);
 
-    const { data: costData, error: costError } = await getServiceCosts();
-    if(costError) {
-        toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
-    } else if (costData) {
+    const { data: orderData, error: orderError } = orderRes;
+    if (orderError) toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
+    else setOrders(orderData || []);
+    
+    const { data: vehicleData, error: vehicleError } = vehicleRes;
+    if (vehicleError) toast({ variant: 'destructive', title: 'Gagal memuat data kendaraan' });
+    else setVehicles(vehicleData || []);
+
+    const { data: costData, error: costError } = costRes;
+    if(costError) toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
+    else if (costData) {
         setServiceCosts(costData as any);
         setEditableCosts({
             driver: String(costData.driver || 0),
@@ -83,12 +83,9 @@ export default function KeuanganPage() {
         });
     }
     
-    const { data: bankData, error: bankError } = await supabase.from('bank_accounts').select('*');
-    if (bankError) {
-      toast({ variant: 'destructive', title: 'Gagal memuat rekening bank', description: bankError.message });
-    } else {
-      setBankAccounts(bankData || []);
-    }
+    const { data: bankData, error: bankError } = bankRes;
+    if (bankError) toast({ variant: 'destructive', title: 'Gagal memuat rekening bank', description: bankError.message });
+    else setBankAccounts(bankData || []);
 
     setIsLoading(false);
   }
@@ -99,7 +96,9 @@ export default function KeuanganPage() {
   }, []);
 
   useEffect(() => {
-    fetchFinancialData();
+    if (supabase) {
+        fetchFinancialData(supabase);
+    }
   }, [supabase]);
 
 
@@ -236,7 +235,7 @@ export default function KeuanganPage() {
         setSelectedBank("");
         setAccountNumber("");
         setAccountName("");
-        fetchFinancialData(); // Refresh data
+        if (supabase) fetchFinancialData(supabase); // Refresh data
       }
     });
   };
@@ -248,7 +247,7 @@ export default function KeuanganPage() {
         toast({ variant: "destructive", title: "Gagal Menghapus Rekening", description: error.message });
       } else {
         toast({ variant: "destructive", title: "Rekening Dihapus" });
-        fetchFinancialData(); // Refresh data
+        if (supabase) fetchFinancialData(supabase); // Refresh data
       }
     });
   }
@@ -546,3 +545,5 @@ export default function KeuanganPage() {
     </div>
   );
 }
+
+    
