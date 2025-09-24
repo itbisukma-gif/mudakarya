@@ -219,7 +219,7 @@ const id = {
     },
     contact: {
         title: "Hubungi & Kunjungi Kami",
-        description: "Kami siap membantu Anda 24/7. Kantor kami buka setiap hari, pukul 08:00 - 22:00 WITA.",
+        description: "Kami siap membantu Anda 24/7.",
         mapTitle: "Peta Lokasi MudaKarya CarRent",
         getDirections: "Arah",
         contactWhatsApp: "WhatsApp",
@@ -492,7 +492,7 @@ const en: typeof id = {
     },
     contact: {
         title: "Contact & Visit Us",
-        description: "We are ready to help you 24/7. Our office is open daily, from 08:00 - 22:00 WITA.",
+        description: "We are ready to help you 24/7.",
         mapTitle: "MudaKarya CarRent Location Map",
         getDirections: "Directions",
         contactWhatsApp: "WhatsApp",

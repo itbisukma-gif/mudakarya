@@ -91,6 +91,7 @@ export type ContactInfo = {
     whatsapp: string;
     maps: string;
     mapsDirectionUrl: string | null;
+    openingHoursDescription?: string | null;
     instagram?: string | null;
     facebook?: string | null;
     twitter?: string | null;

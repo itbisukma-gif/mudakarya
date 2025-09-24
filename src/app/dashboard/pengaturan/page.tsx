@@ -168,6 +168,15 @@ export default function PengaturanPage() {
                         <Label htmlFor="address">Alamat Kantor</Label>
                         <Input id="address" value={contactInfo.address} onChange={(e) => handleContactChange('address', e.target.value)} />
                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="openingHoursDescription">Deskripsi Jam Buka</Label>
+                        <Textarea 
+                            id="openingHoursDescription" 
+                            value={contactInfo.openingHoursDescription || ''} 
+                            onChange={(e) => handleContactChange('openingHoursDescription', e.target.value)} 
+                            placeholder="Contoh: Kami siap membantu Anda 24/7. Kantor kami buka setiap hari, pukul 08:00 - 22:00 WITA."
+                        />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
