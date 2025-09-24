@@ -1,27 +1,11 @@
-
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { BankAccount } from '@/lib/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-let supabase: SupabaseClient | null = null;
-
-function getSupabase() {
-    if (!supabase) {
-        try {
-            supabase = createServiceRoleClient();
-        } catch (e) {
-            console.log('Supabase client could not be created, likely during build time.');
-            return null;
-        }
-    }
-    return supabase;
-}
 
 export async function getServiceCosts() {
-    const supabase = getSupabase();
+    const supabase = createServiceRoleClient();
     if (!supabase) {
         // Return a default, safe object during build time
         return { data: { driver: 0, matic: 0, fuel: 0 }, error: null };
@@ -52,7 +36,7 @@ export async function getServiceCosts() {
 
 
 export async function updateServiceCost(name: 'driver' | 'matic' | 'fuel', cost: number) {
-    const supabase = getSupabase();
+    const supabase = createServiceRoleClient();
     if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
     const { data, error } = await supabase
         .from('service_costs')
@@ -71,7 +55,7 @@ export async function updateServiceCost(name: 'driver' | 'matic' | 'fuel', cost:
 }
 
 export async function addBankAccount(account: Omit<BankAccount, 'id'>) {
-    const supabase = getSupabase();
+    const supabase = createServiceRoleClient();
     if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
     const { data, error } = await supabase.from('bank_accounts').insert(account).select().single();
 
@@ -84,7 +68,7 @@ export async function addBankAccount(account: Omit<BankAccount, 'id'>) {
 }
 
 export async function deleteBankAccount(id: number) {
-    const supabase = getSupabase();
+    const supabase = createServiceRoleClient();
     if (!supabase) return { error: { message: "Supabase client not available." } };
     const { error } = await supabase.from('bank_accounts').delete().eq('id', id);
 

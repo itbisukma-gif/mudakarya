@@ -1,22 +1,7 @@
-
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-
-let supabase: SupabaseClient | null = null;
-
-function getSupabase() {
-    if (!supabase) {
-        try {
-            supabase = createServiceRoleClient();
-        } catch (e) {
-            console.log('Supabase client could not be created, likely during build time.');
-            return null;
-        }
-    }
-    return supabase;
-}
 
 
 /**
@@ -26,7 +11,7 @@ function getSupabase() {
  * @returns An object containing the signed URL, the token, and the path.
  */
 export async function createSignedUploadUrl(filePath: string) {
-    const supabase = getSupabase();
+    const supabase = createServiceRoleClient();
     if (!supabase) {
       return { error: { message: "Server is not ready for uploads." }, signedUrl: null, token: null };
     }

@@ -1,4 +1,3 @@
-
 'use server';
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
@@ -11,7 +10,9 @@ export const createClient = () => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase URL and Anon Key are required for server-side client.");
+    // This check is important, especially for the build process
+    // where env vars might not be available.
+    return null;
   }
 
   // Create a server-side client with the user's cookies
@@ -51,7 +52,9 @@ export const createServiceRoleClient = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Supabase URL and Service Role Key are required for admin operations.");
+     // During build time, these variables might be undefined.
+     // Returning null prevents the app from crashing.
+    return null;
   }
 
   // Create a server-side client with the service_role key to bypass RLS
