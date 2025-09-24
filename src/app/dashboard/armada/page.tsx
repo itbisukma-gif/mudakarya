@@ -237,7 +237,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     
     const onSubmit: SubmitHandler<Vehicle> = (data) => {
         startTransition(async () => {
-            let photoUrl = vehicle?.photo || null;
+            let photoUrl = data.photo || vehicle?.photo || null;
 
             // 1. Handle file upload if a new file is selected
             if (selectedFile) {
