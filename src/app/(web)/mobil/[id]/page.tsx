@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { notFound, useParams, useRouter } from 'next/navigation';
@@ -36,6 +37,8 @@ import { useToast } from '@/hooks/use-toast';
 import { upsertTestimonial } from '@/app/dashboard/testimoni/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { incrementViewCount } from '@/app/actions/vehicle-stats';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +55,7 @@ function VehicleDetail() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [userName, setUserName] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [userComment, setUserComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -138,14 +142,14 @@ function VehicleDetail() {
   }, [params.id, supabase]);
 
   const handleSubmitReview = async () => {
-      if (userRating === 0 || !userComment.trim() || !vehicle) {
-          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon berikan rating dan komentar.' });
+      if (!userName.trim() || userRating === 0 || !userComment.trim() || !vehicle) {
+          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon isi nama, berikan rating, dan komentar.' });
           return;
       }
       setIsSubmittingReview(true);
       const newTestimonial: Omit<Testimonial, 'created_at'> = {
           id: crypto.randomUUID(),
-          customerName: "Pelanggan Anonim", // or get from logged in user
+          customerName: userName,
           vehicleName: `${vehicle.brand} ${vehicle.name}`,
           rating: userRating,
           comment: userComment,
@@ -158,6 +162,7 @@ function VehicleDetail() {
           if (result.data) {
              setTestimonials(prev => [result.data!, ...prev]);
           }
+          setUserName("");
           setUserRating(0);
           setUserComment("");
       }
@@ -313,12 +318,19 @@ function VehicleDetail() {
                             <CardDescription className="text-sm">{dictionary.vehicleDetail.reviews.formDescription}</CardDescription>
                         </CardHeader>
                             <CardContent className="space-y-4 p-4 pt-0">
-                            <Textarea placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={4} value={userComment} onChange={e => setUserComment(e.target.value)} />
+                            <div className="space-y-2">
+                                <Label htmlFor="customerName">Nama Anda</Label>
+                                <Input id="customerName" placeholder="Tulis nama Anda" value={userName} onChange={e => setUserName(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="comment">Komentar</Label>
+                                <Textarea id="comment" placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={3} value={userComment} onChange={e => setUserComment(e.target.value)} />
+                            </div>
                             <div className="flex justify-between items-center bg-muted/50 p-2 rounded-md">
                                 <p className="font-medium text-sm">{dictionary.vehicleDetail.reviews.yourRating}</p>
                                     <StarRating rating={userRating} onRatingChange={setUserRating} />
                             </div>
-                            <Button onClick={handleSubmitReview} disabled={isSubmittingReview} className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
+                            <Button onClick={handleSubmitReview} disabled={isSubmittingReview || !userName || !userComment || userRating === 0} className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
                                 {isSubmittingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {dictionary.vehicleDetail.reviews.submitReview}
                             </Button>
@@ -388,5 +400,7 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
+
+    
 
     
