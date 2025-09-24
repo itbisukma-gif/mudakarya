@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -72,7 +73,7 @@ function AssignmentComponent() {
     }, [params.orderId, supabase]);
 
     const handleAccept = () => {
-        if (!order || !driver) return;
+        if (!order || !driver || !vehicle) return;
         startTransition(async () => {
             // 1. Update Order Status to 'dipesan'
             const { error: orderError } = await updateOrderStatus(order.id, 'dipesan');
@@ -88,13 +89,11 @@ function AssignmentComponent() {
                 return;
             }
             
-            // 3. Update Vehicle Status to 'dipesan' (if not partner unit)
-            if (!order.isPartnerUnit) {
-                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'dipesan');
-                 if (vehicleError) {
-                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
-                    return;
-                 }
+            // 3. Update Vehicle Status/Stock
+            if (vehicle.unitType === 'khusus') {
+                await adjustVehicleStock(vehicle.id, -1);
+            } else if (!order.isPartnerUnit) {
+                await updateVehicleStatus(order.vehicleId, 'dipesan');
             }
 
             setActionTaken('accepted');

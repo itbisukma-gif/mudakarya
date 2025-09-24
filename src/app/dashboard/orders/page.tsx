@@ -66,33 +66,28 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
     const handleStatusChange = (newStatus: OrderStatus) => {
         startTransition(async () => {
             const oldStatus = order.status;
+            const isBookingState = (s: OrderStatus | null) => s === 'dipesan' || s === 'disetujui';
+            
             const { error: orderError } = await updateOrderStatus(order.id, newStatus);
             if (orderError) {
                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: (orderError as Error).message });
                 return;
             }
 
-            // Handle stock for special units
-            if (vehicle?.unitType === 'khusus') {
-                // If moving to a "booked" state from a "not booked" state
-                if ((newStatus === 'dipesan' || newStatus === 'disetujui') && (oldStatus === 'pending')) {
-                    await adjustVehicleStock(order.vehicleId, -1);
-                } 
-                // If moving from a "booked" state to a "finished" state
-                else if ((newStatus === 'selesai' || newStatus === 'tidak disetujui') && (oldStatus === 'dipesan' || oldStatus === 'disetujui')) {
-                     await adjustVehicleStock(order.vehicleId, 1);
-                }
-            } 
-            // Handle status for regular units
-            else if (!order.isPartnerUnit) {
+            // Handle stock and status changes
+            if (vehicle?.unitType === 'khusus' && isBookingState(oldStatus) && !isBookingState(newStatus)) {
+                // If moving from a "booked" state to a "finished/cancelled" state, restore stock
+                 await adjustVehicleStock(order.vehicleId, 1);
+            }
+            
+            if (!order.isPartnerUnit) {
                  if (newStatus === 'disetujui') {
                     await updateVehicleStatus(order.vehicleId, 'disewa');
                 } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && oldStatus === 'disetujui') {
                     await updateVehicleStatus(order.vehicleId, 'tersedia');
                 }
             }
-
-            // Handle driver status update if order is finished/cancelled
+            
             if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
                 await updateDriverStatus(order.driverId, 'Tersedia');
             }
@@ -142,7 +137,7 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
         const domain = window.location.origin;
         const assignmentUrl = `${domain}/penugasan/${order.id}`;
         
-        const message = `Halo ${selectedDriver.name}, Anda mendapatkan penugasan baru dari MudaKarya CarRent.
+        const message = `Halo ${selectedDriver.name}, Anda mendapatkan penugasan baru dari MudaKarya RentCar.
 Customer: ${order.customerName}
 Mobil: ${vehicle.brand} ${vehicle.name}
 Layanan: ${order.service}
