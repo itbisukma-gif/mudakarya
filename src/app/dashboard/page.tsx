@@ -1,5 +1,3 @@
-
-
 'use client'
 
 import * as React from 'react'
@@ -76,8 +74,6 @@ import {
 import { createClient } from '@/utils/supabase/client';
 import { upsertDriver, deleteDriver, updateDriverStatus } from './actions'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-export const dynamic = 'force-dynamic';
 
 // Function to generate mock data for comparison
 const generatePreviousWeekData = (baseData: typeof initialChartData) => {
@@ -215,8 +211,8 @@ export default function DashboardPage() {
     }, [supabase, toast]);
 
     useEffect(() => {
-      const supabaseClient = createClient();
-      setSupabase(supabaseClient);
+      // Initialize Supabase client on the client-side
+      setSupabase(createClient());
       setDate({
         from: new Date(),
         to: addDays(new Date(), 6),
@@ -264,7 +260,7 @@ export default function DashboardPage() {
             fetchData();
         }
     });
-  }
+  };
 
   const handleStatusChange = (driverId: string, newStatus: 'Tersedia' | 'Bertugas') => {
     startTransition(async () => {

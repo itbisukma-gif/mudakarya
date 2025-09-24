@@ -23,8 +23,6 @@ import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceCosts, updateServiceCost, addBankAccount, deleteBankAccount } from './actions';
 
-export const dynamic = 'force-dynamic';
-
 type BankNameKey = keyof typeof logos;
 
 export default function KeuanganPage() {
@@ -93,12 +91,14 @@ export default function KeuanganPage() {
   }
 
   useEffect(() => {
-    const supabaseClient = createClient();
-    setSupabase(supabaseClient);
+    // Initialize Supabase client on the client-side
+    setSupabase(createClient());
   }, []);
 
   useEffect(() => {
-    fetchFinancialData();
+    if (supabase) {
+        fetchFinancialData();
+    }
   }, [supabase]);
 
 

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useTransition, useEffect, useCallback, ChangeEvent } from "react";
@@ -24,8 +22,6 @@ import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useDebounce } from "@/hooks/use-debounce";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
-
-export const dynamic = 'force-dynamic';
 
 function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: (vehicle: Vehicle) => void, onDelete: (vehicleId: string) => void }) {
     const { logoUrl } = useVehicleLogo(vehicle.brand);
@@ -167,7 +163,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
 
 function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; onSave: () => void; onCancel: () => void; }) {
     const { toast } = useToast();
-    const supabase = createClient();
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
     const [isPending, startTransition] = useTransition();
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Vehicle>({
         defaultValues: vehicle || { id: crypto.randomUUID(), code: '', unitType: 'biasa', stock: 0, status: 'tersedia' }
@@ -184,6 +180,10 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     const { logoUrl } = useVehicleLogo(brand);
 
     useEffect(() => {
+        setSupabase(createClient());
+    }, []);
+
+    useEffect(() => {
         if (vehicle?.photo) {
             setPreviewUrl(vehicle.photo);
             setValue('photo', vehicle.photo);
@@ -191,10 +191,9 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     }, [vehicle, setValue]);
 
     useEffect(() => {
-        if (!debouncedName || vehicle) return;
+        if (!debouncedName || vehicle || !supabase) return;
         
         const fetchExistingVariant = async () => {
-            const supabase = createClient();
             const { data } = await supabase
                 .from('vehicles')
                 .select('brand, type, photo')
@@ -219,7 +218,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
 
         fetchExistingVariant();
 
-    }, [debouncedName, setValue, vehicle, toast]);
+    }, [debouncedName, setValue, vehicle, toast, supabase]);
     
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -239,6 +238,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     
     const onSubmit: SubmitHandler<Vehicle> = (data) => {
         startTransition(async () => {
+            if (!supabase) return;
             let photoUrl = data.photo || vehicle?.photo || null;
 
             // 1. Handle file upload if a new file is selected
@@ -469,8 +469,8 @@ export default function ArmadaPage() {
     }, [supabase, debouncedSearchTerm, toast]);
 
     useEffect(() => {
-        const supabaseClient = createClient();
-        setSupabase(supabaseClient);
+        // Initialize Supabase client on the client-side
+        setSupabase(createClient());
     }, []);
 
     useEffect(() => {
