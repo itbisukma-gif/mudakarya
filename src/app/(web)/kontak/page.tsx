@@ -14,8 +14,6 @@ import { createClient } from '@/utils/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const dynamic = 'force-dynamic';
-
 function SocialButton({ platform, url }: { platform: string; url: string; }) {
   if (!url) return null;
   
