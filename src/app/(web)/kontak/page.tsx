@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,8 @@ function KontakPageContent() {
     }
 
     const hasSocialMedia = contactInfo.instagram || contactInfo.facebook || contactInfo.twitter || contactInfo.tiktok || contactInfo.telegram;
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactInfo.address)}`;
+
 
     return (
             <div className="container py-8 md:py-16">
@@ -111,7 +114,7 @@ function KontakPageContent() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 pt-8 justify-center mb-8">
-                         <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer">
+                         <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
                             <Button size="lg">
                                 <Navigation className="mr-2 h-4 w-4" />
                                 {dictionary.contact.getDirections}
