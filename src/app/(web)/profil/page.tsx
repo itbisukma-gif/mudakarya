@@ -9,6 +9,7 @@ import { useLanguage } from "@/hooks/use-language";
 import type { ContactInfo } from '@/lib/types';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import Image from 'next/image';
 
 const companyData = {
     history: "Didirikan pada tahun 2024, MudaKarya RentCar lahir dari semangat untuk memberikan solusi mobilitas yang mudah, aman, dan terpercaya. Kami memulai dengan armada sederhana dan tekad kuat untuk menjadi mitra perjalanan terbaik bagi setiap pelanggan, baik untuk kebutuhan bisnis, liburan keluarga, maupun perjalanan personal.",
@@ -73,7 +74,20 @@ export default function CompanyProfilePage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">{companyData.history}</p>
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            <div className="relative aspect-3/2 w-full md:w-1/3 rounded-lg overflow-hidden flex-shrink-0">
+                                <Image
+                                    src="https://picsum.photos/seed/companyhistory/600/400"
+                                    alt="Kantor MudaKarya RentCar"
+                                    fill
+                                    className="object-cover"
+                                    data-ai-hint="office building"
+                                />
+                            </div>
+                            <div className="flex-grow">
+                                <p className="text-muted-foreground">{companyData.history}</p>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
