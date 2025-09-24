@@ -24,11 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { Separator } from '@/components/ui/separator';
 
 
 import type { Vehicle, Driver } from '@/lib/types';
@@ -347,49 +343,46 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             </Tabs>
         </div>
         <div className="p-6 border-t mt-auto bg-background flex-shrink-0">
-             <Collapsible>
-                <CollapsibleTrigger className="flex justify-between items-center w-full group mb-2">
-                    <h4 className="font-semibold text-sm">{dictionary.orderForm.summary.title}</h4>
-                    <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-in-out data-[state=closed]:-translate-y-2 data-[state=closed]:max-h-0 data-[state=closed]:opacity-0 data-[state=open]:max-h-48 data-[state=open]:opacity-100 data-[state=open]:translate-y-0">
-                   <div className="space-y-1 text-sm pt-2">
+             <div className="space-y-4">
+                <h4 className="font-semibold text-base">{dictionary.orderForm.summary.title}</h4>
+                <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                        <span>{dictionary.orderForm.summary.basePrice(calculatedDuration)}</span>
+                        <span>{formatCurrency(baseRentalCost)}</span>
+                    </div>
+                    {driverFee > 0 && (
                         <div className="flex justify-between text-muted-foreground">
-                            <span>{dictionary.orderForm.summary.basePrice(calculatedDuration)}</span>
-                            <span>{formatCurrency(baseRentalCost)}</span>
+                            <span>{dictionary.orderForm.summary.driverFee}</span>
+                            <span>{formatCurrency(driverFee)}</span>
                         </div>
-                        {driverFee > 0 && (
-                           <div className="flex justify-between text-muted-foreground">
-                               <span>{dictionary.orderForm.summary.driverFee}</span>
-                               <span>{formatCurrency(driverFee)}</span>
-                           </div>
-                        )}
-                         {fuelFee > 0 && (
-                           <div className="flex justify-between text-muted-foreground">
-                               <span>{dictionary.orderForm.summary.fuelFee}</span>
-                               <span>{formatCurrency(fuelFee)}</span>
-                           </div>
-                        )}
-                        {maticFee > 0 && (
-                           <div className="flex justify-between text-muted-foreground">
-                               <span>{dictionary.orderForm.summary.maticFee}</span>
-                               <span>{formatCurrency(maticFee)}</span>
-                           </div>
-                        )}
-                         {discountAmount > 0 && selectedVehicle && (
-                            <div className="flex justify-between text-green-600">
-                                <span className="font-medium">Diskon ({selectedVehicle.discountPercentage}%)</span>
-                                <span>- {formatCurrency(discountAmount)}</span>
-                            </div>
-                        )}
-                   </div>
-                </CollapsibleContent>
-             </Collapsible>
-            <div className="flex justify-between font-bold text-lg pt-3 border-t mt-3">
-                <span>{dictionary.orderForm.summary.total}</span>
-                <span>{formatCurrency(totalCost)}</span>
-            </div>
-             <Button className="w-full mt-4 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100" disabled={isBookingDisabled} asChild>
+                    )}
+                    {fuelFee > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                            <span>{dictionary.orderForm.summary.fuelFee}</span>
+                            <span>{formatCurrency(fuelFee)}</span>
+                        </div>
+                    )}
+                    {maticFee > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                            <span>{dictionary.orderForm.summary.maticFee}</span>
+                            <span>{formatCurrency(maticFee)}</span>
+                        </div>
+                    )}
+                    {discountAmount > 0 && selectedVehicle && (
+                        <div className="flex justify-between text-green-600 font-medium">
+                            <span>Diskon ({selectedVehicle.discountPercentage}%)</span>
+                            <span>- {formatCurrency(discountAmount)}</span>
+                        </div>
+                    )}
+                </div>
+                <Separator className="my-3" />
+                <div className="flex justify-between items-center font-bold text-lg">
+                    <span>{dictionary.orderForm.summary.total}</span>
+                    <span className="text-primary">{formatCurrency(totalCost)}</span>
+                </div>
+             </div>
+
+             <Button className="w-full mt-6 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100" disabled={isBookingDisabled} asChild>
                 <Link href={paymentUrl}>
                     {dictionary.orderForm.bookNow}
                 </Link>
