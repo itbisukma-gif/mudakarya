@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
@@ -9,8 +10,8 @@ import { createServiceRoleClient } from '@/utils/supabase/server';
  * @returns An object containing the signed URL, the token, and the path.
  */
 export async function createSignedUploadUrl(filePath: string) {
-    const supabase = createServiceRoleClient();
     try {
+        const supabase = createServiceRoleClient();
         const { data, error } = await supabase.storage
             .from('mudakarya-bucket')
             .createSignedUploadUrl(filePath);
@@ -24,6 +25,10 @@ export async function createSignedUploadUrl(filePath: string) {
     } catch (e) {
         const error = e as Error;
         console.error('Unexpected error in createSignedUploadUrl:', error);
+        // Check if the error is due to Supabase client not being available during build.
+        if (error.message.includes("Supabase URL and Service Role Key are required")) {
+            return { error: { message: "Server is not ready for uploads." }, signedUrl: null, token: null };
+        }
         return { error: { message: error.message }, signedUrl: null, token: null };
     }
 }

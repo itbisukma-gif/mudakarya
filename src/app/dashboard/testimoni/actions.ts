@@ -18,6 +18,7 @@ export async function upsertTestimonial(testimonialData: Omit<Testimonial, 'crea
     
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
+    revalidatePath('/mobil/[id]', 'page');
     return { data, error: null };
 }
 
@@ -30,6 +31,7 @@ export async function deleteTestimonial(id: string) {
     }
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
+     revalidatePath('/mobil/[id]', 'page');
     return { error: null };
 }
 
@@ -46,6 +48,7 @@ export async function addGalleryItem(galleryData: Omit<GalleryItem, 'id' | 'crea
     }
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
+    revalidatePath('/mobil/[id]', 'page');
     return { data, error: null };
 }
 
@@ -76,6 +79,7 @@ export async function deleteGalleryItem(id: string) {
 
     revalidatePath('/dashboard/testimoni');
     revalidatePath('/testimoni');
+    revalidatePath('/mobil/[id]', 'page');
     return { error: null };
 }
 
@@ -118,5 +122,3 @@ export async function deleteFeature(id: string) {
     revalidatePath('/');
     return { error: null };
 }
-
-    
