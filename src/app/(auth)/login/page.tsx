@@ -47,8 +47,6 @@ export default function LoginPage() {
             title: 'Login Berhasil',
             description: 'Anda akan diarahkan ke dashboard.',
         });
-        // Redirect to the dashboard. Using router.refresh() to ensure server components
-        // re-render and middleware picks up the new session.
         router.push('/dashboard');
         router.refresh();
     }
