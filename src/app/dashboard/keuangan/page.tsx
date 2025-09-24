@@ -23,6 +23,7 @@ import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceCosts, updateServiceCost, addBankAccount, deleteBankAccount } from './actions';
 
+export const dynamic = 'force-dynamic';
 
 type BankNameKey = keyof typeof logos;
 

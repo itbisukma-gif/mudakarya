@@ -17,6 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { updateContactInfo, updateTermsContent } from './actions';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
 
 const socialPlatforms = [
     { value: 'instagram', label: 'Instagram' },

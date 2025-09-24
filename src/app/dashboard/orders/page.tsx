@@ -28,6 +28,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { WhatsAppIcon } from '@/components/icons';
 import { updateOrderDriver, updateOrderStatus } from './actions';
 
+export const dynamic = 'force-dynamic';
 
 const getStatusInfo = (status: OrderStatus | null) => {
     switch (status) {

@@ -25,7 +25,7 @@ import { upsertTestimonial, deleteTestimonial, addGalleryItem, deleteGalleryItem
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 
-
+export const dynamic = 'force-dynamic';
 
 function TestimonialForm({ testimonial, vehicles, onSave, onCancel }: { testimonial?: Testimonial | null, vehicles: Vehicle[], onSave: () => void, onCancel: () => void }) {
     const { toast } = useToast();

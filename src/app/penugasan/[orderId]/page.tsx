@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ import { updateVehicleStatus } from '@/app/dashboard/armada/actions';
 import { updateDriverStatus } from '@/app/dashboard/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+export const dynamic = 'force-dynamic';
 
 function AssignmentComponent() {
     const params = useParams();

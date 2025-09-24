@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useTransition, useEffect, useCallback, ChangeEvent } from "react";
@@ -24,6 +25,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { useDebounce } from "@/hooks/use-debounce";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 
+export const dynamic = 'force-dynamic';
 
 function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: (vehicle: Vehicle) => void, onDelete: (vehicleId: string) => void }) {
     const { logoUrl } = useVehicleLogo(vehicle.brand);

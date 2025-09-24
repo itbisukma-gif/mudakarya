@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/utils/supabase/client';
 import { Loader2, Mail, Lock } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -99,4 +101,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
