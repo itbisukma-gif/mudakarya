@@ -231,12 +231,12 @@ export default function DashboardPage() {
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const availableDrivers = drivers.filter(d => d.status === 'Tersedia').length;
     
-    const rentedCarCodes = new Set(
+    const rentedVehicleIds = new Set(
         orders
-            .filter(o => o.status === 'disetujui')
-            .map(o => o.carName)
+            .filter(o => o.status === 'disetujui' || o.status === 'dipesan')
+            .map(o => o.vehicleId)
     );
-    const availableUnits = fleet.length - rentedCarCodes.size;
+    const availableUnits = fleet.filter(v => v.status === 'tersedia').length;
     
     const now = new Date();
     const currentMonth = now.getMonth();
