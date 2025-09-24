@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
@@ -9,15 +10,27 @@ export async function getServiceCosts() {
     const { data, error } = await supabase.from('service_costs').select('*');
     if (error) {
         console.error('Error fetching service costs:', error);
-        return { data: null, error };
+        // Return default values on error to prevent NaN issues
+        return { data: { driver: 0, matic: 0, fuel: 0 }, error };
     }
-    // Transform array to object for easier access, e.g., { driver: 150000, ... }
+
+    const initialCosts = {
+        driver: 0,
+        matic: 0,
+        fuel: 0,
+    };
+
+    // Reduce the fetched data into the initialCosts object
     const costs = data.reduce((acc, item) => {
-        acc[item.name] = item.cost;
+        if (item.name in acc) {
+            acc[item.name as keyof typeof initialCosts] = item.cost;
+        }
         return acc;
-    }, {} as { [key: string]: number });
+    }, initialCosts);
+    
     return { data: costs, error: null };
 }
+
 
 export async function updateServiceCost(name: 'driver' | 'matic' | 'fuel', cost: number) {
     const supabase = createServiceRoleClient();

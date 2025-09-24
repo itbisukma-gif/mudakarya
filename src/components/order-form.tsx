@@ -38,12 +38,14 @@ import { useLanguage } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceCosts } from '@/app/dashboard/keuangan/actions';
 
 
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
     const { dictionary, language } = useLanguage();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
     const [serviceCosts, setServiceCosts] = useState<{ driver: number, matic: number, fuel: number } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [activeTab, setActiveTab] = useState('direct');
     const [rentalDays, setRentalDays] = useState(1);
@@ -85,6 +87,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         if (!supabase) return;
         
         const fetchInitialData = async () => {
+            setIsLoading(true);
             const { data: driverData } = await supabase
                 .from('drivers')
                 .select('*')
@@ -96,14 +99,11 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 }
             }
 
-            const { data: costsData } = await supabase.from('service_costs').select('*');
+            const { data: costsData } = await getServiceCosts();
             if (costsData) {
-                 const costs = costsData.reduce((acc, item) => {
-                    acc[item.name] = item.cost;
-                    return acc;
-                }, {} as { [key: string]: number });
-                setServiceCosts(costs as any);
+                setServiceCosts(costsData);
             }
+            setIsLoading(false);
         };
         fetchInitialData();
     }, [supabase]);
@@ -183,7 +183,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || !serviceCosts;
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || isLoading;
 
     const paymentUrl = useMemo(() => {
         if (isBookingDisabled || !selectedVehicle) return '#';
@@ -194,6 +194,10 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             service: service,
             baseCost: String(baseRentalCost),
             totalCost: String(totalCost),
+            maticFee: String(maticFee),
+            driverFee: String(driverFee),
+            fuelFee: String(fuelFee),
+            discount: String(discountAmount),
             isPartnerUnit: String(selectedVehicle.unitType === 'khusus'),
         });
 
@@ -204,18 +208,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         if (driverId) {
             params.append('driverId', driverId);
         }
-        if (maticFee > 0) {
-            params.append('maticFee', String(maticFee));
-        }
-        if (driverFee > 0) {
-            params.append('driverFee', String(driverFee));
-        }
-        if (fuelFee > 0) {
-            params.append('fuelFee', String(fuelFee));
-        }
-        if (discountAmount > 0) {
-            params.append('discount', String(discountAmount));
-        }
 
         return `/pembayaran?${params.toString()}`;
 
@@ -223,7 +215,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
     const locale = language === 'id' ? id : undefined;
 
-    if (!representativeVehicle || !serviceCosts) {
+    if (!representativeVehicle || isLoading) {
         return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>
     }
 
