@@ -20,6 +20,7 @@ function getSupabase() {
 export async function getServiceCosts() {
     const supabase = getSupabase();
     if (!supabase) {
+        // Return a default, safe object during build time
         return { data: { driver: 0, matic: 0, fuel: 0 }, error: null };
     }
     const { data, error } = await supabase.from('service_costs').select('*');
