@@ -197,7 +197,7 @@ export default function PengaturanPage() {
                             onChange={(e) => handleContactChange('maps', e.target.value)}
                             placeholder="Contoh: https://www.google.com/maps/embed?pb=..."
                         />
-                         <p className="text-xs text-muted-foreground">{'Buka Google Maps > cari lokasi > 'Share' > pilih tab 'Embed a map' > salin HANYA URL (src) dari dalam kode iframe.'}</p>
+                         <p className="text-xs text-muted-foreground">{'Buka Google Maps > cari lokasi > \'Share\' > pilih tab \'Embed a map\' > salin HANYA URL (src) dari dalam kode iframe.'}</p>
                     </div>
                      {contactInfo.maps && contactInfo.maps.startsWith('https://') && (
                         <div className="space-y-2">
@@ -289,3 +289,5 @@ export default function PengaturanPage() {
     </div>
   );
 }
+
+    
