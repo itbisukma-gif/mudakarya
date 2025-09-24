@@ -74,12 +74,13 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 return;
             }
 
-            // Handle stock and status changes
+            // Handle stock and status changes for special units
             if (vehicle?.unitType === 'khusus' && isBookingState(oldStatus) && !isBookingState(newStatus)) {
                 // If moving from a "booked" state to a "finished/cancelled" state, restore stock
                  await adjustVehicleStock(order.vehicleId, 1);
             }
             
+            // Handle status for regular units
             if (!order.isPartnerUnit) {
                  if (newStatus === 'disetujui') {
                     await updateVehicleStatus(order.vehicleId, 'disewa');
@@ -88,6 +89,7 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 }
             }
             
+            // Handle driver status
             if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
                 await updateDriverStatus(order.driverId, 'Tersedia');
             }
