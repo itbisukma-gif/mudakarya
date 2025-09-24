@@ -25,7 +25,7 @@ export function WebHeader({ className }: { className?: string }) {
       <div className="container h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo className="w-7 h-7 text-primary" />
-          <span className="text-lg font-bold tracking-tight">MudaKarya CarRent</span>
+          <span className="text-lg font-bold tracking-tight">MudaKarya RentCar</span>
         </Link>
 
         <nav className="hidden md:flex gap-6">

@@ -8,7 +8,7 @@ import { LanguageProvider } from './language-provider';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
-  title: 'MudaKarya CarRent - Solusi Rental Mobil Terbaik',
+  title: 'MudaKarya RentCar - Solusi Rental Mobil Terbaik',
   description: 'Penyedia layanan rental mobil terpercaya dengan berbagai pilihan armada dan harga terbaik.',
   icons: [
     {

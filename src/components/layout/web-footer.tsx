@@ -81,7 +81,7 @@ export function WebFooter({ className }: { className?: string }) {
             <div className="md:col-span-2">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
                   <Logo className="w-7 h-7 text-primary" />
-                  <span className="text-lg font-bold tracking-tight">MudaKarya CarRent</span>
+                  <span className="text-lg font-bold tracking-tight">MudaKarya RentCar</span>
               </Link>
               <p className="text-sm text-muted-foreground max-w-sm">
                   {dictionary.footer.description}

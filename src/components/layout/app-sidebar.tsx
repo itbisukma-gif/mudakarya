@@ -66,7 +66,7 @@ export function AppSidebar() {
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <Logo className="w-7 h-7 text-primary" />
           <span className="text-lg font-bold tracking-tight">
-            MudaKarya CarRent
+            MudaKarya RentCar
           </span>
         </Link>
       </SidebarHeader>

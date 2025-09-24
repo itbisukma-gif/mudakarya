@@ -38,7 +38,7 @@ export function InvoiceTemplate({ order, vehicle, rentalPeriod, isValidated = fa
             <CardHeader className="text-center">
                 <div className="flex justify-center items-center gap-2.5 mb-4">
                     <Logo className="w-8 h-8 text-primary" />
-                    <span className="text-2xl font-bold tracking-tight">MudaKarya CarRent</span>
+                    <span className="text-2xl font-bold tracking-tight">MudaKarya RentCar</span>
                 </div>
                 <CardTitle className="text-2xl">Rincian Pembayaran</CardTitle>
                 <CardDescription>Order ID: <span className='font-mono'>{order.id}</span></CardDescription>

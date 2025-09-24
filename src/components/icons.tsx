@@ -8,7 +8,7 @@ export function Logo(props: ImageProps) {
   return (
     <Image
       src="/logo-icon.png" // Path to your logo in the public folder
-      alt="MudaKarya CarRent Logo"
+      alt="MudaKarya RentCar Logo"
       width={32} // Default width, can be overridden by props
       height={32} // Default height, can be overridden by props
       {...props}

@@ -12,7 +12,7 @@ import type { Order, Vehicle, Driver } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Logo } from '@/components/icons';
 import { updateOrderStatus } from '@/app/dashboard/orders/actions';
-import { updateVehicleStatus } from '@/app/dashboard/armada/actions';
+import { updateVehicleStatus, adjustVehicleStock } from '@/app/dashboard/armada/actions';
 import { updateDriverStatus } from '@/app/dashboard/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -130,7 +130,7 @@ function AssignmentComponent() {
             <CardHeader className="text-center">
                 <div className="flex justify-center items-center gap-2.5 mb-4">
                     <Logo className="w-8 h-8 text-primary" />
-                    <span className="text-2xl font-bold tracking-tight">MudaKarya CarRent</span>
+                    <span className="text-2xl font-bold tracking-tight">MudaKarya RentCar</span>
                 </div>
                 <CardTitle className="text-2xl">Detail Penugasan</CardTitle>
                 <CardDescription>Order ID: <span className='font-mono'>{order.id}</span></CardDescription>
