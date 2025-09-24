@@ -86,6 +86,8 @@ function AssignmentComponent() {
             const { error: driverError } = await updateDriverStatus(driver.id, 'Bertugas');
             if (driverError) {
                 toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: driverError.message });
+                // Attempt to revert order status
+                await updateOrderStatus(order.id, 'pending');
                 return;
             }
             

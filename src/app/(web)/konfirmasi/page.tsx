@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { WhatsAppIcon } from "@/components/icons";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { updateVehicleStatus } from "@/app/dashboard/armada/actions";
+import { updateVehicleStatus, adjustVehicleStock } from "@/app/dashboard/armada/actions";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 import { incrementBookedCount } from "@/app/actions/vehicle-stats";
 
@@ -311,12 +311,14 @@ function KonfirmasiComponent() {
             if (vehicleData) {
                 // Logic to determine the actual physical unit to book
                 if (isPartnerUnitParam) {
+                    // If the booked unit is a "unit khusus" (special/partner), lock it to that specific unit.
                     setFinalVehicleId(vehicleData.id);
                     setIsPartnerUnit(true);
                 } else {
+                    // If the booked unit is a "unit biasa" (regular), find any available regular unit of the same model.
                     const { data: availableUnit } = await supabase
                         .from('vehicles')
-                        .select('id, unitType')
+                        .select('id')
                         .eq('brand', vehicleData.brand)
                         .eq('name', vehicleData.name)
                         .eq('transmission', vehicleData.transmission)
@@ -330,15 +332,38 @@ function KonfirmasiComponent() {
                         setFinalVehicleId(availableUnit.id);
                         setIsPartnerUnit(false);
                     } else {
-                        // Fallback to the partner unit ID if no regular unit is available
-                        setFinalVehicleId(vehicleData.id);
-                        setIsPartnerUnit(true);
+                        // If no regular unit is available, fall back to a partner unit of the same model if available
+                        const { data: partnerFallbackUnit } = await supabase
+                            .from('vehicles')
+                            .select('id')
+                            .eq('brand', vehicleData.brand)
+                            .eq('name', vehicleData.name)
+                            .eq('transmission', vehicleData.transmission)
+                            .eq('fuel', vehicleData.fuel)
+                            .gt('stock', 0)
+                            .eq('unitType', 'khusus')
+                            .limit(1)
+                            .single();
+                        
+                        if (partnerFallbackUnit) {
+                            setFinalVehicleId(partnerFallbackUnit.id);
+                            setIsPartnerUnit(true);
+                        } else {
+                            // If no units are available at all, show an error (handled by disabled button)
+                            // and potentially lock the original vehicle ID to show the correct details
+                            setFinalVehicleId(vehicleData.id); 
+                            toast({
+                                variant: 'destructive',
+                                title: 'Stok Habis',
+                                description: `Mohon maaf, semua unit ${vehicleData.name} sedang tidak tersedia.`
+                            });
+                        }
                     }
                 }
             }
         };
         fetchVehicleAndDriver();
-    }, [vehicleId, driverId, supabase, isPartnerUnitParam]);
+    }, [vehicleId, driverId, supabase, isPartnerUnitParam, toast]);
 
     const handleUploadSuccess = async (proofUrl: string) => {
         if (!supabase || !finalVehicleId || !vehicle || isSavingOrder) return;
@@ -369,9 +394,14 @@ function KonfirmasiComponent() {
                 throw new Error(insertError.message);
             }
 
-            if (!isPartnerUnit) {
+            if (isPartnerUnit) {
+                // For partner units, decrement stock
+                await adjustVehicleStock(finalVehicleId, -1);
+            } else {
+                // For regular units, change status to 'dipesan'
                 await updateVehicleStatus(finalVehicleId, 'dipesan');
             }
+
 
             // Increment booked count (fire-and-forget)
             await incrementBookedCount(vehicle.id);
