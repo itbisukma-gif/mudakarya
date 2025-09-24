@@ -35,6 +35,8 @@ export default function KeuanganPage() {
 
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
+  const [editableCosts, setEditableCosts] = useState({ driver: '0', matic: '0', fuel: '0' });
+
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
 
@@ -63,8 +65,13 @@ export default function KeuanganPage() {
     const { data: costData, error: costError } = await getServiceCosts();
     if(costError) {
         toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
-    } else {
+    } else if (costData) {
         setServiceCosts(costData as any);
+        setEditableCosts({
+            driver: String(costData.driver || 0),
+            matic: String(costData.matic || 0),
+            fuel: String(costData.fuel || 0),
+        });
     }
     
     const { data: bankData, error: bankError } = await supabase.from('bank_accounts').select('*');
@@ -151,13 +158,25 @@ export default function KeuanganPage() {
         description: `File ${fileName} berhasil dibuat.`
     });
   };
+  
+  const handlePriceInputChange = (field: 'driver' | 'matic' | 'fuel', value: string) => {
+    // Allow only numbers and ensure the value is not negative
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setEditableCosts(prev => ({ ...prev, [field]: numericValue }));
+  };
 
   const handleSavePrices = () => {
     startPriceSaveTransition(async () => {
+        const costsToSave = {
+            driver: Number(editableCosts.driver) || 0,
+            matic: Number(editableCosts.matic) || 0,
+            fuel: Number(editableCosts.fuel) || 0,
+        };
+
         const results = await Promise.all([
-            updateServiceCost('driver', serviceCosts.driver),
-            updateServiceCost('matic', serviceCosts.matic),
-            updateServiceCost('fuel', serviceCosts.fuel)
+            updateServiceCost('driver', costsToSave.driver),
+            updateServiceCost('matic', costsToSave.matic),
+            updateServiceCost('fuel', costsToSave.fuel)
         ]);
 
         const hasError = results.some(r => r.error);
@@ -173,6 +192,7 @@ export default function KeuanganPage() {
                 title: "Harga Disimpan",
                 description: "Harga layanan telah berhasil diperbarui."
             });
+            setServiceCosts(costsToSave);
             setIsPricesOpen(false);
         }
     });
@@ -263,27 +283,27 @@ export default function KeuanganPage() {
                             <Label htmlFor="driver-price" className="text-right">Harga Supir</Label>
                             <Input 
                                 id="driver-price" 
-                                type="number" 
-                                value={serviceCosts.driver} 
-                                onChange={(e) => setServiceCosts(prev => ({...prev, driver: Number(e.target.value)}))}
+                                type="text"
+                                value={editableCosts.driver} 
+                                onChange={(e) => handlePriceInputChange('driver', e.target.value)}
                                 className="col-span-2" />
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label htmlFor="matic-price" className="text-right">Biaya Matic</Label>
                              <Input 
                                 id="matic-price" 
-                                type="number" 
-                                value={serviceCosts.matic} 
-                                onChange={(e) => setServiceCosts(prev => ({...prev, matic: Number(e.target.value)}))}
+                                type="text"
+                                value={editableCosts.matic} 
+                                onChange={(e) => handlePriceInputChange('matic', e.target.value)}
                                 className="col-span-2" />
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label htmlFor="fuel-price" className="text-right">Harga BBM</Label>
                              <Input 
                                 id="fuel-price" 
-                                type="number" 
-                                value={serviceCosts.fuel} 
-                                onChange={(e) => setServiceCosts(prev => ({...prev, fuel: Number(e.target.value)}))}
+                                type="text"
+                                value={editableCosts.fuel} 
+                                onChange={(e) => handlePriceInputChange('fuel', e.target.value)}
                                 className="col-span-2"
                              />
                         </div>
