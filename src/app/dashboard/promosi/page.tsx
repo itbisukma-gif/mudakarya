@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, useRef, useEffect, useTransition } from 'react';
+import { useState, ChangeEvent, useRef, useEffect, useTransition, useCallback } from 'react';
 import Image from 'next/image';
 import Autoplay from "embla-carousel-autoplay"
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { upsertVehicle } from '../armada/actions';
 import { upsertPromotion, deletePromotion } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSignedUploadUrl } from '@/app/actions/upload-actions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 export const dynamic = 'force-dynamic';
@@ -221,6 +222,62 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
     );
 }
 
+function PromotionList({ promotions, vehicles, onEdit, onDelete, isLoading, isDeleting }: { promotions: Promotion[], vehicles: Vehicle[], onEdit: (promo: Promotion) => void, onDelete: (promo: Promotion) => void, isLoading: boolean, isDeleting: boolean }) {
+    if (isLoading) {
+        return <div className="flex justify-center items-center py-8"><Loader2 className="h-6 w-6 animate-spin"/></div>;
+    }
+    
+    if (promotions.length === 0) {
+        return <p className="text-sm text-muted-foreground text-center py-8">Tidak ada promosi di kategori ini.</p>;
+    }
+
+    return (
+        <div className="space-y-4">
+            {promotions.map(promo => {
+                const vehicle = vehicles.find(v => v.id === promo.vehicleId);
+                return (
+                    <div key={promo.id} className="flex items-center gap-4 border rounded-lg p-3">
+                        <Image src={promo.imageUrl} alt={promo.title} width={160} height={90} className="rounded-md object-cover aspect-video bg-muted" />
+                        <div className="flex-grow">
+                            <h4 className="font-bold">{promo.title}</h4>
+                            <p className="text-sm text-muted-foreground">{promo.description}</p>
+                            {vehicle && (
+                                <div className="flex items-center gap-2 mt-2 text-xs text-blue-600 font-medium">
+                                    <Car className="h-4 w-4" />
+                                    <span>Promo untuk: {vehicle.brand} {vehicle.name} {vehicle.discountPercentage ? `(${vehicle.discountPercentage}% off)` : ''}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" onClick={() => onEdit(promo)}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon" disabled={isDeleting}><Trash2 className="h-4 w-4" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Anda Yakin?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Tindakan ini akan menghapus promosi "{promo.title}" secara permanen.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => onDelete(promo)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+
 export default function PromosiPage() {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -300,6 +357,9 @@ export default function PromosiPage() {
     const dialogTitle = selectedPromo ? "Edit Promosi" : "Tambahkan Promosi Baru";
     const dialogDescription = selectedPromo ? "Perbarui detail promosi di bawah ini." : "Isi detail promosi untuk slider di halaman utama.";
 
+    const discountPromos = promotions.filter(p => p.vehicleId);
+    const generalSliders = promotions.filter(p => !p.vehicleId);
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -318,11 +378,9 @@ export default function PromosiPage() {
             </div>
 
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Pratinjau Slider Promosi</CardTitle>
-                        <CardDescription>Beginilah tampilan slider di halaman utama.</CardDescription>
-                    </div>
+                <CardHeader>
+                    <CardTitle>Pratinjau Slider Promosi</CardTitle>
+                    <CardDescription>Beginilah tampilan slider di halaman utama. Ini menampilkan semua jenis promosi.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {promotions.length > 0 ? (
@@ -348,8 +406,12 @@ export default function PromosiPage() {
                                     </CarouselItem>
                                 ))}
                             </CarouselContent>
-                            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-                            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+                             {promotions.length > 1 && (
+                                <>
+                                    <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+                                    <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+                                </>
+                            )}
                         </Carousel>
                     ) : (
                          <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg bg-muted/50">
@@ -360,62 +422,54 @@ export default function PromosiPage() {
                 </CardContent>
             </Card>
 
-             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Daftar Promosi Aktif</CardTitle>
-                        <CardDescription>Kelola semua promosi yang ada.</CardDescription>
-                    </div>
+             <Tabs defaultValue="discount-promo">
+                <div className="flex justify-between items-end">
+                    <TabsList>
+                        <TabsTrigger value="discount-promo">Promo Diskon</TabsTrigger>
+                        <TabsTrigger value="general-slider">Slider Umum</TabsTrigger>
+                    </TabsList>
                      <Button onClick={handleAddClick}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Tambahkan Promosi
+                        Tambah Item Baru
                     </Button>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {promotions.length > 0 ? promotions.map(promo => {
-                        const vehicle = vehicles.find(v => v.id === promo.vehicleId);
-                        return (
-                        <div key={promo.id} className="flex items-center gap-4 border rounded-lg p-3">
-                            <Image src={promo.imageUrl} alt={promo.title} width={160} height={90} className="rounded-md object-cover aspect-video bg-muted" />
-                            <div className="flex-grow">
-                                <h4 className="font-bold">{promo.title}</h4>
-                                <p className="text-sm text-muted-foreground">{promo.description}</p>
-                                {vehicle && (
-                                    <div className="flex items-center gap-2 mt-2 text-xs text-blue-600 font-medium">
-                                        <Car className="h-4 w-4" />
-                                        <span>Promo untuk: {vehicle.brand} {vehicle.name} {vehicle.discountPercentage ? `(${vehicle.discountPercentage}% off)`: ''}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={() => handleEditClick(promo)}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                                 <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon" disabled={isDeleting}><Trash2 className="h-4 w-4" /></Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Anda Yakin?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Tindakan ini akan menghapus promosi "{promo.title}" secara permanen.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDelete(promo)} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </div>
-                        )
-                    }) : (
-                        <p className="text-sm text-muted-foreground text-center py-8">Tidak ada promosi aktif.</p>
-                    )}
-                </CardContent>
-            </Card>
+                </div>
+                <TabsContent value="discount-promo">
+                    <Card className="mt-4">
+                        <CardHeader>
+                            <CardTitle>Promo Diskon Kendaraan</CardTitle>
+                            <CardDescription>Promosi ini tertaut ke mobil spesifik dan memberikan diskon.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PromotionList 
+                                promotions={discountPromos}
+                                vehicles={vehicles}
+                                onEdit={handleEditClick}
+                                onDelete={handleDelete}
+                                isLoading={isLoading}
+                                isDeleting={isDeleting}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="general-slider">
+                     <Card className="mt-4">
+                        <CardHeader>
+                            <CardTitle>Slider Umum</CardTitle>
+                            <CardDescription>Slider ini hanya untuk display dan tombolnya akan mengarah ke daftar armada.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PromotionList 
+                                promotions={generalSliders}
+                                vehicles={vehicles}
+                                onEdit={handleEditClick}
+                                onDelete={handleDelete}
+                                isLoading={isLoading}
+                                isDeleting={isDeleting}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+             </Tabs>
 
             <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
                 <DialogContent className="sm:max-w-2xl p-0">
@@ -434,5 +488,3 @@ export default function PromosiPage() {
         </div>
     );
 }
-
-    

@@ -192,11 +192,9 @@ function HomePageContent() {
                                             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">{promo.title}</h2>
                                             <p className="text-base md:text-lg text-primary-foreground/80 mt-3 md:mt-4 hidden sm:block">{promo.description}</p>
                                              <Button size="lg" className="mt-6 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100" asChild>
-                                                {promo.vehicleId ? (
-                                                    <Link href={`/mobil/${promo.vehicleId}`}>{dictionary.home.hero.bookNow}</Link>
-                                                ) : (
-                                                    <Link href="#fleet-section">{dictionary.home.hero.bookNow}</Link>
-                                                )}
+                                                <Link href={promo.vehicleId ? `/mobil/${promo.vehicleId}` : "#fleet-section"}>
+                                                    {dictionary.home.hero.bookNow}
+                                                </Link>
                                             </Button>
                                         </div>
                                      </div>
