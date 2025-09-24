@@ -186,7 +186,7 @@ export default function PengaturanPage() {
                             onChange={(e) => handleContactChange('mapsDirectionUrl', e.target.value)}
                             placeholder="Contoh: https://maps.app.goo.gl/abcdef123456"
                         />
-                        <p className="text-xs text-muted-foreground">Buka Google Maps > cari lokasi > klik 'Share' > 'Copy link'.</p>
+                        <p className="text-xs text-muted-foreground">Buka Google Maps &gt; cari lokasi &gt; klik 'Share' &gt; 'Copy link'.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="maps">Embed URL Google Maps (untuk Tampilan Peta)</Label>
