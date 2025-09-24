@@ -35,6 +35,8 @@ const getStatusInfo = (status: OrderStatus | null) => {
             return { label: 'Disetujui', className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100' };
         case 'pending':
             return { label: 'Pending', className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100' };
+        case 'dipesan':
+            return { label: 'Dipesan', className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-100' };
         case 'tidak disetujui':
             return { label: 'Ditolak', className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-100' };
         case 'selesai':

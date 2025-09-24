@@ -1,3 +1,4 @@
+
 export type Driver = {
   id: string;
   created_at?: string;
@@ -62,7 +63,7 @@ export type BankAccount = {
     logoUrl: string;
 }
 
-export type OrderStatus = 'pending' | 'disetujui' | 'tidak disetujui' | 'selesai';
+export type OrderStatus = 'pending' | 'disetujui' | 'tidak disetujui' | 'selesai' | 'dipesan';
 
 export type Order = {
   id: string;
@@ -111,4 +112,3 @@ export type Promotion = {
     imageUrl: string;
     vehicleId?: string | null;
 };
-

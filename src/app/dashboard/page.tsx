@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from 'react'
@@ -231,11 +232,6 @@ export default function DashboardPage() {
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const availableDrivers = drivers.filter(d => d.status === 'Tersedia').length;
     
-    const rentedVehicleIds = new Set(
-        orders
-            .filter(o => o.status === 'disetujui' || o.status === 'dipesan')
-            .map(o => o.vehicleId)
-    );
     const availableUnits = fleet.filter(v => v.status === 'tersedia').length;
     
     const now = new Date();
