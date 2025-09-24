@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -12,6 +13,7 @@ import {
   Moon,
   Sun,
   Loader2,
+  User
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -37,6 +39,7 @@ const menuItems = [
   { href: "/dashboard/orders", label: "List Order", icon: ClipboardList },
   { href: "/dashboard/promosi", label: "Promosi", icon: Wand2 },
   { href: "/dashboard/testimoni", label: "Testimoni", icon: Star },
+  { href: "/dashboard/profil", label: "Manajemen Profil", icon: User },
   { href: "/dashboard/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

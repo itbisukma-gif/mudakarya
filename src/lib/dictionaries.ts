@@ -1,6 +1,6 @@
 
 
-import { Home, Star, Pin, FileText, ArrowLeft } from 'lucide-react';
+import { Home, Star, Pin, FileText, ArrowLeft, User } from 'lucide-react';
 
 const id = {
     loading: "Memuat",
@@ -8,6 +8,7 @@ const id = {
       { href: "/", label: "Home", icon: Home },
       { href: "/testimoni", label: "Testimoni", icon: Star },
       { href: "/kontak", label: "Alamat", icon: Pin },
+      { href: "/profil", label: "Profil", icon: User },
       { href: "/syarat-ketentuan", label: "S&K", icon: FileText },
     ],
     footer: {
@@ -19,6 +20,7 @@ const id = {
         { href: "/", label: "Home" },
         { href: "/testimoni", label: "Testimoni" },
         { href: "/kontak", label: "Kontak & Alamat" },
+        { href: "/profil", label: "Profil" },
         { href: "/syarat-ketentuan", label: "S&K" },
       ],
     },
@@ -281,6 +283,7 @@ const en: typeof id = {
       { href: "/", label: "Home", icon: Home },
       { href: "/testimoni", label: "Testimonials", icon: Star },
       { href: "/kontak", label: "Address", icon: Pin },
+      { href: "/profil", label: "Profile", icon: User },
       { href: "/syarat-ketentuan", label: "T&C", icon: FileText },
     ],
     footer: {
@@ -292,6 +295,7 @@ const en: typeof id = {
         { href: "/", label: "Home" },
         { href: "/testimoni", label: "Testimonials" },
         { href: "/kontak", label: "Contact & Address" },
+        { href: "/profil", label: "Profile" },
         { href: "/syarat-ketentuan", label: "T&C" },
       ],
     },
