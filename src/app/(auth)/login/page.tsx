@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@/utils/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const supabase = createClient();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,28 +24,28 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication
-    if (email === 'admin@example.com' && password === 'password') {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Gagal',
+        description: error.message || 'Email atau password yang Anda masukkan salah.',
+      });
+      setIsLoading(false);
+    } else {
       toast({
         title: 'Login Berhasil',
         description: 'Anda akan diarahkan ke dashboard.',
       });
-
-      // Set a manual session cookie
-      // In a real app, this would be a secure, HTTP-only cookie set by a server
-      document.cookie = "session=true; path=/; max-age=3600"; // Expires in 1 hour
-
-      // Redirect to the dashboard. Using window.location.href to force a full page reload
-      // which ensures the middleware picks up the new cookie.
-      window.location.href = '/dashboard';
-
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Login Gagal',
-        description: 'Email atau password yang Anda masukkan salah.',
-      });
-      setIsLoading(false);
+      // No need for manual cookie management. Supabase handles the session.
+      // We use router.refresh() to ensure the server-side components and middleware
+      // re-evaluate based on the new auth state.
+      router.refresh();
+      router.push('/dashboard');
     }
   };
 
@@ -76,7 +78,7 @@ export default function LoginPage() {
             <Input
               id="password"
               type="password"
-              placeholder="password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
