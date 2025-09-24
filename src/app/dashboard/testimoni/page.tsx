@@ -231,36 +231,14 @@ function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | nu
     );
 }
 
-function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onDataChange: () => void }) {
-    const [gallery, setGallery] = useState<GalleryItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+function GalleryEditor({ gallery, vehicles, isLoading, onDataChange }: { gallery: GalleryItem[], vehicles: Vehicle[], isLoading: boolean, onDataChange: () => void }) {
     const [isAddPhotoOpen, setAddPhotoOpen] = useState(false);
     const { toast } = useToast();
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selectedVehicleName, setSelectedVehicleName] = useState<string | undefined>(undefined);
     const [isPending, startTransition] = useTransition();
-    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-
-    const fetchGallery = useCallback(async () => {
-        if (!supabase) return;
-        setIsLoading(true);
-        const { data, error } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
-        if (error) toast({ variant: 'destructive', title: 'Gagal memuat galeri', description: error.message });
-        else setGallery(data || []);
-        setIsLoading(false);
-    }, [supabase, toast]);
-
-    useEffect(() => {
-        const supabaseClient = createClient();
-        setSupabase(supabaseClient);
-    }, []);
-
-    useEffect(() => {
-        if (supabase) {
-            fetchGallery();
-        }
-    }, [supabase, fetchGallery]);
+    const supabase = createClient();
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -282,10 +260,6 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
         startTransition(async () => {
             if (!selectedFile) {
                 toast({ variant: 'destructive', title: 'Tidak ada foto dipilih' });
-                return;
-            }
-            if (!supabase) {
-                toast({ variant: 'destructive', title: 'Klien Supabase tidak tersedia' });
                 return;
             }
             
@@ -454,36 +428,12 @@ function GalleryEditor({ vehicles, onDataChange }: { vehicles: Vehicle[], onData
     );
 }
 
-function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
-    const [features, setFeatures] = useState<FeatureItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+function FeatureEditor({ features, isLoading, onDataChange }: { features: FeatureItem[], isLoading: boolean, onDataChange: () => void }) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedFeature, setSelectedFeature] = useState<FeatureItem | null>(null);
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
-    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-
-    const fetchFeatures = useCallback(async () => {
-        if (!supabase) return;
-        setIsLoading(true);
-        const { data, error } = await supabase.from('features').select('*').order('created_at', { ascending: false });
-        if (error) toast({ variant: 'destructive', title: 'Gagal memuat keunggulan', description: error.message });
-        else setFeatures(data || []);
-        setIsLoading(false);
-    }, [supabase, toast]);
-
-    useEffect(() => {
-        const supabaseClient = createClient();
-        setSupabase(supabaseClient);
-    }, []);
-
-    useEffect(() => {
-        if (supabase) {
-            fetchFeatures();
-        }
-    }, [supabase, fetchFeatures]);
-
-
+    
     const handleAddClick = () => {
         setSelectedFeature(null);
         setIsFormOpen(true);
@@ -587,6 +537,9 @@ function FeatureEditor({ onDataChange }: { onDataChange: () => void }) {
 export default function TestimoniPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [features, setFeatures] = useState<FeatureItem[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
@@ -601,14 +554,24 @@ export default function TestimoniPage() {
   const fetchData = useCallback(async () => {
     if (!supabase) return;
     setIsLoading(true);
-    const { data: testimonialsData, error: testimonialsError } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
-    const { data: vehiclesData, error: vehiclesError } = await supabase.from('vehicles').select('*');
+    const [testimonialsRes, vehiclesRes, galleryRes, featuresRes] = await Promise.all([
+        supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
+        supabase.from('vehicles').select('*'),
+        supabase.from('gallery').select('*').order('created_at', { ascending: false }),
+        supabase.from('features').select('*').order('created_at', { ascending: false })
+    ]);
     
-    if (testimonialsError) toast({ variant: 'destructive', title: 'Gagal memuat testimoni', description: testimonialsError.message });
-    else setTestimonials(testimonialsData || []);
+    if (testimonialsRes.error) toast({ variant: 'destructive', title: 'Gagal memuat testimoni', description: testimonialsRes.error.message });
+    else setTestimonials(testimonialsRes.data || []);
     
-    if (vehiclesError) toast({ variant: 'destructive', title: 'Gagal memuat kendaraan', description: vehiclesError.message });
-    else setVehicles(vehiclesData || []);
+    if (vehiclesRes.error) toast({ variant: 'destructive', title: 'Gagal memuat kendaraan', description: vehiclesRes.error.message });
+    else setVehicles(vehiclesRes.data || []);
+
+    if (galleryRes.error) toast({ variant: 'destructive', title: 'Gagal memuat galeri', description: galleryRes.error.message });
+    else setGallery(galleryRes.data || []);
+
+    if (featuresRes.error) toast({ variant: 'destructive', title: 'Gagal memuat keunggulan', description: featuresRes.error.message });
+    else setFeatures(featuresRes.data || []);
     
     setIsLoading(false);
   }, [supabase, toast]);
@@ -823,11 +786,11 @@ export default function TestimoniPage() {
             </TabsContent>
 
              <TabsContent value="gallery" className="mt-6">
-                <GalleryEditor vehicles={vehicles} onDataChange={fetchData} />
+                <GalleryEditor gallery={gallery} vehicles={vehicles} isLoading={isLoading} onDataChange={fetchData} />
             </TabsContent>
 
              <TabsContent value="features" className="mt-6">
-                <FeatureEditor onDataChange={fetchData} />
+                <FeatureEditor features={features} isLoading={isLoading} onDataChange={fetchData} />
             </TabsContent>
 
        </Tabs>
@@ -849,3 +812,5 @@ export default function TestimoniPage() {
     </div>
   );
 }
+
+    
