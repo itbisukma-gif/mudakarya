@@ -37,7 +37,7 @@ export async function updateOrderDriver(orderId: string, driverName: string, dri
 
     if (error) {
         console.error('Error updating order driver:', error);
-        return { data, null, error };
+        return { data: null, error };
     }
     
     revalidatePath('/dashboard/orders');
