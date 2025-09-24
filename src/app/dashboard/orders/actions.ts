@@ -1,9 +1,10 @@
+
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function updateOrderStatus(orderId: string, status: 'pending' | 'disetujui' | 'tidak disetujui' | 'selesai') {
+export async function updateOrderStatus(orderId: string, status: 'pending' | 'disetujui' | 'tidak disetujui' | 'selesai' | 'dipesan') {
     const supabase = createServiceRoleClient();
     const { data, error } = await supabase
         .from('orders')
