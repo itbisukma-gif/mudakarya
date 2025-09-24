@@ -8,25 +8,25 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("session");
   const hasSession = !!sessionCookie;
 
-  // 2. Define protected routes
-  const protectedRoutes = ["/dashboard"];
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
+  // 2. Define protected and auth routes
+  const isProtectedRoute = pathname.startsWith("/dashboard");
+  const isAuthRoute = pathname.startsWith("/login");
 
-  // 3. Redirect to login if trying to access protected route without session
-  if (isProtectedRoute && !hasSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // 4. Redirect to dashboard if logged in and trying to access login page
-  if (hasSession && pathname.startsWith("/login")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // 5. Handle logout: delete cookie and redirect to login
+  // 3. Handle logout: delete cookie and redirect to login
   if (pathname === "/logout") {
     const response = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.set("session", "", { expires: new Date(0), path: '/' });
     return response;
+  }
+
+  // 4. Redirect to login if trying to access protected route without session
+  if (isProtectedRoute && !hasSession) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // 5. Redirect to dashboard if logged in and trying to access login page
+  if (isAuthRoute && hasSession) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // 6. If none of the above, allow the request to proceed
