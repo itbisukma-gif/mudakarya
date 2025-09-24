@@ -71,14 +71,14 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                         </div>
                     )}
                  </div>
-                 <div className="absolute top-2 right-2 flex items-center gap-2">
+                 <div className="absolute top-2 left-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="secondary" size="icon" className="h-8 w-8">
+                            <Button variant="secondary" size="icon" className="h-8 w-8 bg-black/50 hover:bg-black/70 border-none text-white">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="start">
                             <DropdownMenuItem onSelect={() => onEdit(vehicle)}>Edit</DropdownMenuItem>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -126,7 +126,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                     )}
                 </div>
                  {hasDiscount && (
-                    <Badge variant="destructive" className="absolute top-2 left-2 shadow-lg">
+                    <Badge variant="destructive" className="absolute bottom-2 right-2 shadow-lg">
                       {vehicle.discountPercentage}% OFF
                     </Badge>
                 )}
@@ -558,5 +558,3 @@ function ArmadaPage() {
 }
 
 export default ArmadaPage;
-
-    
