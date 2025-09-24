@@ -77,8 +77,7 @@ function VehicleDetail() {
   }, [variants]);
   
   useEffect(() => {
-    const supabaseClient = createClient();
-    setSupabase(supabaseClient);
+    setSupabase(createClient());
   }, []);
   
   useEffect(() => {
