@@ -1,40 +1,42 @@
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
-import type { Promotion } from '@/lib/types';
-import { revalidatePath } from 'next/cache';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) {
+export async function POST(request: NextRequest) {
     const supabase = createServiceRoleClient();
-    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
+    if (!supabase) {
+        return NextResponse.json({ error: { message: "Supabase client not available." } }, { status: 500 });
+    }
+    const promoData = await request.json();
     
-    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('promotions').upsert(promoData, { onConflict: 'id' }).select().single();
     if (error) {
         console.error('Error upserting promotion:', error);
-        return { data: null, error };
+        return NextResponse.json({ error }, { status: 500 });
     }
 
-    revalidatePath('/dashboard/promosi');
-    revalidatePath('/');
-    return { data, error: null };
+    return NextResponse.json({ data });
 }
 
-export async function deletePromotion(promoId: string) {
+export async function DELETE(request: NextRequest) {
     const supabase = createServiceRoleClient();
-    if (!supabase) return { error: { message: "Supabase client not available." } };
+    if (!supabase) {
+        return NextResponse.json({ error: { message: "Supabase client not available." } }, { status: 500 });
+    }
+    const { promoId } = await request.json();
 
     const { data: itemData, error: fetchError } = await supabase.from('promotions').select('imageUrl').eq('id', promoId).single();
     if (fetchError) {
         console.error("Error fetching promotion for deletion:", fetchError);
-        return { error: fetchError };
+        return NextResponse.json({ error: fetchError }, { status: 500 });
     }
 
     const { error } = await supabase.from('promotions').delete().eq('id', promoId);
     if (error) {
         console.error('Error deleting promotion:', error);
-        return { error };
+        return NextResponse.json({ error }, { status: 500 });
     }
 
     if(itemData.imageUrl) {
@@ -43,7 +45,5 @@ export async function deletePromotion(promoId: string) {
         await supabase.storage.from(bucketName).remove([filePath]);
     }
     
-    revalidatePath('/dashboard/promosi');
-    revalidatePath('/');
-    return { error: null };
+    return NextResponse.json({ error: null });
 }

@@ -21,7 +21,6 @@ import { LanguageProvider } from '@/app/language-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/utils/supabase/client';
-import { upsertTestimonial, deleteTestimonial, addGalleryItem, deleteGalleryItem, upsertFeature, deleteFeature } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 
@@ -53,7 +52,13 @@ function TestimonialForm({ testimonial, vehicles, onSave, onCancel }: { testimon
                 comment: comment || null,
             };
 
-            const result = await upsertTestimonial(dataToSave);
+            const response = await fetch('/api/testimonials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSave)
+            });
+            const result = await response.json();
+
             if (result.error) {
                 toast({ variant: "destructive", title: "Gagal Menyimpan", description: result.error.message });
             } else {
@@ -181,7 +186,12 @@ function FeatureForm({ feature, onSave, onCancel }: { feature?: FeatureItem | nu
                 dataAiHint: feature?.dataAiHint || 'feature illustration'
             };
 
-            const result = await upsertFeature(newFeature);
+            const response = await fetch('/api/testimonials/features', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newFeature)
+            });
+            const result = await response.json();
 
             if (result.error) {
                  toast({ variant: "destructive", title: "Gagal Menyimpan", description: result.error.message });
@@ -288,7 +298,13 @@ function GalleryEditor({ gallery, vehicles, isLoading, onDataChange }: { gallery
                 vehicleName: selectedVehicleName,
             };
             
-            const result = await addGalleryItem(newPhotoData);
+            const response = await fetch('/api/testimonials/gallery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPhotoData)
+            });
+            const result = await response.json();
+
             if (result.error) {
                 toast({ variant: 'destructive', title: 'Gagal menambah foto', description: result.error.message });
             } else {
@@ -304,7 +320,13 @@ function GalleryEditor({ gallery, vehicles, isLoading, onDataChange }: { gallery
 
     const handleDeletePhoto = (photoId: string) => {
         startTransition(async () => {
-             const result = await deleteGalleryItem(photoId);
+             const response = await fetch('/api/testimonials/gallery', {
+                 method: 'DELETE',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ id: photoId })
+             });
+             const result = await response.json();
+
               if (result.error) {
                 toast({ variant: 'destructive', title: 'Gagal menghapus foto', description: result.error.message });
             } else {
@@ -451,7 +473,12 @@ function FeatureEditor({ features, isLoading, onDataChange }: { features: Featur
 
     const handleDelete = (featureId: string, featureTitle: string) => {
         startTransition(async () => {
-            const result = await deleteFeature(featureId);
+             const response = await fetch('/api/testimonials/features', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: featureId })
+            });
+            const result = await response.json();
             if (result.error) {
                  toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
             } else {
@@ -624,7 +651,13 @@ export default function TestimoniPage() {
 
   const handleDelete = (testimonial: Testimonial) => {
     startDeleteTransition(async () => {
-        const result = await deleteTestimonial(testimonial.id);
+        const response = await fetch('/api/testimonials', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: testimonial.id })
+        });
+        const result = await response.json();
+
         if (result.error) {
             toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
         } else {

@@ -72,7 +72,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { createClient } from '@/utils/supabase/client';
-import { upsertDriver, deleteDriver, updateDriverStatus } from './actions'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Function to generate mock data for comparison
@@ -119,7 +118,12 @@ function DriverForm({ driver, onSave, onCancel }: { driver?: Driver | null; onSa
                 status: driver?.status || 'Tersedia',
             };
     
-            const result = await upsertDriver(driverData);
+            const response = await fetch('/api/drivers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(driverData),
+            });
+            const result = await response.json();
 
             if (result.error) {
                  toast({
@@ -252,7 +256,12 @@ export default function DashboardPage() {
   
   const handleDeleteDriver = (driverId: string) => {
     startTransition(async () => {
-        const result = await deleteDriver(driverId);
+        const response = await fetch('/api/drivers', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driverId }),
+        });
+        const result = await response.json();
         if (result.error) {
             toast({ variant: "destructive", title: "Gagal Menghapus", description: result.error.message });
         } else {
@@ -264,7 +273,12 @@ export default function DashboardPage() {
 
   const handleStatusChange = (driverId: string, newStatus: 'Tersedia' | 'Bertugas') => {
     startTransition(async () => {
-        const result = await updateDriverStatus(driverId, newStatus);
+        const response = await fetch('/api/drivers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driverId: driverId, status: newStatus }),
+        });
+        const result = await response.json();
         if (result.error) {
             toast({ variant: "destructive", title: "Gagal Memperbarui Status", description: result.error.message });
         } else {

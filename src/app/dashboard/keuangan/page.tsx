@@ -21,7 +21,6 @@ import type { ComboboxItem } from '@/components/ui/combobox';
 import logos from '@/lib/logo-urls.json';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getServiceCosts, updateServiceCost, addBankAccount, deleteBankAccount } from './actions';
 
 type BankNameKey = keyof typeof logos;
 
@@ -68,15 +67,16 @@ export default function KeuanganPage() {
       setVehicles(vehicleData || []);
     }
 
-    const { data: costData, error: costError } = await getServiceCosts();
+    const costsResponse = await fetch('/api/financials');
+    const { data: costsData, error: costError } = await costsResponse.json();
     if(costError) {
         toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costError.message });
-    } else if (costData) {
-        setServiceCosts(costData as any);
+    } else if (costsData) {
+        setServiceCosts(costsData);
         setEditableCosts({
-            driver: String(costData.driver || 0),
-            matic: String(costData.matic || 0),
-            fuel: String(costData.fuel || 0),
+            driver: String(costsData.driver || 0),
+            matic: String(costsData.matic || 0),
+            fuel: String(costsData.fuel || 0),
         });
     }
     
@@ -185,12 +185,12 @@ export default function KeuanganPage() {
         };
 
         const results = await Promise.all([
-            updateServiceCost('driver', costsToSave.driver),
-            updateServiceCost('matic', costsToSave.matic),
-            updateServiceCost('fuel', costsToSave.fuel)
+            fetch('/api/financials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'driver', cost: costsToSave.driver }) }),
+            fetch('/api/financials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'matic', cost: costsToSave.matic }) }),
+            fetch('/api/financials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'fuel', cost: costsToSave.fuel }) })
         ]);
 
-        const hasError = results.some(r => r.error);
+        const hasError = results.some(r => !r.ok);
 
         if (hasError) {
              toast({
@@ -226,7 +226,13 @@ export default function KeuanganPage() {
           logoUrl: logos[bankDetails.value as BankNameKey] || ''
       };
       
-      const { error } = await addBankAccount(newAccount);
+      const response = await fetch('/api/financials/bank-accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newAccount)
+      });
+
+      const { error } = await response.json();
 
       if (error) {
         toast({ variant: 'destructive', title: 'Gagal Menambah Rekening', description: error.message });
@@ -242,7 +248,13 @@ export default function KeuanganPage() {
   
   const handleDeleteAccount = (id: number) => {
     startAccountSaveTransition(async () => {
-      const { error } = await deleteBankAccount(id);
+       const response = await fetch('/api/financials/bank-accounts', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+      });
+      const { error } = await response.json();
+
        if (error) {
         toast({ variant: "destructive", title: "Gagal Menghapus Rekening", description: error.message });
       } else {

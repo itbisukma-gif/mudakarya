@@ -1,4 +1,3 @@
-
 'use client'
 
 import { notFound, useParams, useRouter } from 'next/navigation';
@@ -34,7 +33,6 @@ import { useVehicleLogo } from '@/hooks/use-vehicle-logo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { upsertTestimonial } from '@/app/dashboard/testimoni/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 
@@ -152,7 +150,14 @@ function VehicleDetail() {
           rating: userRating,
           comment: userComment.trim() || null,
       };
-      const result = await upsertTestimonial(newTestimonial);
+
+      const response = await fetch('/api/testimonials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTestimonial)
+      });
+      const result = await response.json();
+
       if (result.error) {
           toast({ variant: 'destructive', title: 'Gagal Mengirim Ulasan', description: result.error.message });
       } else {

@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useVehicleLogo } from "@/hooks/use-vehicle-logo";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { upsertVehicle, deleteVehicle } from "./actions";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -282,7 +281,13 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                 status: data.status || 'tersedia',
             };
 
-            const result = await upsertVehicle(vehicleData);
+            const response = await fetch('/api/vehicles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vehicleData),
+            });
+            const result = await response.json();
+
 
             if (result.error) {
                 toast({
@@ -485,9 +490,15 @@ export default function ArmadaPage() {
 
     const handleDelete = (vehicleId: string) => {
         startDeleteTransition(async () => {
-            const { error } = await deleteVehicle(vehicleId);
-            if (error) {
-                toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
+             const response = await fetch('/api/vehicles', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vehicleId }),
+            });
+            const result = await response.json();
+
+            if (result.error) {
+                toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
             } else {
                 toast({ title: "Kendaraan Dihapus" });
                 fetchFleet();

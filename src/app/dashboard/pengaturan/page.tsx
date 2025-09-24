@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { updateContactInfo, updateTermsContent } from './actions';
 import Image from 'next/image';
 
 const socialPlatforms = [
@@ -99,21 +97,32 @@ export default function PengaturanPage() {
   const handleSaveChanges = (type: 'Kontak' | 'S&K') => {
     startSavingTransition(async () => {
         let result: { error: any } | null = null;
+        let response;
         if (type === 'Kontak' && contactInfo) {
             const newContactInfo: Partial<ContactInfo> = { ...contactInfo };
-            // Reset all social fields first
             socialPlatforms.forEach(p => newContactInfo[p.value] = undefined);
-            // Then populate from the socialLinks array
             socialLinks.forEach(link => {
                 if (link.platform && link.url) {
                     newContactInfo[link.platform] = link.url;
                 }
             });
             
-            result = await updateContactInfo(newContactInfo as ContactInfo);
+             response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'contact', data: newContactInfo }),
+            });
 
         } else if (type === 'S&K' && terms) {
-             result = await updateTermsContent(terms);
+             response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'terms', data: terms }),
+            });
+        }
+
+        if(response){
+            result = await response.json();
         }
         
         if (result?.error) {
@@ -204,7 +213,7 @@ export default function PengaturanPage() {
                             onChange={(e) => handleContactChange('maps', e.target.value)}
                             placeholder="Contoh: https://www.google.com/maps/embed?pb=..."
                         />
-                         <p className="text-xs text-muted-foreground">{'Buka Google Maps > cari lokasi > \'Share\' > pilih tab \'Embed a map\' > salin HANYA URL (src) dari dalam kode iframe.'}</p>
+                         <p className="text-xs text-muted-foreground">Buka Google Maps &gt; cari lokasi &gt; 'Share' &gt; pilih tab 'Embed a map' &gt; salin HANYA URL (src) dari dalam kode iframe.</p>
                     </div>
                      {contactInfo.maps && contactInfo.maps.startsWith('https://') && (
                         <div className="space-y-2">

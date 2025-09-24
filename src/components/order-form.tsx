@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, forwardRef } from 'react';
@@ -38,7 +37,6 @@ import { useLanguage } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getServiceCosts } from '@/app/dashboard/keuangan/actions';
 
 
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
@@ -99,7 +97,8 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                 }
             }
 
-            const { data: costsData } = await getServiceCosts();
+            const costsResponse = await fetch('/api/financials');
+            const { data: costsData } = await costsResponse.json();
             if (costsData) {
                 setServiceCosts(costsData);
             }

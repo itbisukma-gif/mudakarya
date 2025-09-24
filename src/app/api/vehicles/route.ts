@@ -1,15 +1,16 @@
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
-import type { Vehicle } from '@/lib/types';
-import { revalidatePath } from 'next/cache';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function upsertVehicle(vehicleData: Vehicle) {
+export async function POST(request: NextRequest) {
     const supabase = createServiceRoleClient();
-    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
+    if (!supabase) {
+        return NextResponse.json({ error: { message: "Supabase client not available." } }, { status: 500 });
+    }
+    const vehicleData = await request.json();
 
-    // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase
         .from('vehicles')
         .upsert(vehicleData, { onConflict: 'id' })
@@ -18,21 +19,23 @@ export async function upsertVehicle(vehicleData: Vehicle) {
     
     if (error) {
         console.error('Error upserting vehicle:', error);
-        return { data: null, error };
+        return NextResponse.json({ error }, { status: 500 });
     }
     
-    revalidatePath('/dashboard/armada');
-    return { data, error: null };
+    return NextResponse.json({ data });
 }
 
-export async function deleteVehicle(vehicleId: string) {
+export async function DELETE(request: NextRequest) {
     const supabase = createServiceRoleClient();
-    if (!supabase) return { error: { message: "Supabase client not available." } };
+    if (!supabase) {
+        return NextResponse.json({ error: { message: "Supabase client not available." } }, { status: 500 });
+    }
+    const { vehicleId } = await request.json();
     
     const { data: itemData, error: fetchError } = await supabase.from('vehicles').select('photo').eq('id', vehicleId).single();
     if (fetchError) {
         console.error("Error fetching vehicle for deletion:", fetchError);
-        return { error: fetchError };
+        return NextResponse.json({ error: fetchError }, { status: 500 });
     }
     
     const { error } = await supabase
@@ -42,7 +45,7 @@ export async function deleteVehicle(vehicleId: string) {
     
     if (error) {
         console.error('Error deleting vehicle:', error);
-        return { error };
+        return NextResponse.json({ error }, { status: 500 });
     }
 
     if(itemData.photo) {
@@ -51,13 +54,15 @@ export async function deleteVehicle(vehicleId: string) {
         await supabase.storage.from(bucketName).remove([filePath]);
     }
 
-    revalidatePath('/dashboard/armada');
-    return { error: null };
+    return NextResponse.json({ error: null });
 }
 
-export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' | 'dipesan' | 'disewa') {
+export async function PATCH(request: NextRequest) {
     const supabase = createServiceRoleClient();
-    if (!supabase) return { error: { message: "Supabase client not available." } };
+    if (!supabase) {
+        return NextResponse.json({ error: { message: "Supabase client not available." } }, { status: 500 });
+    }
+    const { vehicleId, status } = await request.json();
 
     const { error } = await supabase
         .from('vehicles')
@@ -66,10 +71,8 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
     
     if (error) {
         console.error('Error updating vehicle status:', error);
-        return { error };
+        return NextResponse.json({ error }, { status: 500 });
     }
-
-    revalidatePath('/dashboard/armada');
-    revalidatePath('/dashboard/orders');
-    return { error: null };
+    
+    return NextResponse.json({ error: null });
 }
