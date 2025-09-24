@@ -4,17 +4,17 @@
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Check, X, Car, User, Calendar, Truck } from 'lucide-react';
-import { useState, useEffect, useMemo, useTransition } from 'react';
+import { Loader2, AlertTriangle, Check, X, Car, User, Truck, MessageSquareWarning } from 'lucide-react';
+import { useState, useEffect, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/utils/supabase/client';
 import type { Order, Vehicle, Driver } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { Separator } from '@/components/ui/separator';
 import { Logo } from '@/components/icons';
 import { updateOrderStatus } from '@/app/dashboard/orders/actions';
 import { updateVehicleStatus } from '@/app/dashboard/armada/actions';
 import { updateDriverStatus } from '@/app/dashboard/actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 function AssignmentComponent() {
@@ -24,6 +24,8 @@ function AssignmentComponent() {
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
     const [isProcessing, startTransition] = useTransition();
+    const [actionTaken, setActionTaken] = useState<'accepted' | 'rejected' | null>(null);
+
     const [order, setOrder] = useState<Order | null>(null);
     const [vehicle, setVehicle] = useState<Vehicle | null>(null);
     const [driver, setDriver] = useState<Driver | null>(null);
@@ -95,20 +97,21 @@ function AssignmentComponent() {
                  }
             }
 
+            setActionTaken('accepted');
             toast({ title: 'Penugasan Diterima!', description: 'Terima kasih telah mengkonfirmasi.' });
-            // Redirect or show a success message. For now, we'll just disable buttons.
-            // A page refresh on the dashboard will show the new status.
         });
     };
     
     const handleReject = () => {
-        // For now, we just inform the driver. Admin will need to re-assign manually.
-        toast({
-            variant: 'destructive',
-            title: 'Penugasan Ditolak',
-            description: 'Admin telah diberitahu. Terima kasih atas konfirmasinya.',
+        startTransition(async () => {
+             // Logic to notify admin can be added here if needed in the future
+            setActionTaken('rejected');
+            toast({
+                variant: 'destructive',
+                title: 'Penugasan Ditolak',
+                description: 'Admin telah diberitahu. Terima kasih atas konfirmasinya.',
+            });
         });
-        router.push('/'); // Redirect to home
     };
 
     if (isLoading) {
@@ -119,8 +122,8 @@ function AssignmentComponent() {
         notFound();
     }
 
-    const isActionable = order.status === 'pending';
-    const isAccepted = order.status === 'dipesan' || order.status === 'disetujui' || order.status === 'selesai';
+    const isActionable = order.status === 'pending' && !actionTaken;
+    const isAcceptedInDb = order.status === 'dipesan' || order.status === 'disetujui' || order.status === 'selesai';
 
     return (
         <Card className="w-full max-w-md shadow-lg">
@@ -147,11 +150,13 @@ function AssignmentComponent() {
                         <span className='font-medium capitalize'>{order.service}</span>
                     </div>
                 </div>
-                <p className="text-sm text-muted-foreground text-center px-4">
-                    Halo, <span className="font-bold">{driver.name}</span>. Anda diminta untuk melayani pesanan di atas. Mohon terima atau tolak penugasan ini.
-                </p>
+                {isActionable && (
+                    <p className="text-sm text-muted-foreground text-center px-4">
+                        Halo, <span className="font-bold">{driver.name}</span>. Anda diminta untuk melayani pesanan di atas. Mohon terima atau tolak penugasan ini.
+                    </p>
+                )}
             </CardContent>
-            <CardFooter className='flex flex-col gap-2'>
+            <CardFooter className='flex flex-col gap-3'>
                 {isActionable && (
                     <div className="grid grid-cols-2 gap-3 w-full">
                         <Button variant="outline" className='border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground' onClick={handleReject} disabled={isProcessing}>
@@ -164,18 +169,36 @@ function AssignmentComponent() {
                         </Button>
                     </div>
                 )}
-                {isAccepted && (
-                     <div className="w-full text-center p-4 bg-green-50 text-green-800 rounded-md">
-                        <p className="font-semibold">Penugasan telah Anda terima.</p>
-                        <p className="text-sm">Admin akan melanjutkan proses verifikasi order.</p>
-                    </div>
-                )}
-                 {order.status === 'tidak disetujui' && (
-                     <div className="w-full text-center p-4 bg-red-50 text-red-800 rounded-md">
-                        <p className="font-semibold">Order ini telah dibatalkan oleh Admin.</p>
-                    </div>
+                
+                {(isAcceptedInDb || actionTaken === 'accepted') && (
+                     <Alert variant="default" className="bg-green-50 border-green-200 text-green-800">
+                        <Check className="h-4 w-4 !text-green-600" />
+                        <AlertTitle className="font-semibold">Penugasan Diterima</AlertTitle>
+                        <AlertDescription className="text-green-700">
+                           Terima kasih atas konfirmasinya. Silakan hubungi admin untuk info lebih lanjut.
+                        </AlertDescription>
+                    </Alert>
                 )}
 
+                {actionTaken === 'rejected' && (
+                     <Alert variant="destructive">
+                        <MessageSquareWarning className="h-4 w-4" />
+                        <AlertTitle className="font-semibold">Penugasan Ditolak</AlertTitle>
+                        <AlertDescription>
+                           Anda telah menolak penugasan ini. Silakan hubungi admin untuk konfirmasi.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                 {order.status === 'tidak disetujui' && (
+                     <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle className="font-semibold">Order Dibatalkan</AlertTitle>
+                        <AlertDescription>
+                            Order ini telah dibatalkan oleh Admin.
+                        </AlertDescription>
+                    </Alert>
+                )}
             </CardFooter>
         </Card>
     );
@@ -184,4 +207,3 @@ function AssignmentComponent() {
 export default function AssignmentPage() {
     return <AssignmentComponent />;
 }
-
