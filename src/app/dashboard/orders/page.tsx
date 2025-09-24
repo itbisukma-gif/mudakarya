@@ -113,12 +113,8 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 return;
             }
 
-            const { error: driverError } = await updateDriverStatus(driverId, 'Bertugas');
-            if (driverError) {
-                toast({ variant: 'destructive', title: 'Gagal Memperbarui Status Driver', description: (driverError as Error).message });
-            } else {
-                toast({ title: "Driver Ditugaskan", description: `${driverName} telah ditugaskan ke pesanan ${order.id}.` });
-            }
+            // Don't change driver status here, let the driver accept the job first
+            toast({ title: "Driver Dipilih", description: `${driverName} telah dipilih untuk pesanan ${order.id}. Kirim penugasan sekarang.` });
 
             onDataChange();
         });
@@ -128,19 +124,25 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
         handleStatusChange('selesai');
     };
 
-    const invoiceUrl = useMemo(() => {
-        return `/invoice/${order.id}`;
-    }, [order.id]);
+    const selectedDriver = useMemo(() => {
+        return drivers.find(d => d.id === order.driverId);
+    }, [drivers, order.driverId]);
 
-    const whatsAppInvoiceUrl = useMemo(() => {
-        if (!order.customerPhone || typeof window === 'undefined') return '#';
+    const whatsAppAssignmentUrl = useMemo(() => {
+        if (!selectedDriver?.phone || typeof window === 'undefined' || !vehicle) return '#';
 
         const domain = window.location.origin;
-        const shareableInvoiceUrl = `${domain}/invoice/${order.id}/share`;
+        const assignmentUrl = `${domain}/penugasan/${order.id}`;
         
-        const message = `Halo ${order.customerName}, terima kasih telah memesan di MudaKarya CarRent. Pembayaran Anda telah kami konfirmasi. Berikut adalah rincian invoice untuk pesanan Anda: ${shareableInvoiceUrl}`;
+        const message = `Halo ${selectedDriver.name}, Anda mendapatkan penugasan baru dari MudaKarya CarRent.
+Customer: ${order.customerName}
+Mobil: ${vehicle.brand} ${vehicle.name}
+Layanan: ${order.service}
+
+Silakan buka tautan berikut untuk menerima atau menolak penugasan:
+${assignmentUrl}`;
         
-        let formattedPhone = order.customerPhone.replace(/\D/g, '');
+        let formattedPhone = selectedDriver.phone.replace(/\D/g, '');
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '62' + formattedPhone.substring(1);
         } else if (!formattedPhone.startsWith('62')) {
@@ -148,7 +150,7 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
         }
 
         return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-    }, [order.id, order.customerName, order.customerPhone]);
+    }, [order, vehicle, selectedDriver]);
 
     return (
          <Card className="flex flex-col">
@@ -199,27 +201,36 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Driver</span>
                          {requiresDriver ? (
-                            <Select 
-                                value={order.driverId ? `${order.driverId}|${order.driver}` : undefined} 
-                                onValueChange={handleDriverChange}
-                                disabled={order.status === 'disetujui' || order.status === 'selesai' || isPending}
-                            >
-                                <SelectTrigger className="w-[180px] h-8 text-xs">
-                                <SelectValue placeholder="Pilih Driver" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {drivers.map(d => 
-                                        <SelectItem 
-                                            key={d.id} 
-                                            value={`${d.id}|${d.name}`}
-                                            disabled={d.status === 'Bertugas' && order.driver !== d.name}
-                                            className="text-xs"
-                                        >
-                                            {d.name} ({d.status})
-                                        </SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-2">
+                                <Select 
+                                    value={order.driverId ? `${order.driverId}|${order.driver}` : undefined} 
+                                    onValueChange={handleDriverChange}
+                                    disabled={order.status !== 'pending' || isPending}
+                                >
+                                    <SelectTrigger className="w-[150px] h-8 text-xs">
+                                    <SelectValue placeholder="Pilih Driver" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {drivers.map(d => 
+                                            <SelectItem 
+                                                key={d.id} 
+                                                value={`${d.id}|${d.name}`}
+                                                disabled={d.status === 'Bertugas' && order.driver !== d.name}
+                                                className="text-xs"
+                                            >
+                                                {d.name} ({d.status})
+                                            </SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {order.status === 'pending' && selectedDriver && (
+                                    <Button size="sm" variant="outline" asChild className="h-8 w-8 p-0 bg-green-500 text-white hover:bg-green-600 hover:text-white border-green-600">
+                                        <a href={whatsAppAssignmentUrl} target="_blank" rel="noopener noreferrer">
+                                            <WhatsAppIcon className="h-4 w-4" />
+                                        </a>
+                                    </Button>
+                                )}
+                             </div>
                         ) : (
                             <span className="font-medium">-</span>
                         )}
@@ -262,11 +273,6 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 <div className="flex items-center gap-2">
                     {order.status === 'disetujui' && (
                          <>
-                            <Button size="sm" variant="outline" asChild className="bg-green-500 text-white hover:bg-green-600 hover:text-white border-green-600">
-                                <a href={whatsAppInvoiceUrl} target="_blank" rel="noopener noreferrer">
-                                    <WhatsAppIcon className="h-4 w-4" />
-                                </a>
-                            </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button size="sm" variant="default" className='bg-blue-600 hover:bg-blue-700' disabled={isPending}>
@@ -301,10 +307,10 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                             Pesanan Ditolak
                         </div>
                     )}
-                    {order.status === 'pending' && (
+                    {(order.status === 'pending' || order.status === 'dipesan') && (
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="default" size="sm" disabled={isPending}>
+                                <Button variant="default" size="sm" disabled={isPending || (requiresDriver && order.status === 'pending')}>
                                     {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                                     Verifikasi
                                 </Button>
@@ -318,6 +324,9 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                    )}
+                     {requiresDriver && order.status === 'pending' && (
+                        <p className="text-xs text-muted-foreground text-right">Menunggu konfirmasi driver</p>
                     )}
                 </div>
             </CardFooter>
@@ -366,7 +375,7 @@ export default function OrdersPage() {
 
     const { pendingOrders, approvedOrders, completedOrders } = useMemo(() => {
         return {
-            pendingOrders: orders.filter(o => o.status === 'pending'),
+            pendingOrders: orders.filter(o => o.status === 'pending' || o.status === 'dipesan'),
             approvedOrders: orders.filter(o => o.status === 'disetujui'),
             completedOrders: orders.filter(o => o.status === 'selesai' || o.status === 'tidak disetujui'),
         }
