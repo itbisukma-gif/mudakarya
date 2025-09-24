@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
-import type { Vehicle, Testimonial, GalleryItem } from "@/lib/types";
+import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2, Eye, ShoppingCart, MessageSquare } from 'lucide-react';
+import type { Vehicle, Testimonial, GalleryItem, Order } from "@/lib/types";
 import {
   Carousel,
   CarouselContent,
@@ -50,6 +50,7 @@ function VehicleDetail() {
   const [otherVehicles, setOtherVehicles] = useState<Vehicle[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [orderCount, setOrderCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const [userName, setUserName] = useState("");
@@ -96,7 +97,16 @@ function VehicleDetail() {
             notFound();
             return;
         }
-        setVehicle(vehicleData);
+
+        // Increment view count
+        const { data: updatedVehicle } = await supabase
+            .from('vehicles')
+            .update({ views: (vehicleData.views || 0) + 1 })
+            .eq('id', vehicleId)
+            .select()
+            .single();
+        
+        setVehicle(updatedVehicle || vehicleData);
 
         const { data: variantData } = await supabase
             .from('vehicles')
@@ -118,6 +128,9 @@ function VehicleDetail() {
 
         const { data: testimonialsData } = await supabase.from('testimonials').select('*').eq('vehicleName', vehicleFullName);
         setTestimonials(testimonialsData || []);
+        
+        const { count: ordersCount } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('vehicleId', vehicleId);
+        setOrderCount(ordersCount || 0);
 
         const { data: galleryData } = await supabase.from('gallery').select('*').eq('vehicleName', vehicleFullName);
         setGallery(galleryData || []);
@@ -246,6 +259,20 @@ function VehicleDetail() {
                       <p className="text-xl font-bold text-primary">{formatCurrency(representativeVehicle.price || 0)}</p>
                   )}
                </div>
+                <div className="flex justify-around text-center text-xs text-muted-foreground pt-3 border-t">
+                    <div className="flex items-center gap-1.5">
+                        <Eye className="h-4 w-4"/>
+                        <span>{vehicle?.views || 0} dilihat</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <ShoppingCart className="h-4 w-4"/>
+                        <span>{orderCount || 0} dipesan</span>
+                    </div>
+                     <div className="flex items-center gap-1.5">
+                        <MessageSquare className="h-4 w-4"/>
+                        <span>{testimonials.length} ulasan</span>
+                    </div>
+                </div>
                <Separator />
                 <Sheet>
                   <SheetTrigger asChild>
