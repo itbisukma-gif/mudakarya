@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect, useCallback, ChangeEvent } from "react";
@@ -436,7 +437,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     )
 }
 
-function ArmadaPage() {
+export default function ArmadaPage() {
     const [fleet, setFleet] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setFormOpen] = useState(false);
