@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useState, useMemo, useEffect, useTransition, useCallback } from 'react';
@@ -20,10 +22,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formatDistanceToNow, differenceInHours } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { createClient } from '@/utils/supabase/client';
+import { updateDriverStatus } from '../actions';
+import { updateVehicleStatus } from '../armada/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { WhatsAppIcon } from '@/components/icons';
+import { updateOrderDriver, updateOrderStatus } from './actions';
 
-export const dynamic = 'force-dynamic';
 
 const getStatusInfo = (status: OrderStatus | null) => {
     switch (status) {
@@ -61,47 +65,25 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
 
     const handleStatusChange = (newStatus: OrderStatus) => {
         startTransition(async () => {
-            const orderResponse = await fetch('/api/orders', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: order.id, status: newStatus }),
-            });
-            
-            const { error: orderError } = await orderResponse.json();
-
+            const { error: orderError } = await updateOrderStatus(order.id, newStatus);
             if (orderError) {
                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: (orderError as Error).message });
                 return;
             }
 
             if (newStatus === 'disetujui' && !order.isPartnerUnit) {
-                const vehicleResponse = await fetch('/api/vehicles', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vehicleId: order.vehicleId, status: 'disewa' }),
-                });
-                 const { error: vehicleError } = await vehicleResponse.json();
+                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'disewa');
                  if (vehicleError) {
                     toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
                  }
             } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && !order.isPartnerUnit) {
-                 const vehicleResponse = await fetch('/api/vehicles', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vehicleId: order.vehicleId, status: 'tersedia' }),
-                });
-                 const { error: vehicleError } = await vehicleResponse.json();
+                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'tersedia');
                  if (vehicleError) {
                     toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
                  }
 
                 if (order.driverId) {
-                    const driverResponse = await fetch('/api/drivers', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ driverId: order.driverId, status: 'Tersedia' }),
-                    });
-                    const { error: driverError } = await driverResponse.json();
+                    const { error: driverError } = await updateDriverStatus(order.driverId, 'Tersedia');
                     if (driverError) {
                         toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: (driverError as Error).message });
                     }
@@ -119,23 +101,13 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
 
         startTransition(async () => {
             if (order.driverId) {
-                 const driverResponse = await fetch('/api/drivers', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ driverId: order.driverId, status: 'Tersedia' }),
-                });
-                 const { error: oldDriverError } = await driverResponse.json();
+                const { error: oldDriverError } = await updateDriverStatus(order.driverId, 'Tersedia');
                  if (oldDriverError) {
                     toast({ variant: 'destructive', title: 'Gagal Melepas Driver Lama', description: (oldDriverError as Error).message });
                  }
             }
 
-            const orderResponse = await fetch('/api/orders', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: order.id, driverName: driverName, driverId: driverId }),
-            });
-            const { error: orderError } = await orderResponse.json();
+            const { error: orderError } = await updateOrderDriver(order.id, driverName, driverId);
             if (orderError) {
                 toast({ variant: 'destructive', title: 'Gagal Menugaskan Driver', description: (orderError as Error).message });
                 return;

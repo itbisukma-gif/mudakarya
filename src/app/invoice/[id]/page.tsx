@@ -18,8 +18,6 @@ import { id } from 'date-fns/locale';
 import type { Html2PdfOptions } from 'html2pdf.js';
 import { InvoiceTemplate } from '@/components/invoice-template';
 
-export const dynamic = 'force-dynamic';
-
 function InvoiceComponent() {
     const params = useParams();
     const router = useRouter();

@@ -1,8 +1,6 @@
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
-
 
 /**
  * Creates a signed upload URL for the client to upload a file directly to Supabase Storage.
@@ -12,10 +10,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  */
 export async function createSignedUploadUrl(filePath: string) {
     const supabase = createServiceRoleClient();
-    if (!supabase) {
-      return { error: { message: "Server is not ready for uploads." }, signedUrl: null, token: null };
-    }
-
     try {
         const { data, error } = await supabase.storage
             .from('mudakarya-bucket')

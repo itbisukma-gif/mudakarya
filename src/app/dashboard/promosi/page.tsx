@@ -17,9 +17,12 @@ import { cn } from "@/lib/utils";
 import type { Promotion, Vehicle } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@/utils/supabase/client';
+import { upsertVehicle } from '../armada/actions';
+import { upsertPromotion, deletePromotion } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -98,12 +101,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 vehicleId: vehicleId === 'none' ? undefined : vehicleId,
             };
 
-            const promoResponse = await fetch('/api/promotions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(promoData)
-            });
-            const promoResult = await promoResponse.json();
+            const promoResult = await upsertPromotion(promoData);
 
             if (promoResult.error) {
                 toast({ variant: 'destructive', title: 'Gagal Menyimpan Promosi', description: promoResult.error.message });
@@ -115,12 +113,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 const vehicleToUpdate = vehicles.find(v => v.id === vehicleId);
                 if (vehicleToUpdate) {
                     const updatedVehicle: Vehicle = { ...vehicleToUpdate, discountPercentage: discount || null };
-                    const vehicleResponse = await fetch('/api/vehicles', {
-                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedVehicle)
-                    });
-                     const vehicleResult = await vehicleResponse.json();
+                    const vehicleResult = await upsertVehicle(updatedVehicle);
                      if (vehicleResult.error) {
                         toast({ variant: 'destructive', title: 'Gagal Apply Diskon', description: `Promosi disimpan, tapi gagal menerapkan diskon ke kendaraan. ${vehicleResult.error.message}` });
                      }
@@ -132,11 +125,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                  const oldVehicle = vehicles.find(v => v.id === promotion.vehicleId);
                  if(oldVehicle) {
                     const updatedOldVehicle: Vehicle = { ...oldVehicle, discountPercentage: null };
-                    await fetch('/api/vehicles', {
-                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedOldVehicle)
-                    });
+                    await upsertVehicle(updatedOldVehicle);
                  }
             }
 
@@ -339,13 +328,7 @@ export default function PromosiPage() {
 
     const handleDelete = (promo: Promotion) => {
         startDeleteTransition(async () => {
-             const response = await fetch('/api/promotions', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ promoId: promo.id })
-            });
-            const result = await response.json();
-
+            const result = await deletePromotion(promo.id);
             if (result.error) {
                 toast({ variant: 'destructive', title: 'Gagal menghapus promosi', description: result.error.message });
                 return;
@@ -356,11 +339,7 @@ export default function PromosiPage() {
                 const vehicleToUpdate = vehicles.find(v => v.id === promo.vehicleId);
                 if(vehicleToUpdate) {
                     const updatedVehicle = { ...vehicleToUpdate, discountPercentage: null };
-                    await fetch('/api/vehicles', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedVehicle)
-                    });
+                    await upsertVehicle(updatedVehicle);
                 }
             }
 

@@ -17,10 +17,13 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useVehicleLogo } from "@/hooks/use-vehicle-logo";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { upsertVehicle, deleteVehicle } from "./actions";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useDebounce } from "@/hooks/use-debounce";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
+
+export const dynamic = 'force-dynamic';
 
 function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: (vehicle: Vehicle) => void, onDelete: (vehicleId: string) => void }) {
     const { logoUrl } = useVehicleLogo(vehicle.brand);
@@ -162,7 +165,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
 
 function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; onSave: () => void; onCancel: () => void; }) {
     const { toast } = useToast();
-    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+    const supabase = createClient();
     const [isPending, startTransition] = useTransition();
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Vehicle>({
         defaultValues: vehicle || { id: crypto.randomUUID(), code: '', unitType: 'biasa', stock: 0, status: 'tersedia' }
@@ -179,10 +182,6 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     const { logoUrl } = useVehicleLogo(brand);
 
     useEffect(() => {
-        setSupabase(createClient());
-    }, []);
-
-    useEffect(() => {
         if (vehicle?.photo) {
             setPreviewUrl(vehicle.photo);
             setValue('photo', vehicle.photo);
@@ -190,9 +189,10 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     }, [vehicle, setValue]);
 
     useEffect(() => {
-        if (!debouncedName || vehicle || !supabase) return;
+        if (!debouncedName || vehicle) return;
         
         const fetchExistingVariant = async () => {
+            const supabase = createClient();
             const { data } = await supabase
                 .from('vehicles')
                 .select('brand, type, photo')
@@ -217,7 +217,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
 
         fetchExistingVariant();
 
-    }, [debouncedName, setValue, vehicle, toast, supabase]);
+    }, [debouncedName, setValue, vehicle, toast]);
     
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -237,8 +237,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     
     const onSubmit: SubmitHandler<Vehicle> = (data) => {
         startTransition(async () => {
-            if (!supabase) return;
-            let photoUrl = data.photo || vehicle?.photo || null;
+            let photoUrl = vehicle?.photo || null;
 
             // 1. Handle file upload if a new file is selected
             if (selectedFile) {
@@ -281,13 +280,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                 status: data.status || 'tersedia',
             };
 
-            const response = await fetch('/api/vehicles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vehicleData),
-            });
-            const result = await response.json();
-
+            const result = await upsertVehicle(vehicleData);
 
             if (result.error) {
                 toast({
@@ -444,7 +437,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
     )
 }
 
-export default function ArmadaPage() {
+function ArmadaPage() {
     const [fleet, setFleet] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setFormOpen] = useState(false);
@@ -474,7 +467,8 @@ export default function ArmadaPage() {
     }, [supabase, debouncedSearchTerm, toast]);
 
     useEffect(() => {
-        setSupabase(createClient());
+        const supabaseClient = createClient();
+        setSupabase(supabaseClient);
     }, []);
 
     useEffect(() => {
@@ -490,15 +484,9 @@ export default function ArmadaPage() {
 
     const handleDelete = (vehicleId: string) => {
         startDeleteTransition(async () => {
-             const response = await fetch('/api/vehicles', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vehicleId }),
-            });
-            const result = await response.json();
-
-            if (result.error) {
-                toast({ variant: "destructive", title: "Gagal menghapus", description: result.error.message });
+            const { error } = await deleteVehicle(vehicleId);
+            if (error) {
+                toast({ variant: "destructive", title: "Gagal menghapus", description: error.message });
             } else {
                 toast({ title: "Kendaraan Dihapus" });
                 fetchFleet();
@@ -568,3 +556,5 @@ export default function ArmadaPage() {
         </div>
     );
 }
+
+export default ArmadaPage;

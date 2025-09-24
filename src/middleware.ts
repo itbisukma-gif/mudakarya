@@ -1,42 +1,36 @@
 
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createClient(request);
   const { pathname } = request.nextUrl;
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession();
+  // 1. Get session from the manual cookie
+  const sessionCookie = request.cookies.get("session");
+  const hasSession = !!sessionCookie;
 
-  // Define protected and auth routes
-  const isProtectedRoute = pathname.startsWith("/dashboard");
-  const isAuthRoute = pathname === "/login";
+  // 2. Define protected routes
+  const protectedRoutes = ["/dashboard"];
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
-  // Handle logout
+  // 3. Redirect to login if trying to access protected route without session
+  if (isProtectedRoute && !hasSession) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // 4. Redirect to dashboard if logged in and trying to access login page
+  if (hasSession && pathname.startsWith("/login")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // 5. Handle logout: delete cookie and redirect to login
   if (pathname === "/logout") {
-    await supabase.auth.signOut();
-    // Redirecting to login after sign out
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/login';
-    return NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.set("session", "", { expires: new Date(0), path: '/' });
+    return response;
   }
 
-  // Redirect to login if trying to access protected route without a session
-  if (isProtectedRoute && !session) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/login';
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Redirect to dashboard if logged in and trying to access login page
-  if (isAuthRoute && session) {
-     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/dashboard';
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  return response;
+  // 6. If none of the above, allow the request to proceed
+  return NextResponse.next();
 }
 
 export const config = {

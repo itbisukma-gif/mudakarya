@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -10,9 +11,11 @@ import { createClient } from '@/utils/supabase/client';
 import type { Order, Vehicle, Driver } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Logo } from '@/components/icons';
+import { updateOrderStatus } from '@/app/dashboard/orders/actions';
+import { updateVehicleStatus } from '@/app/dashboard/armada/actions';
+import { updateDriverStatus } from '@/app/dashboard/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export const dynamic = 'force-dynamic';
 
 function AssignmentComponent() {
     const params = useParams();
@@ -71,39 +74,37 @@ function AssignmentComponent() {
     const handleAccept = () => {
         if (!order || !driver) return;
         startTransition(async () => {
-             try {
-                // 1. Update Order Status to 'dipesan'
-                await fetch('/api/orders', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId: order.id, status: 'dipesan' }),
-                });
+            // 1. Update Order Status to 'dipesan'
+            const { error: orderError } = await updateOrderStatus(order.id, 'dipesan');
+            if (orderError) {
+                toast({ variant: 'destructive', title: 'Gagal Update Order', description: orderError.message });
+                return;
+            }
 
-                // 2. Update Driver Status to 'Bertugas'
-                 await fetch('/api/drivers', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ driverId: driver.id, status: 'Bertugas' }),
-                });
-                
-                // 3. Update Vehicle Status to 'dipesan' (if not partner unit)
-                if (!order.isPartnerUnit) {
-                    await fetch('/api/vehicles', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ vehicleId: order.vehicleId, status: 'dipesan' }),
-                    });
-                }
-                setActionTaken('accepted');
-                toast({ title: 'Penugasan Diterima!', description: 'Terima kasih telah mengkonfirmasi.' });
-             } catch (error) {
-                 toast({ variant: 'destructive', title: 'Gagal Menerima Tugas', description: 'Terjadi kesalahan jaringan.' });
-             }
+            // 2. Update Driver Status to 'Bertugas'
+            const { error: driverError } = await updateDriverStatus(driver.id, 'Bertugas');
+            if (driverError) {
+                toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: driverError.message });
+                return;
+            }
+            
+            // 3. Update Vehicle Status to 'dipesan' (if not partner unit)
+            if (!order.isPartnerUnit) {
+                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'dipesan');
+                 if (vehicleError) {
+                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: vehicleError.message });
+                    return;
+                 }
+            }
+
+            setActionTaken('accepted');
+            toast({ title: 'Penugasan Diterima!', description: 'Terima kasih telah mengkonfirmasi.' });
         });
     };
     
     const handleReject = () => {
         startTransition(async () => {
+             // Logic to notify admin can be added here if needed in the future
             setActionTaken('rejected');
             toast({
                 variant: 'destructive',

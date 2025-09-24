@@ -4,11 +4,10 @@ import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2, Eye, ShoppingCart, MessageSquare } from 'lucide-react';
-import type { Vehicle, Testimonial, GalleryItem, Order } from "@/lib/types";
+import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
+import type { Vehicle, Testimonial, GalleryItem } from "@/lib/types";
 import {
   Carousel,
   CarouselContent,
@@ -33,8 +32,10 @@ import { useVehicleLogo } from '@/hooks/use-vehicle-logo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { upsertTestimonial } from '@/app/dashboard/testimoni/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
 
 function VehicleDetail() {
   const params = useParams();
@@ -47,10 +48,8 @@ function VehicleDetail() {
   const [otherVehicles, setOtherVehicles] = useState<Vehicle[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
-  const [orderCount, setOrderCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [userName, setUserName] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [userComment, setUserComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -75,7 +74,8 @@ function VehicleDetail() {
   }, [variants]);
   
   useEffect(() => {
-    setSupabase(createClient());
+    const supabaseClient = createClient();
+    setSupabase(supabaseClient);
   }, []);
   
   useEffect(() => {
@@ -93,16 +93,7 @@ function VehicleDetail() {
             notFound();
             return;
         }
-
-        // Increment view count
-        const { data: updatedVehicle } = await supabase
-            .from('vehicles')
-            .update({ views: (vehicleData.views || 0) + 1 })
-            .eq('id', vehicleId)
-            .select()
-            .single();
-        
-        setVehicle(updatedVehicle || vehicleData);
+        setVehicle(vehicleData);
 
         const { data: variantData } = await supabase
             .from('vehicles')
@@ -124,9 +115,6 @@ function VehicleDetail() {
 
         const { data: testimonialsData } = await supabase.from('testimonials').select('*').eq('vehicleName', vehicleFullName);
         setTestimonials(testimonialsData || []);
-        
-        const { count: ordersCount } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('vehicleId', vehicleId);
-        setOrderCount(ordersCount || 0);
 
         const { data: galleryData } = await supabase.from('gallery').select('*').eq('vehicleName', vehicleFullName);
         setGallery(galleryData || []);
@@ -138,26 +126,19 @@ function VehicleDetail() {
   }, [params.id, supabase]);
 
   const handleSubmitReview = async () => {
-      if (!userName.trim() || userRating === 0) {
-          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon isi nama dan berikan rating.' });
+      if (userRating === 0 || !userComment.trim() || !vehicle) {
+          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon berikan rating dan komentar.' });
           return;
       }
       setIsSubmittingReview(true);
       const newTestimonial: Omit<Testimonial, 'created_at'> = {
           id: crypto.randomUUID(),
-          customerName: userName,
-          vehicleName: `${vehicle!.brand} ${vehicle!.name}`,
+          customerName: "Pelanggan Anonim", // or get from logged in user
+          vehicleName: `${vehicle.brand} ${vehicle.name}`,
           rating: userRating,
-          comment: userComment.trim() || null,
+          comment: userComment,
       };
-
-      const response = await fetch('/api/testimonials', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newTestimonial)
-      });
-      const result = await response.json();
-
+      const result = await upsertTestimonial(newTestimonial);
       if (result.error) {
           toast({ variant: 'destructive', title: 'Gagal Mengirim Ulasan', description: result.error.message });
       } else {
@@ -165,7 +146,6 @@ function VehicleDetail() {
           if (result.data) {
              setTestimonials(prev => [result.data!, ...prev]);
           }
-          setUserName("");
           setUserRating(0);
           setUserComment("");
       }
@@ -262,20 +242,6 @@ function VehicleDetail() {
                       <p className="text-xl font-bold text-primary">{formatCurrency(representativeVehicle.price || 0)}</p>
                   )}
                </div>
-                <div className="flex justify-around text-center text-xs text-muted-foreground pt-3 border-t">
-                    <div className="flex items-center gap-1.5">
-                        <Eye className="h-4 w-4"/>
-                        <span>{vehicle?.views || 0} dilihat</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <ShoppingCart className="h-4 w-4"/>
-                        <span>{orderCount || 0} dipesan</span>
-                    </div>
-                     <div className="flex items-center gap-1.5">
-                        <MessageSquare className="h-4 w-4"/>
-                        <span>{testimonials.length} ulasan</span>
-                    </div>
-                </div>
                <Separator />
                 <Sheet>
                   <SheetTrigger asChild>
@@ -324,12 +290,11 @@ function VehicleDetail() {
                             <CardTitle className="text-base">{dictionary.vehicleDetail.reviews.shareExperience}</CardTitle>
                             <CardDescription className="text-sm">{dictionary.vehicleDetail.reviews.formDescription}</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4 p-4 pt-0">
-                            <Input placeholder="Nama Anda" value={userName} onChange={e => setUserName(e.target.value)} />
-                            <Textarea placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={3} value={userComment} onChange={e => setUserComment(e.target.value)} />
+                            <CardContent className="space-y-4 p-4 pt-0">
+                            <Textarea placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={4} value={userComment} onChange={e => setUserComment(e.target.value)} />
                             <div className="flex justify-between items-center bg-muted/50 p-2 rounded-md">
                                 <p className="font-medium text-sm">{dictionary.vehicleDetail.reviews.yourRating}</p>
-                                <StarRating rating={userRating} onRatingChange={setUserRating} />
+                                    <StarRating rating={userRating} onRatingChange={setUserRating} />
                             </div>
                             <Button onClick={handleSubmitReview} disabled={isSubmittingReview} className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
                                 {isSubmittingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

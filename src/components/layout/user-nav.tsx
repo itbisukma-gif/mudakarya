@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,49 +23,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogOut, User, Settings, Loader2 } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { createClient } from "@/utils/supabase/client";
 
-function EditAccountForm({ user, onUpdate }: { user: any, onUpdate: () => void }) {
+function EditAccountForm() {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
-    const [name, setName] = useState(user?.user_metadata?.full_name || '');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const supabase = createClient();
 
-    const handleSaveChanges = async () => {
-        setIsLoading(true);
-        let updates: any = {};
-        if (password) {
-            updates.password = password;
-        }
-        if (name !== user?.user_metadata?.full_name) {
-            updates.data = { full_name: name };
-        }
-
-        if (Object.keys(updates).length > 0) {
-            const { error } = await supabase.auth.updateUser(updates);
-            if (error) {
-                 toast({
-                    variant: "destructive",
-                    title: "Gagal Memperbarui Akun",
-                    description: error.message
-                });
-            } else {
-                 toast({
-                    title: "Perubahan Disimpan",
-                    description: "Informasi akun Anda telah berhasil diperbarui."
-                });
-                onUpdate();
-                setOpen(false);
-            }
-        } else {
-            setOpen(false);
-        }
-        setIsLoading(false);
+    const handleSaveChanges = () => {
+        // Logika untuk menyimpan perubahan akan ada di sini
+        toast({
+            title: "Perubahan Disimpan",
+            description: "Informasi akun Anda telah berhasil diperbarui."
+        });
+        setOpen(false); // Tutup dialog setelah menyimpan
     }
 
     return (
@@ -89,26 +60,23 @@ function EditAccountForm({ user, onUpdate }: { user: any, onUpdate: () => void }
                         <Label htmlFor="name" className="text-right">
                             Nama
                         </Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+                        <Input id="name" defaultValue="Admin 1" className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="email" className="text-right">
                             Email
                         </Label>
-                        <Input id="email" type="email" value={user?.email || ''} className="col-span-3" disabled />
+                        <Input id="email" type="email" defaultValue="admin.satu@example.com" className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="password" className="text-right">
                             Password Baru
                         </Label>
-                        <Input id="password" type="password" placeholder="Kosongkan jika tidak diubah" value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
+                        <Input id="password" type="password" placeholder="Kosongkan jika tidak diubah" className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" onClick={handleSaveChanges} disabled={isLoading}>
-                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Simpan Perubahan
-                    </Button>
+                    <Button type="submit" onClick={handleSaveChanges}>Simpan Perubahan</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -117,26 +85,11 @@ function EditAccountForm({ user, onUpdate }: { user: any, onUpdate: () => void }
 
 
 export function UserNav() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const name = "Admin 1";
+  const email = "admin.satu@example.com";
 
-  const fetchUser = async () => {
-     const { data: { user } } = await supabase.auth.getUser();
-     setUser(user);
-     setLoading(false);
-  }
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  const name = user?.user_metadata?.full_name || user?.email || "Admin";
-  const email = user?.email || "";
-
-  const getInitials = (nameStr: string) => {
-    if (!nameStr) return '?';
-    const parts = nameStr.split(' ');
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
     if (parts.length > 1) {
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
@@ -144,10 +97,6 @@ export function UserNav() {
   };
   
   const initials = getInitials(name);
-
-  if (loading) {
-    return <Loader2 className="h-6 w-6 animate-spin" />;
-  }
 
   return (
     <DropdownMenu>
@@ -195,7 +144,7 @@ export function UserNav() {
                     </div>
                   </div>
                   <DialogFooter>
-                      <EditAccountForm user={user} onUpdate={fetchUser} />
+                      <EditAccountForm />
                   </DialogFooter>
               </DialogContent>
           </Dialog>
@@ -211,4 +160,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-
