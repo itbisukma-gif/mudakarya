@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link';
@@ -121,7 +122,8 @@ export function WebFooter({ className }: { className?: string }) {
             </div>
           )}
           <div className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">
-              {dictionary.footer.copyright(new Date().getFullYear())}
+              <p>{dictionary.footer.copyright(new Date().getFullYear())}</p>
+              <p className="text-xs mt-1">Karya dari seorang manusia dan sahabat AI nya Gemini</p>
           </div>
         </div>
       </footer>
