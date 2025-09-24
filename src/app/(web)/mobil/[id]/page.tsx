@@ -1,9 +1,11 @@
+
 'use client'
 
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from '@/components/ui/input';
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
@@ -50,6 +52,7 @@ function VehicleDetail() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [userName, setUserName] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [userComment, setUserComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -126,17 +129,17 @@ function VehicleDetail() {
   }, [params.id, supabase]);
 
   const handleSubmitReview = async () => {
-      if (userRating === 0 || !userComment.trim() || !vehicle) {
-          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon berikan rating dan komentar.' });
+      if (!userName.trim() || userRating === 0) {
+          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon isi nama dan berikan rating.' });
           return;
       }
       setIsSubmittingReview(true);
       const newTestimonial: Omit<Testimonial, 'created_at'> = {
           id: crypto.randomUUID(),
-          customerName: "Pelanggan Anonim", // or get from logged in user
-          vehicleName: `${vehicle.brand} ${vehicle.name}`,
+          customerName: userName,
+          vehicleName: `${vehicle!.brand} ${vehicle!.name}`,
           rating: userRating,
-          comment: userComment,
+          comment: userComment.trim() || null,
       };
       const result = await upsertTestimonial(newTestimonial);
       if (result.error) {
@@ -146,6 +149,7 @@ function VehicleDetail() {
           if (result.data) {
              setTestimonials(prev => [result.data!, ...prev]);
           }
+          setUserName("");
           setUserRating(0);
           setUserComment("");
       }
@@ -290,11 +294,12 @@ function VehicleDetail() {
                             <CardTitle className="text-base">{dictionary.vehicleDetail.reviews.shareExperience}</CardTitle>
                             <CardDescription className="text-sm">{dictionary.vehicleDetail.reviews.formDescription}</CardDescription>
                         </CardHeader>
-                            <CardContent className="space-y-4 p-4 pt-0">
-                            <Textarea placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={4} value={userComment} onChange={e => setUserComment(e.target.value)} />
+                        <CardContent className="space-y-4 p-4 pt-0">
+                            <Input placeholder="Nama Anda" value={userName} onChange={e => setUserName(e.target.value)} />
+                            <Textarea placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={3} value={userComment} onChange={e => setUserComment(e.target.value)} />
                             <div className="flex justify-between items-center bg-muted/50 p-2 rounded-md">
                                 <p className="font-medium text-sm">{dictionary.vehicleDetail.reviews.yourRating}</p>
-                                    <StarRating rating={userRating} onRatingChange={setUserRating} />
+                                <StarRating rating={userRating} onRatingChange={setUserRating} />
                             </div>
                             <Button onClick={handleSubmitReview} disabled={isSubmittingReview} className="w-full transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
                                 {isSubmittingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -366,3 +371,5 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
+
+    
