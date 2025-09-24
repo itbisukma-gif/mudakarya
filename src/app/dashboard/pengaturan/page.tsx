@@ -177,7 +177,17 @@ export default function PengaturanPage() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="maps">Embed URL Google Maps</Label>
+                        <Label htmlFor="mapsDirectionUrl">URL Titik Arah Google Maps</Label>
+                        <Input 
+                            id="mapsDirectionUrl" 
+                            value={contactInfo.mapsDirectionUrl || ''} 
+                            onChange={(e) => handleContactChange('mapsDirectionUrl', e.target.value)}
+                            placeholder="Contoh: https://maps.app.goo.gl/abcdef123456"
+                        />
+                        <p className="text-xs text-muted-foreground">Buka Google Maps > cari lokasi > klik 'Share' > 'Copy link'.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="maps">Embed URL Google Maps (untuk Tampilan Peta)</Label>
                         <Textarea 
                             id="maps" 
                             rows={4} 
@@ -185,7 +195,7 @@ export default function PengaturanPage() {
                             onChange={(e) => handleContactChange('maps', e.target.value)}
                             placeholder="Contoh: https://www.google.com/maps/embed?pb=..."
                         />
-                         <p className="text-xs text-muted-foreground">{'Buka Google Maps > Cari lokasi > Share > Pilih tab \'Embed a map\' > Salin HANYA URL (src) dari dalam kode iframe.'}</p>
+                         <p className="text-xs text-muted-foreground">{'Buka Google Maps > cari lokasi > 'Share' > pilih tab 'Embed a map' > salin HANYA URL (src) dari dalam kode iframe.'}</p>
                     </div>
                      {contactInfo.maps && contactInfo.maps.startsWith('https://') && (
                         <div className="space-y-2">

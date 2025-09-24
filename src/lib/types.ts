@@ -90,6 +90,7 @@ export type ContactInfo = {
     email: string;
     whatsapp: string;
     maps: string;
+    mapsDirectionUrl: string | null;
     instagram?: string | null;
     facebook?: string | null;
     twitter?: string | null;

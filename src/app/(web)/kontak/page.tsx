@@ -86,7 +86,7 @@ function KontakPageContent() {
     }
 
     const hasSocialMedia = contactInfo.instagram || contactInfo.facebook || contactInfo.twitter || contactInfo.tiktok || contactInfo.telegram;
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactInfo.address)}`;
+    const googleMapsUrl = contactInfo.mapsDirectionUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactInfo.address)}`;
 
 
     return (
