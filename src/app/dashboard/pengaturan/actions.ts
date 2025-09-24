@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 // Server Actions
 export async function updateContactInfo(data: ContactInfo) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { error: { message: "Supabase client not available." } };
+
     const { error } = await supabase.from('contact_info').update(data).eq('id', 1);
     if(error) return {error};
     revalidatePath('/dashboard/pengaturan');
@@ -17,6 +19,8 @@ export async function updateContactInfo(data: ContactInfo) {
 
 export async function updateTermsContent(data: TermsContent) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { error: { message: "Supabase client not available." } };
+
     const { error } = await supabase.from('terms_content').update(data).eq('id', 1);
     if(error) return {error};
     revalidatePath('/dashboard/pengaturan');

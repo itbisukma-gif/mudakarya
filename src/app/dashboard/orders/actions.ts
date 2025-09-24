@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache';
 
 export async function updateOrderStatus(orderId: string, status: 'pending' | 'disetujui' | 'tidak disetujui' | 'selesai' | 'dipesan') {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
+
     const { data, error } = await supabase
         .from('orders')
         .update({ status })
@@ -24,6 +26,8 @@ export async function updateOrderStatus(orderId: string, status: 'pending' | 'di
 
 export async function updateOrderDriver(orderId: string, driverName: string, driverId: string) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
+
     const { data, error } = await supabase
         .from('orders')
         .update({ driver: driverName, driverId: driverId })

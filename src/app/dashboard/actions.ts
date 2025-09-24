@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function upsertDriver(driverData: Omit<Driver, 'created_at'>) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
     const { data, error } = await supabase
         .from('drivers')
         .upsert(driverData, { onConflict: 'id' })
@@ -25,6 +26,7 @@ export async function upsertDriver(driverData: Omit<Driver, 'created_at'>) {
 
 export async function deleteDriver(driverId: string) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { error: { message: "Supabase client not available." } };
     
     const { error } = await supabase
         .from('drivers')
@@ -42,6 +44,7 @@ export async function deleteDriver(driverId: string) {
 
 export async function updateDriverStatus(driverId: string, status: 'Tersedia' | 'Bertugas') {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { error: { message: "Supabase client not available." } };
 
     const { error } = await supabase
         .from('drivers')

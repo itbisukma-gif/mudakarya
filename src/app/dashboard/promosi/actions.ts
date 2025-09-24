@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { data: null, error: { message: "Supabase client not available." } };
     
     // The image URL should already be a public Supabase URL, no upload logic here.
     const { data, error } = await supabase.from('promotions').upsert(promoData, { onConflict: 'id' }).select().single();
@@ -22,6 +23,7 @@ export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>) 
 
 export async function deletePromotion(promoId: string) {
     const supabase = createServiceRoleClient();
+    if (!supabase) return { error: { message: "Supabase client not available." } };
 
     const { data: itemData, error: fetchError } = await supabase.from('promotions').select('imageUrl').eq('id', promoId).single();
     if (fetchError) {
@@ -45,5 +47,3 @@ export async function deletePromotion(promoId: string) {
     revalidatePath('/');
     return { error: null };
 }
-
-    
