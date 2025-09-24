@@ -23,7 +23,7 @@ import { formatDistanceToNow, differenceInHours } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { createClient } from '@/utils/supabase/client';
 import { updateDriverStatus } from '../actions';
-import { updateVehicleStatus } from '../armada/actions';
+import { updateVehicleStatus, adjustVehicleStock } from '../armada/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { WhatsAppIcon } from '@/components/icons';
 import { updateOrderDriver, updateOrderStatus } from './actions';
@@ -65,30 +65,38 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
 
     const handleStatusChange = (newStatus: OrderStatus) => {
         startTransition(async () => {
+            const oldStatus = order.status;
             const { error: orderError } = await updateOrderStatus(order.id, newStatus);
             if (orderError) {
                 toast({ variant: 'destructive', title: 'Gagal Memperbarui Status', description: (orderError as Error).message });
                 return;
             }
 
-            if (newStatus === 'disetujui' && !order.isPartnerUnit) {
-                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'disewa');
-                 if (vehicleError) {
-                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
-                 }
-            } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && !order.isPartnerUnit) {
-                const { error: vehicleError } = await updateVehicleStatus(order.vehicleId, 'tersedia');
-                 if (vehicleError) {
-                    toast({ variant: 'destructive', title: 'Gagal Update Status Mobil', description: (vehicleError as Error).message });
-                 }
-
-                if (order.driverId) {
-                    const { error: driverError } = await updateDriverStatus(order.driverId, 'Tersedia');
-                    if (driverError) {
-                        toast({ variant: 'destructive', title: 'Gagal Update Status Driver', description: (driverError as Error).message });
-                    }
+            // Handle stock for special units
+            if (vehicle?.unitType === 'khusus') {
+                // If moving to a "booked" state from a "not booked" state
+                if ((newStatus === 'dipesan' || newStatus === 'disetujui') && (oldStatus === 'pending')) {
+                    await adjustVehicleStock(order.vehicleId, -1);
+                } 
+                // If moving from a "booked" state to a "finished" state
+                else if ((newStatus === 'selesai' || newStatus === 'tidak disetujui') && (oldStatus === 'dipesan' || oldStatus === 'disetujui')) {
+                     await adjustVehicleStock(order.vehicleId, 1);
+                }
+            } 
+            // Handle status for regular units
+            else if (!order.isPartnerUnit) {
+                 if (newStatus === 'disetujui') {
+                    await updateVehicleStatus(order.vehicleId, 'disewa');
+                } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && oldStatus === 'disetujui') {
+                    await updateVehicleStatus(order.vehicleId, 'tersedia');
                 }
             }
+
+            // Handle driver status update if order is finished/cancelled
+            if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
+                await updateDriverStatus(order.driverId, 'Tersedia');
+            }
+
 
             toast({ title: 'Status Diperbarui', description: `Status pesanan ${order.id} telah diubah.` });
             onDataChange();

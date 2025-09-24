@@ -37,7 +37,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   const { logoUrl } = useVehicleLogo(displayVehicle.brand);
 
-  const isOutOfStock = displayVehicle.unitType === 'khusus' && (!displayVehicle.stock || displayVehicle.stock <= 0);
+  const isOutOfStock = displayVehicle.unitType === 'khusus' && (displayVehicle.stock === null || displayVehicle.stock <= 0);
 
   const detailUrl = `/mobil/${displayVehicle.id}`;
 

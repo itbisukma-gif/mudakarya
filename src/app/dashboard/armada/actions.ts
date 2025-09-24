@@ -71,4 +71,31 @@ export async function updateVehicleStatus(vehicleId: string, status: 'tersedia' 
     return { error: null };
 }
 
+export async function adjustVehicleStock(vehicleId: string, adjustment: number) {
+    const supabase = createServiceRoleClient();
     
+    const { data: vehicle, error: fetchError } = await supabase.from('vehicles').select('stock').eq('id', vehicleId).single();
+
+    if (fetchError || !vehicle) {
+        console.error('Error fetching vehicle for stock adjustment:', fetchError);
+        return { error: fetchError || new Error('Vehicle not found') };
+    }
+    
+    const currentStock = vehicle.stock || 0;
+    const newStock = Math.max(0, currentStock + adjustment); // Ensure stock doesn't go below 0
+
+    const { error: updateError } = await supabase
+        .from('vehicles')
+        .update({ stock: newStock })
+        .eq('id', vehicleId);
+
+    if (updateError) {
+        console.error('Error adjusting vehicle stock:', updateError);
+        return { error: updateError };
+    }
+    
+    revalidatePath('/dashboard/armada');
+    revalidatePath('/dashboard/orders');
+    revalidatePath('/'); // Revalidate homepage to show updated stock
+    return { error: null };
+}

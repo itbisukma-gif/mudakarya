@@ -156,6 +156,12 @@ function HomePageContent() {
 
     const sortedFleet = useMemo(() => {
         return [...groupedAndFilteredFleet].sort((a, b) => {
+            const isAOutOfStock = a.unitType === 'khusus' && (a.stock ?? 0) <= 0;
+            const isBOutOfStock = b.unitType === 'khusus' && (b.stock ?? 0) <= 0;
+
+            if (isAOutOfStock && !isBOutOfStock) return 1;
+            if (!isAOutOfStock && isBOutOfStock) return -1;
+            
             if (!a.price || !b.price) return 0;
             switch (sortBy) {
                 case 'price-asc':
