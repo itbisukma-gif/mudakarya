@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
@@ -27,7 +28,7 @@ function PembayaranComponent() {
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-    const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
+    const [serviceCosts, setServiceCosts] = useState<{ driver: number, matic: number, fuel: number } | null>(null);
     
     const vehicleId = searchParams.get('vehicleId');
     const daysStr = searchParams.get('days');
@@ -138,7 +139,7 @@ function PembayaranComponent() {
             const { data: costsData, error: costsError } = await supabase.from('service_costs').select('*');
             if (costsError) {
                  toast({ variant: 'destructive', title: 'Gagal memuat harga layanan', description: costsError.message });
-            } else {
+            } else if (costsData) {
                  const costs = costsData.reduce((acc, item) => {
                     acc[item.name] = item.cost;
                     return acc;
@@ -165,7 +166,7 @@ function PembayaranComponent() {
         }
     }
     
-    if (isLoading || !vehicle) {
+    if (isLoading || !vehicle || !serviceCosts) {
         return <div className="flex h-screen items-center justify-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{dictionary.loading}...</div>;
     }
 

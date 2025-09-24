@@ -43,7 +43,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
     const { dictionary, language } = useLanguage();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-    const [serviceCosts, setServiceCosts] = useState({ driver: 0, matic: 0, fuel: 0 });
+    const [serviceCosts, setServiceCosts] = useState<{ driver: number, matic: number, fuel: number } | null>(null);
 
     const [activeTab, setActiveTab] = useState('direct');
     const [rentalDays, setRentalDays] = useState(1);
