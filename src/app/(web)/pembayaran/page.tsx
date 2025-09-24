@@ -18,7 +18,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/utils/supabase/client';
 import type { Vehicle } from '@/lib/types';
-import type { SupabaseClient } from '@supabase/js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
