@@ -44,41 +44,50 @@ export function InvoiceTemplate({ order, vehicle, rentalPeriod, isValidated = fa
                 <CardDescription>Order ID: <span className='font-mono'>{order.id}</span></CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4 space-y-2.5 text-sm">
-                    <div className="flex justify-between">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
+                    {/* General Info Section */}
+                    <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Status Pembayaran</span>
                         <Badge variant={getStatusVariant(displayStatus!)} className="capitalize">{displayStatus}</Badge>
                     </div>
-                     <div className="flex justify-between">
+                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Pelanggan</span>
                         <span className='font-medium'>{order.customerName}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Metode Pembayaran</span>
                         <span className='font-medium'>{order.paymentMethod}</span>
                     </div>
-                     <Separator />
-                     <h4 className='font-semibold pt-2'>Detail Sewa</h4>
-                     <div className="flex justify-between">
+                     
+                     <Separator className='my-3' />
+
+                     {/* Rental Details Section */}
+                     <h4 className='font-semibold'>Detail Sewa</h4>
+                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Kendaraan</span>
-                        <span className='font-medium'>{vehicle.brand} {vehicle.name}</span>
+                        <span className='font-medium text-right'>{vehicle.brand} {vehicle.name}</span>
                     </div>
-                     <div className="flex justify-between">
+                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Periode</span>
                         <span className='font-medium'>{rentalPeriod}</span>
                     </div>
-                     <div className="flex justify-between">
+                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Layanan</span>
-                        <span className='font-medium'>{order.service}</span>
+                        <span className='font-medium capitalize'>{order.service}</span>
                     </div>
-                    <Separator />
-                    <h4 className='font-semibold pt-2'>Rincian Biaya</h4>
-                     <div className="flex justify-between">
+
+                    <Separator className='my-3' />
+                    
+                    {/* Cost Details Section */}
+                    <h4 className='font-semibold'>Rincian Biaya</h4>
+                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Total Tagihan</span>
                         <span className='font-medium'>{formatCurrency(order.total || 0)}</span>
                     </div>
 
-                    <Separator className='my-2' />
+                    <Separator className='my-3' />
+
+                     {/* Grand Total Section */}
                      <div className="flex justify-between items-baseline pt-1">
                         <span className="text-base font-bold">Total Lunas</span>
                         <span className="text-xl font-bold text-primary">{formatCurrency(order.total || 0)}</span>
