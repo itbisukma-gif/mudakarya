@@ -1,6 +1,6 @@
+
 'use server';
 
-import { createClient } from '@/utils/supabase/client';
 import { createServiceRoleClient } from '@/utils/supabase/server';
 import type { ContactInfo, TermsContent } from "@/lib/types";
 import { revalidatePath } from "next/cache";
