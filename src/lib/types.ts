@@ -1,4 +1,5 @@
 
+
 export type Driver = {
   id: string;
   created_at?: string;
@@ -27,6 +28,8 @@ export type Vehicle = {
   unitType: 'biasa' | 'khusus' | null;
   stock: number | null;
   status: 'tersedia' | 'dipesan' | 'disewa' | null;
+  view_count?: number;
+  booked_count?: number;
 }
 
 export type Testimonial = {

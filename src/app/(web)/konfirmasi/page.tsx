@@ -24,6 +24,7 @@ import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { updateVehicleStatus } from "@/app/dashboard/armada/actions";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
+import { incrementBookedCount } from "@/app/actions/vehicle-stats";
 
 async function fileToDataUri(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -371,6 +372,9 @@ function KonfirmasiComponent() {
             if (!isPartnerUnit) {
                 await updateVehicleStatus(finalVehicleId, 'dipesan');
             }
+
+            // Increment booked count (fire-and-forget)
+            await incrementBookedCount(vehicle.id);
 
             setUploadSuccess(true);
         } catch (error) {

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { notFound, useParams, useRouter } from 'next/navigation';
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { UserCircle, Tag, Cog, Users, Fuel, Calendar, CheckCircle, Image as ImageIcon, Loader2, Eye, ShoppingCart } from 'lucide-react';
 import type { Vehicle, Testimonial, GalleryItem } from "@/lib/types";
 import {
   Carousel,
@@ -34,6 +35,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { upsertTestimonial } from '@/app/dashboard/testimoni/actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { incrementViewCount } from '@/app/actions/vehicle-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,10 +81,11 @@ function VehicleDetail() {
   }, []);
   
   useEffect(() => {
-    if (!supabase) return;
-
     const vehicleId = params.id as string;
-    if (!vehicleId) return;
+    if (!supabase || !vehicleId) return;
+
+    // Increment view count, fire-and-forget
+    incrementViewCount(vehicleId);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -210,6 +213,16 @@ function VehicleDetail() {
             <p className="text-base font-light text-muted-foreground">{representativeVehicle.brand}</p>
             <h1 className="text-3xl font-bold tracking-tight -mt-1">{representativeVehicle.name}</h1>
             <StarRating rating={representativeVehicle.rating || 0} totalReviews={testimonials.length} />
+             <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
+                <div className="flex items-center gap-1.5">
+                    <Eye className="h-4 w-4"/>
+                    <span>Dilihat {vehicle?.view_count || 0} kali</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <ShoppingCart className="h-4 w-4"/>
+                    <span>Dipesan {vehicle?.booked_count || 0} kali</span>
+                </div>
+            </div>
           </div>
           
           <Card>
