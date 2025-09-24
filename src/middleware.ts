@@ -1,36 +1,35 @@
 
 import { NextResponse, type NextRequest } from "next/server";
+import { createClient } from "@/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  const { supabase, response } = createClient(request);
+
+  // Refresh session if expired - required for Server Components
+  // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { pathname } = request.nextUrl;
 
-  // 1. Get session from the manual cookie
-  const sessionCookie = request.cookies.get("session");
-  const hasSession = !!sessionCookie;
-
-  // 2. Define protected routes
-  const protectedRoutes = ["/dashboard"];
+  // Define protected routes
+  const protectedRoutes = ["/dashboard", "/invoice/[id]"]; // Invoice page is also protected
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
-  // 3. Redirect to login if trying to access protected route without session
-  if (isProtectedRoute && !hasSession) {
+  // Redirect to login if trying to access protected route without session
+  if (isProtectedRoute && !session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 4. Redirect to dashboard if logged in and trying to access login page
-  if (hasSession && pathname.startsWith("/login")) {
+  // Redirect to dashboard if logged in and trying to access login page
+  if (session && pathname.startsWith("/login")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
-  // 5. Handle logout: delete cookie and redirect to login
-  if (pathname === "/logout") {
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.set("session", "", { expires: new Date(0), path: '/' });
-    return response;
-  }
-
-  // 6. If none of the above, allow the request to proceed
-  return NextResponse.next();
+  
+  // The logout route is now a server-side route handler
+  
+  return response;
 }
 
 export const config = {
