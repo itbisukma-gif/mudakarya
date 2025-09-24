@@ -15,6 +15,7 @@ import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { updateContactInfo, updateTermsContent } from './actions';
+import Image from 'next/image';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +75,7 @@ export default function PengaturanPage() {
     fetchData();
   }, [toast, supabase]);
    
-   const handleContactChange = (field: keyof Omit<ContactInfo, SocialPlatformKey>, value: string) => {
+   const handleContactChange = (field: keyof Omit<ContactInfo, SocialPlatformKey | 'id'>, value: string) => {
     setContactInfo(prev => prev ? ({ ...prev, [field]: value }) : null);
    }
    
