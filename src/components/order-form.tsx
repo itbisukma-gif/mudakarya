@@ -209,6 +209,9 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         if (driverId) {
             params.append('driverId', driverId);
         }
+        if (discountAmount > 0) {
+            params.append('discount', String(discountAmount));
+        }
 
         return `/pembayaran?${params.toString()}`;
 
@@ -402,3 +405,5 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     );
 });
 OrderForm.displayName = 'OrderForm';
+
+    

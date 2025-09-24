@@ -108,11 +108,20 @@ function VehicleDetail() {
 
         const { data: otherVehiclesData } = await supabase
           .from('vehicles')
-          .select('*')
-          .neq('brand', vehicleData.brand)
+          .select()
           .neq('name', vehicleData.name)
-          .limit(6);
-        setOtherVehicles(otherVehiclesData || []);
+          .limit(10);
+        
+        // Post-process to get unique recommendations by name
+        if (otherVehiclesData) {
+            const uniqueRecs = otherVehiclesData.reduce((acc, current) => {
+                if (!acc.some(item => item.name === current.name)) {
+                    acc.push(current);
+                }
+                return acc;
+            }, [] as Vehicle[]);
+            setOtherVehicles(uniqueRecs.slice(0, 6));
+        }
 
         const vehicleFullName = `${vehicleData.brand} ${vehicleData.name}`;
 
@@ -379,3 +388,5 @@ export default function MobilDetailPage() {
         <VehicleDetail />
     );
 }
+
+    
