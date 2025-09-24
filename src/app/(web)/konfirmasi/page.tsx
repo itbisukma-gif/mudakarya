@@ -348,8 +348,6 @@ function KonfirmasiComponent() {
                 id: orderId,
                 customerName: customerName,
                 customerPhone: customerPhone,
-                carBrand: vehicle.brand,
-                carName: vehicle.name,
                 type: vehicle.type,
                 fuel: vehicle.fuel,
                 transmission: vehicle.transmission,

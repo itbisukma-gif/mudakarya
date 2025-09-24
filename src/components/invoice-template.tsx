@@ -5,10 +5,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/icons';
 import { UserCheck } from 'lucide-react';
-import type { Order } from '@/lib/types';
+import type { Order, Vehicle } from '@/lib/types';
 
 interface InvoiceTemplateProps {
     order: Order;
+    vehicle: Vehicle;
     rentalPeriod: string;
     isValidated?: boolean;
 }
@@ -26,7 +27,7 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
     }
 }
 
-export function InvoiceTemplate({ order, rentalPeriod, isValidated = false }: InvoiceTemplateProps) {
+export function InvoiceTemplate({ order, vehicle, rentalPeriod, isValidated = false }: InvoiceTemplateProps) {
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
     
@@ -60,7 +61,7 @@ export function InvoiceTemplate({ order, rentalPeriod, isValidated = false }: In
                      <h4 className='font-semibold pt-2'>Detail Sewa</h4>
                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Kendaraan</span>
-                        <span className='font-medium'>{order.carName}</span>
+                        <span className='font-medium'>{vehicle.brand} {vehicle.name}</span>
                     </div>
                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Periode</span>

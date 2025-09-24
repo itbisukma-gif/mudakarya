@@ -10,7 +10,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Send, Eye, Share, CheckCircle, Car, ShieldCheck, Clock, AlertTriangle, Loader2, Users } from "lucide-react";
 import Link from "next/link";
-import type { Driver, Order, OrderStatus } from '@/lib/types';
+import type { Driver, Order, OrderStatus, Vehicle } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +44,7 @@ const getStatusInfo = (status: OrderStatus | null) => {
     }
 }
 
-function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Driver[], onDataChange: () => void }) {
+function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, drivers: Driver[], vehicle: Vehicle | undefined, onDataChange: () => void }) {
     const { toast } = useToast();
     const [isClient, setIsClient] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -162,10 +162,12 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                     </div>
                      <Badge variant="outline" className={cn("capitalize text-xs", statusInfo.className)}>{statusInfo.label}</Badge>
                 </div>
-                <div className="flex items-center gap-2 pt-3 text-sm text-muted-foreground">
-                    <Car className="h-4 w-4" />
-                    <span>{order.carBrand} {order.carName}</span>
-                </div>
+                {vehicle && (
+                  <div className="flex items-center gap-2 pt-3 text-sm text-muted-foreground">
+                      <Car className="h-4 w-4" />
+                      <span>{vehicle.brand} {vehicle.name}</span>
+                  </div>
+                )}
             </CardHeader>
             <CardContent className="flex-grow space-y-4">
                  {needsAttention && (
@@ -177,12 +179,12 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
                         </AlertDescription>
                     </Alert>
                 )}
-                 {order.isPartnerUnit && order.status === 'pending' && (
+                 {order.isPartnerUnit && order.status === 'pending' && vehicle && (
                     <Alert className="bg-blue-50 border-blue-200 text-blue-800 [&>svg]:text-blue-600">
                         <Users className="h-4 w-4" />
                         <AlertTitle className="font-semibold">Unit Mitra</AlertTitle>
                         <AlertDescription className="text-blue-700">
-                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{order.carBrand} {order.carName} ({order.transmission}, {order.fuel})</span>.
+                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{vehicle.brand} {vehicle.name} ({vehicle.transmission}, {vehicle.fuel})</span>.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -325,6 +327,7 @@ function OrderCard({ order, drivers, onDataChange }: { order: Order, drivers: Dr
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
@@ -334,18 +337,16 @@ export default function OrdersPage() {
         setIsLoading(true);
         const { data: orderData, error: orderError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data: driverData, error: driverError } = await supabase.from('drivers').select('*');
+        const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
 
-        if (orderError) {
-            toast({ variant: 'destructive', title: 'Gagal mengambil data pesanan', description: orderError.message });
-        } else {
-            setOrders(orderData || []);
-        }
+        if (orderError) toast({ variant: 'destructive', title: 'Gagal mengambil data pesanan', description: orderError.message });
+        else setOrders(orderData || []);
+        
+        if (driverError) toast({ variant: 'destructive', title: 'Gagal mengambil data driver', description: driverError.message });
+        else setDrivers(driverData || []);
 
-        if (driverError) {
-            toast({ variant: 'destructive', title: 'Gagal mengambil data driver', description: driverError.message });
-        } else {
-            setDrivers(driverData || []);
-        }
+        if (vehicleError) toast({ variant: 'destructive', title: 'Gagal mengambil data kendaraan', description: vehicleError.message });
+        else setVehicles(vehicleData || []);
 
         setIsLoading(false);
     }, [supabase, toast])
@@ -369,6 +370,13 @@ export default function OrdersPage() {
         }
     }, [orders]);
     
+    const ordersWithVehicles = useMemo(() => {
+        return orders.map(order => {
+            const vehicle = vehicles.find(v => v.id === order.vehicleId);
+            return { order, vehicle };
+        })
+    }, [orders, vehicles]);
+
     if (isLoading) {
         return (
             <div className="flex flex-col gap-8">
@@ -425,6 +433,7 @@ export default function OrdersPage() {
                     key={order.id} 
                     order={order}
                     drivers={drivers}
+                    vehicle={vehicles.find(v => v.id === order.vehicleId)}
                     onDataChange={fetchOrderData}
                    />
                 ))}
@@ -444,6 +453,7 @@ export default function OrdersPage() {
                     key={order.id} 
                     order={order}
                     drivers={drivers}
+                    vehicle={vehicles.find(v => v.id === order.vehicleId)}
                     onDataChange={fetchOrderData}
                    />
                 ))}
@@ -463,6 +473,7 @@ export default function OrdersPage() {
                     key={order.id} 
                     order={order}
                     drivers={drivers}
+                    vehicle={vehicles.find(v => v.id === order.vehicleId)}
                     onDataChange={fetchOrderData}
                    />
                 ))}

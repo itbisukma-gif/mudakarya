@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Order, BankAccount } from "@/lib/types";
+import type { Order, BankAccount, Vehicle } from "@/lib/types";
 import { Download, FileText, Trash2, Loader2, Upload } from "lucide-react";
 import Image from "next/image";
 import { Combobox } from '@/components/ui/combobox';
@@ -29,6 +29,7 @@ type BankNameKey = keyof typeof logos;
 
 export default function KeuanganPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingPrices, startPriceSaveTransition] = useTransition();
   const [isSavingAccount, startAccountSaveTransition] = useTransition();
@@ -60,6 +61,13 @@ export default function KeuanganPage() {
         toast({ variant: 'destructive', title: 'Gagal memuat data keuangan', description: orderError.message });
     } else {
         setOrders(orderData || []);
+    }
+    
+    const { data: vehicleData, error: vehicleError } = await supabase.from('vehicles').select('*');
+    if (vehicleError) {
+      toast({ variant: 'destructive', title: 'Gagal memuat data kendaraan' });
+    } else {
+      setVehicles(vehicleData || []);
     }
 
     const { data: costData, error: costError } = await getServiceCosts();
@@ -94,17 +102,20 @@ export default function KeuanganPage() {
   }, [supabase]);
 
 
-  const financialReport = orders.map((order, index) => ({
-      no: index + 1,
-      orderNo: order.id,
-      unit: order.carName,
-      service: order.service,
-      transmission: order.transmission,
-      payment: order.paymentMethod,
-      driver: order.driver || "-",
-      total: order.total,
-      status: order.status
-  }));
+  const financialReport = orders.map((order, index) => {
+      const vehicle = vehicles.find(v => v.id === order.vehicleId);
+      return {
+          no: index + 1,
+          orderNo: order.id,
+          unit: vehicle ? `${vehicle.brand} ${vehicle.name}` : 'N/A',
+          service: order.service,
+          transmission: order.transmission,
+          payment: order.paymentMethod,
+          driver: order.driver || "-",
+          total: order.total,
+          status: order.status
+      }
+  });
 
   const handleDownloadXLSX = async () => {
     if (financialReport.length === 0) {
@@ -208,7 +219,7 @@ export default function KeuanganPage() {
       const bankDetails = bankList.find(b => b.value === selectedBank);
       if (!bankDetails) return;
 
-      const newAccount: Omit<BankAccount, 'id'> = {
+      const newAccount: Omit<BankAccount, 'id' | 'created_at'> = {
           bankName: bankDetails.label,
           accountNumber,
           accountName,

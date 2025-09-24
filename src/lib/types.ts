@@ -55,6 +55,7 @@ export type FeatureItem = {
 
 export type BankAccount = {
     id?: number;
+    created_at?: string;
     bankName: string;
     accountNumber: string;
     accountName: string;
@@ -67,8 +68,6 @@ export type Order = {
   id: string;
   customerName: string | null;
   customerPhone: string | null;
-  carBrand: string | null;
-  carName: string | null;
   type: string | null;
   fuel: string | null;
   transmission: 'Manual' | 'Matic' | null;
@@ -112,3 +111,4 @@ export type Promotion = {
     imageUrl: string;
     vehicleId?: string | null;
 };
+
