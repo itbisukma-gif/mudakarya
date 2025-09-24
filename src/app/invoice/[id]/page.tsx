@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/utils/supabase/client';
-import type { Order } from '@/lib/types';
+import type { Order, Vehicle } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -28,6 +28,7 @@ function InvoiceComponent() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [order, setOrder] = useState<Order | null>(null);
+    const [vehicle, setVehicle] = useState<Vehicle | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const startDateStr = searchParams.get('startDate');
@@ -62,6 +63,8 @@ function InvoiceComponent() {
                     notFound();
                 } else {
                     setOrder(data);
+                    const { data: vehicleData } = await supabase.from('vehicles').select('*').eq('id', data.vehicleId).single();
+                    setVehicle(vehicleData);
                 }
                 setIsLoading(false);
             }
@@ -133,7 +136,7 @@ function InvoiceComponent() {
         );
     }
     
-    if (!order) {
+    if (!order || !vehicle) {
         notFound();
     }
     
@@ -162,7 +165,7 @@ function InvoiceComponent() {
     return (
         <div className="w-full max-w-md">
             <div id="invoice-pdf-container">
-                 <InvoiceTemplate order={order} rentalPeriod={formattedRentalPeriod} isValidated={isAdmin} />
+                 <InvoiceTemplate order={order} vehicle={vehicle} rentalPeriod={formattedRentalPeriod} isValidated={isAdmin} />
             </div>
 
             <div className='flex flex-col gap-2 mt-4'>
