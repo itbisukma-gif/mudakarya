@@ -81,11 +81,13 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             return rentalDays > 0 ? rentalDays : 1;
         }
         if (activeTab === 'reservation' && startDate && endDate) {
-            const diff = differenceInCalendarDays(endDate, startDate);
+            // Ensure end date is inclusive by adding 1 day to the difference
+            const diff = differenceInCalendarDays(endDate, startDate) + 1;
             return diff >= 1 ? diff : 1;
         }
         return 1;
     }, [startDate, endDate, rentalDays, activeTab]);
+
 
     const debouncedStartDate = useDebounce(startDate, 500);
     const debouncedEndDate = useDebounce(endDate, 500);
@@ -141,10 +143,14 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         }
 
         startAvailabilityCheck(async () => {
+             // Convert local start/end date to UTC string for Supabase (TIMESTAMPTZ)
+            const startISO = debouncedStartDate.toISOString();
+            const endISO = debouncedEndDate.toISOString();
+            
             const { data, error } = await checkVehicleAvailability(
                 selectedVehicle.id,
-                debouncedStartDate.toISOString(),
-                debouncedEndDate.toISOString()
+                startISO,
+                endISO
             );
 
             if (error) {
@@ -330,7 +336,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                                         mode="single"
                                         selected={endDate}
                                         onSelect={handleEndDateChange}
-                                        disabled={startDate ? { before: addDays(startDate,1) } : { before: startOfDay(new Date()) }}
+                                        disabled={startDate ? { before: startDate } : { before: startOfDay(new Date()) }}
                                         initialFocus
                                         locale={locale}
                                     />

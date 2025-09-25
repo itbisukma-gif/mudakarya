@@ -254,8 +254,11 @@ function KonfirmasiComponent() {
     const formattedRentalPeriod = useMemo(() => {
         if (startDateStr && endDateStr) {
             try {
+                // The date strings are in UTC (ISO format), so parse them as such
                 const start = parseISO(startDateStr);
                 const end = parseISO(endDateStr);
+
+                // Format them for display in the local (Indonesian) time
                 const locale = id;
                 return `${format(start, 'd LLL yy', { locale })} - ${format(end, 'd LLL yy', { locale })}`;
             } catch (error) {
@@ -266,6 +269,7 @@ function KonfirmasiComponent() {
         const days = searchParams.get('days') || '1';
         return `${days} ${dictionary.confirmation.days}`;
     }, [startDateStr, endDateStr, searchParams, dictionary]);
+
     
     const invoiceUrl = useMemo(() => {
         let url = `/invoice/${orderId}/share`;
