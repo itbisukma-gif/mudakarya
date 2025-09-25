@@ -22,7 +22,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { VehicleCard } from '@/components/vehicle-card';
 import { useRef, useState, useEffect, useMemo } from 'react';
@@ -178,7 +178,7 @@ function VehicleDetail() {
   
   const hasDiscount = representativeVehicle.discountPercentage && representativeVehicle.discountPercentage > 0;
   const discountedPrice = (hasDiscount && representativeVehicle.price && representativeVehicle.discountPercentage)
-    ? representativeVehicle.price * (1 - representativeVehicle.discountPercentage / 100)
+    ? representativeVehicle.price * (1 - (representativeVehicle.discountPercentage / 100))
     : representativeVehicle.price;
 
   const vehicleDetails = [
@@ -358,7 +358,13 @@ function VehicleDetail() {
                                                     />
                                                 </div>
                                             </DialogTrigger>
-                                            <DialogContent className="p-0 border-0 max-w-4xl">
+                                            <DialogContent className="max-w-4xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>Pratinjau Gambar</DialogTitle>
+                                                    <DialogDescription>
+                                                        {photo.vehicleName || `${representativeVehicle.brand} ${representativeVehicle.name}`}
+                                                    </DialogDescription>
+                                                </DialogHeader>
                                                 <div className="relative aspect-[4/3]">
                                                     <Image
                                                         src={photo.url}

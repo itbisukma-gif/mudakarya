@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { StarRating } from "@/components/star-rating";
 import { FeaturesSection } from "@/components/features-section";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 export const dynamic = 'force-dynamic';
 
@@ -118,7 +118,13 @@ function TestimonialsPageContent() {
                                                 </div>
                                             </div>
                                         </DialogTrigger>
-                                        <DialogContent className="p-0 border-0 max-w-4xl">
+                                        <DialogContent className="max-w-4xl">
+                                             <DialogHeader>
+                                                <DialogTitle>Pratinjau Gambar</DialogTitle>
+                                                <DialogDescription>
+                                                    {photo.vehicleName || "Momen pelanggan bersama MudaKarya RentCar"}
+                                                </DialogDescription>
+                                             </DialogHeader>
                                              <div className="relative aspect-[4/3]">
                                                 <Image
                                                     src={photo.url}
