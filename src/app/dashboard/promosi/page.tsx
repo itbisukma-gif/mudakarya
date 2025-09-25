@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, ChangeEvent, useRef, useEffect, useTransition, useCallback } from 'react';
+import { useState, ChangeEvent, useRef, useEffect, useTransition, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Autoplay from "embla-carousel-autoplay"
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,7 @@ import { cn } from "@/lib/utils";
 import type { Promotion, Vehicle } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@/utils/supabase/client';
-import { upsertVehicle } from '../armada/actions';
-import { upsertPromotion, deletePromotion } from './actions';
+import { deletePromotion, upsertPromotion } from './actions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSignedUploadUrl } from '@/app/actions/upload-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,8 +38,19 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [vehicleId, setVehicleId] = useState<string | undefined>(promotion?.vehicleId || undefined);
     
+    // Find the representative variant for discount display
     const initialVehicle = vehicles.find(v => v.id === promotion?.vehicleId);
     const [discount, setDiscount] = useState<number | undefined>(initialVehicle?.discountPercentage || undefined);
+    
+    // When a vehicle is selected, set the discount value from that vehicle group
+    useEffect(() => {
+        if (vehicleId && vehicleId !== 'none') {
+            const selected = vehicles.find(v => v.id === vehicleId);
+            setDiscount(selected?.discountPercentage || undefined);
+        } else {
+            setDiscount(undefined);
+        }
+    }, [vehicleId, vehicles]);
 
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -102,41 +112,37 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 vehicleId: vehicleId === 'none' ? undefined : vehicleId,
             };
 
-            const promoResult = await upsertPromotion(promoData);
+            const promoResult = await upsertPromotion(promoData, discount, vehicles);
 
             if (promoResult.error) {
                 toast({ variant: 'destructive', title: 'Gagal Menyimpan Promosi', description: promoResult.error.message });
                 return;
             }
-
-            // Apply discount to the selected vehicle
-            if (vehicleId && vehicleId !== 'none') {
-                const vehicleToUpdate = vehicles.find(v => v.id === vehicleId);
-                if (vehicleToUpdate) {
-                    const updatedVehicle: Vehicle = { ...vehicleToUpdate, discountPercentage: discount || null };
-                    const vehicleResult = await upsertVehicle(updatedVehicle);
-                     if (vehicleResult.error) {
-                        toast({ variant: 'destructive', title: 'Gagal Apply Diskon', description: `Promosi disimpan, tapi gagal menerapkan diskon ke kendaraan. ${vehicleResult.error.message}` });
-                     }
-                }
-            }
             
-            // Remove discount from old vehicle if it was changed
-            if (promotion?.vehicleId && promotion.vehicleId !== vehicleId) {
-                 const oldVehicle = vehicles.find(v => v.id === promotion.vehicleId);
-                 if(oldVehicle) {
-                    const updatedOldVehicle: Vehicle = { ...oldVehicle, discountPercentage: null };
-                    await upsertVehicle(updatedOldVehicle);
-                 }
-            }
-
             toast({ title: "Promosi Disimpan" });
             onSave();
         });
     };
+    
+    // We only want to show one entry per car model in the dropdown.
+    const uniqueVehicles = useMemo(() => {
+        const unique = new Map<string, Vehicle>();
+        vehicles.forEach(v => {
+            const key = `${v.brand}|${v.name}`;
+            if (!unique.has(key)) {
+                unique.set(key, v);
+            }
+        });
+        return Array.from(unique.values());
+    }, [vehicles]);
+
 
     return (
         <>
+             <DialogHeader className="p-6 pb-0">
+                <DialogTitle>{promotion ? "Edit Promosi" : "Tambahkan Promosi Baru"}</DialogTitle>
+                <DialogDescription>{promotion ? "Perbarui detail promosi di bawah ini." : "Isi detail promosi untuk slider di halaman utama."}</DialogDescription>
+            </DialogHeader>
             <div className="max-h-[70vh] overflow-y-auto px-1 pr-4">
                 <div className="grid gap-6 py-4 px-6">
                     <div className="space-y-2">
@@ -156,7 +162,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">Tidak ada (Promo Umum)</SelectItem>
-                                    {vehicles.map((vehicle) => (
+                                    {uniqueVehicles.map((vehicle) => (
                                         <SelectItem key={vehicle.id} value={vehicle.id}>
                                             {vehicle.brand} {vehicle.name}
                                         </SelectItem>
@@ -165,7 +171,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="discount">Diskon (%)</Label>
+                            <Label htmlFor="discount">Diskon (%) untuk {vehicles.find(v => v.id === vehicleId)?.name || 'Mobil'}</Label>
                             <Input 
                                 id="discount" 
                                 type="number"
@@ -174,7 +180,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                                 placeholder="cth. 25" 
                                 disabled={!vehicleId || vehicleId === 'none'}
                             />
-                            {(!vehicleId || vehicleId === 'none') && <p className="text-xs text-muted-foreground">Pilih mobil untuk mengaktifkan diskon.</p>}
+                            {(!vehicleId || vehicleId === 'none') && <p className="text-xs text-muted-foreground">Pilih mobil untuk mengatur diskon.</p>}
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -294,7 +300,7 @@ export default function PromosiPage() {
     const fetchData = useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
         const [promoRes, vehicleRes] = await Promise.all([
-            supabaseClient.from('promotions').select('*'),
+            supabaseClient.from('promotions').select('*').order('created_at', { ascending: false }),
             supabaseClient.from('vehicles').select('*')
         ]);
 
@@ -333,21 +339,11 @@ export default function PromosiPage() {
 
     const handleDelete = (promo: Promotion) => {
         startDeleteTransition(async () => {
-            const result = await deletePromotion(promo.id);
+            const result = await deletePromotion(promo, vehicles);
             if (result.error) {
                 toast({ variant: 'destructive', title: 'Gagal menghapus promosi', description: result.error.message });
                 return;
             }
-
-            // Also remove discount from vehicle if it was linked
-            if (promo.vehicleId) {
-                const vehicleToUpdate = vehicles.find(v => v.id === promo.vehicleId);
-                if(vehicleToUpdate) {
-                    const updatedVehicle = { ...vehicleToUpdate, discountPercentage: null };
-                    await upsertVehicle(updatedVehicle);
-                }
-            }
-
             toast({ title: "Promosi Dihapus" });
             if (supabase) fetchData(supabase);
         });
@@ -358,9 +354,6 @@ export default function PromosiPage() {
         setSelectedPromo(null);
         if (supabase) fetchData(supabase);
     };
-
-    const dialogTitle = selectedPromo ? "Edit Promosi" : "Tambahkan Promosi Baru";
-    const dialogDescription = selectedPromo ? "Perbarui detail promosi di bawah ini." : "Isi detail promosi untuk slider di halaman utama.";
 
     const discountPromos = promotions.filter(p => p.vehicleId);
     const generalSliders = promotions.filter(p => !p.vehicleId);
@@ -478,10 +471,6 @@ export default function PromosiPage() {
 
             <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
                 <DialogContent className="sm:max-w-2xl p-0">
-                    <DialogHeader className="p-6 pb-0">
-                        <DialogTitle>{dialogTitle}</DialogTitle>
-                        <DialogDescription>{dialogDescription}</DialogDescription>
-                    </DialogHeader>
                     <PromotionForm 
                         promotion={selectedPromo}
                         vehicles={vehicles}
@@ -493,5 +482,3 @@ export default function PromosiPage() {
         </div>
     );
 }
-
-    
