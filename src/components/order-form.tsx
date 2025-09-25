@@ -394,5 +394,3 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     );
 });
 OrderForm.displayName = 'OrderForm';
-
-    
