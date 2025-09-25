@@ -247,7 +247,7 @@ function KonfirmasiComponent() {
     const [selectedBankId, setSelectedBankId] = useState<string | undefined>(undefined);
     const [isSavingOrder, setIsSavingOrder] = useState(false);
     const [finalVehicleId, setFinalVehicleId] = useState<string | null>(null);
-    const [isPartnerUnit, setIsPartnerUnit] = useState(false);
+    const [isPartnerOrder, setIsPartnerOrder] = useState(false);
 
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
@@ -313,7 +313,7 @@ function KonfirmasiComponent() {
                 if (isPartnerUnitParam) {
                     // If the booked unit is a "unit khusus" (special/partner), lock it to that specific unit.
                     setFinalVehicleId(vehicleData.id);
-                    setIsPartnerUnit(true);
+                    setIsPartnerOrder(true);
                 } else {
                     // If the booked unit is a "unit biasa" (regular), find any available regular unit of the same model.
                     const { data: availableUnit } = await supabase
@@ -330,7 +330,7 @@ function KonfirmasiComponent() {
 
                     if (availableUnit) {
                         setFinalVehicleId(availableUnit.id);
-                        setIsPartnerUnit(false);
+                        setIsPartnerOrder(false);
                     } else {
                         // If no regular unit is available, fall back to a partner unit of the same model if available
                         const { data: partnerFallbackUnit } = await supabase
@@ -347,7 +347,7 @@ function KonfirmasiComponent() {
                         
                         if (partnerFallbackUnit) {
                             setFinalVehicleId(partnerFallbackUnit.id);
-                            setIsPartnerUnit(true);
+                            setIsPartnerOrder(true);
                         } else {
                             // If no units are available at all, show an error (handled by disabled button)
                             // and potentially lock the original vehicle ID to show the correct details
@@ -385,7 +385,7 @@ function KonfirmasiComponent() {
                 status: 'pending',
                 paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
                 total: Number(total),
-                isPartnerUnit: isPartnerUnit,
+                isPartnerUnit: isPartnerOrder,
             };
 
             const { error: insertError } = await supabase.from('orders').insert(newOrder);
@@ -394,13 +394,12 @@ function KonfirmasiComponent() {
                 throw new Error(insertError.message);
             }
 
-            if (isPartnerUnit) {
-                // For partner units, decrement stock
+            if (isPartnerOrder) {
+                // For special units, decrement stock and set status
                 await adjustVehicleStock(finalVehicleId, -1);
-            } else {
-                // For regular units, change status to 'dipesan'
-                await updateVehicleStatus(finalVehicleId, 'dipesan');
             }
+            // Always set status to 'dipesan' for any booked unit
+            await updateVehicleStatus(finalVehicleId, 'dipesan');
 
 
             // Increment booked count (fire-and-forget)

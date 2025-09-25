@@ -66,7 +66,6 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
     const handleStatusChange = (newStatus: OrderStatus) => {
         startTransition(async () => {
             const oldStatus = order.status;
-            const isBookingState = (s: OrderStatus | null) => s === 'dipesan' || s === 'disetujui';
             
             const { error: orderError } = await updateOrderStatus(order.id, newStatus);
             if (orderError) {
@@ -74,20 +73,24 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
                 return;
             }
 
-            // Handle stock and status changes
-            if (vehicle?.unitType === 'khusus' && isBookingState(oldStatus) && !isBookingState(newStatus)) {
-                // If moving from a "booked" state to a "finished/cancelled" state, restore stock
-                 await adjustVehicleStock(order.vehicleId, 1);
-            }
-            
-            if (!order.isPartnerUnit) {
+            // Handle Vehicle Status and Stock Changes
+            if (order.isPartnerUnit) {
+                if (newStatus === 'disetujui') {
+                     await updateVehicleStatus(order.vehicleId, 'disewa');
+                } else if (newStatus === 'selesai' || newStatus === 'tidak disetujui') {
+                    // Restore stock for partner unit
+                    await adjustVehicleStock(order.vehicleId, 1);
+                    await updateVehicleStatus(order.vehicleId, 'tersedia');
+                }
+            } else { // Regular unit
                  if (newStatus === 'disetujui') {
                     await updateVehicleStatus(order.vehicleId, 'disewa');
-                } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && oldStatus === 'disetujui') {
+                } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && (oldStatus === 'disetujui' || oldStatus === 'dipesan')) {
                     await updateVehicleStatus(order.vehicleId, 'tersedia');
                 }
             }
             
+            // Handle Driver Status
             if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
                 await updateDriverStatus(order.driverId, 'Tersedia');
             }
@@ -186,7 +189,7 @@ ${assignmentUrl}`;
                         </AlertDescription>
                     </Alert>
                 )}
-                 {order.isPartnerUnit && order.status === 'pending' && vehicle && (
+                 {order.isPartnerUnit && vehicle?.unitType !== 'khusus' && order.status === 'pending' && vehicle && (
                     <Alert className="bg-blue-50 border-blue-200 text-blue-800 [&>svg]:text-blue-600">
                         <Users className="h-4 w-4" />
                         <AlertTitle className="font-semibold">Unit Mitra</AlertTitle>
@@ -249,14 +252,14 @@ ${assignmentUrl}`;
                             Bukti Bayar
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                        <DialogHeader>
+                    <DialogContent className="max-w-md p-0">
+                        <DialogHeader className='p-6 pb-4'>
                             <DialogTitle>Bukti Pembayaran</DialogTitle>
                             <DialogDescription>
                                 Order ID: {order.id}
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="relative mt-4 aspect-video w-full">
+                        <div className="relative mt-0 aspect-video w-full p-6 pt-0">
                         {order.paymentProof ? (
                            <Image 
                                 src={order.paymentProof} 

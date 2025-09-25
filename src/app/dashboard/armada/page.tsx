@@ -274,7 +274,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
                 price: Number(data.price),
                 year: data.year ? Number(data.year) : null,
                 passengers: data.passengers ? Number(data.passengers) : null,
-                stock: data.unitType === 'khusus' ? Number(data.stock) : null,
+                stock: data.unitType === 'khusus' ? Number(data.stock) : 0,
                 rating: data.rating || 5,
                 discountPercentage: data.discountPercentage || null,
                 status: data.status || 'tersedia',
