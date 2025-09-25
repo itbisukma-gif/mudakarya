@@ -42,15 +42,30 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
     const initialVehicle = vehicles.find(v => v.id === promotion?.vehicleId);
     const [discount, setDiscount] = useState<number | undefined>(initialVehicle?.discountPercentage || undefined);
     
-    // When a vehicle is selected, set the discount value from that vehicle group
+    // We only want to show one entry per car model in the dropdown.
+    const uniqueVehicles = useMemo(() => {
+        const unique = new Map<string, Vehicle>();
+        vehicles.forEach(v => {
+            const key = `${v.brand}|${v.name}`;
+            if (!unique.has(key)) {
+                unique.set(key, v);
+            }
+        });
+        return Array.from(unique.values());
+    }, [vehicles]);
+    
+    // When a vehicle is selected from the unique list, find the corresponding full vehicle object to get its discount
     useEffect(() => {
         if (vehicleId && vehicleId !== 'none') {
-            const selected = vehicles.find(v => v.id === vehicleId);
-            setDiscount(selected?.discountPercentage || undefined);
+            const selectedModelKey = uniqueVehicles.find(v => v.id === vehicleId);
+            if (selectedModelKey) {
+                const representativeVariant = vehicles.find(v => v.brand === selectedModelKey.brand && v.name === selectedModelKey.name);
+                setDiscount(representativeVariant?.discountPercentage || undefined);
+            }
         } else {
             setDiscount(undefined);
         }
-    }, [vehicleId, vehicles]);
+    }, [vehicleId, vehicles, uniqueVehicles]);
 
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +95,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
 
             if (selectedFile) {
                 const fileExtension = selectedFile.name.split('.').pop();
-                const fileName = `promo-${promotion?.id || Date.now()}.${fileExtension}`;
+                const fileName = `promo-${promotion?.id || crypto.randomUUID()}.${fileExtension}`;
                 const filePath = `public/promotions/${fileName}`;
                 
                 const { signedUrl, token, error: urlError } = await createSignedUploadUrl(filePath);
@@ -102,7 +117,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                 return;
             }
 
-            const newId = promotion?.id || `promo-${Date.now()}`;
+            const newId = promotion?.id || crypto.randomUUID();
             
             const promoData: Omit<Promotion, 'created_at'> = {
                 id: newId,
@@ -123,19 +138,6 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
             onSave();
         });
     };
-    
-    // We only want to show one entry per car model in the dropdown.
-    const uniqueVehicles = useMemo(() => {
-        const unique = new Map<string, Vehicle>();
-        vehicles.forEach(v => {
-            const key = `${v.brand}|${v.name}`;
-            if (!unique.has(key)) {
-                unique.set(key, v);
-            }
-        });
-        return Array.from(unique.values());
-    }, [vehicles]);
-
 
     return (
         <>
@@ -155,10 +157,10 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleId">Target Mobil (Opsional)</Label>
+                            <Label htmlFor="vehicleId">Target Model Mobil (Opsional)</Label>
                             <Select onValueChange={setVehicleId} defaultValue={vehicleId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Pilih mobil..." />
+                                    <SelectValue placeholder="Pilih model mobil..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">Tidak ada (Promo Umum)</SelectItem>
@@ -171,7 +173,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="discount">Diskon (%) untuk {vehicles.find(v => v.id === vehicleId)?.name || 'Mobil'}</Label>
+                            <Label htmlFor="discount">Diskon (%) untuk {uniqueVehicles.find(v => v.id === vehicleId)?.name || 'Mobil'}</Label>
                             <Input 
                                 id="discount" 
                                 type="number"
@@ -180,7 +182,7 @@ function PromotionForm({ promotion, vehicles, onSave, onCancel }: { promotion?: 
                                 placeholder="cth. 25" 
                                 disabled={!vehicleId || vehicleId === 'none'}
                             />
-                            {(!vehicleId || vehicleId === 'none') && <p className="text-xs text-muted-foreground">Pilih mobil untuk mengatur diskon.</p>}
+                            {(!vehicleId || vehicleId === 'none') && <p className="text-xs text-muted-foreground">Pilih model mobil untuk mengatur diskon.</p>}
                         </div>
                     </div>
                     <div className="space-y-2">
