@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { StarRating } from "@/components/star-rating";
 import { FeaturesSection } from "@/components/features-section";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 export const dynamic = 'force-dynamic';
 
@@ -102,18 +103,32 @@ function TestimonialsPageContent() {
                         ) : gallery.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                 {gallery.map((photo) => (
-                                    <div key={photo.id} className="relative group aspect-square">
-                                        <Image
-                                            src={photo.url}
-                                            alt={dictionary.testimonials.galleryAlt}
-                                            fill
-                                            className="object-cover rounded-lg shadow-md transition-transform group-hover:scale-105"
-                                            data-ai-hint="customer photo"
-                                        />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                                            <p className="text-white text-center text-sm p-2">{photo.vehicleName || dictionary.testimonials.galleryHover}</p>
-                                        </div>
-                                    </div>
+                                    <Dialog key={photo.id}>
+                                        <DialogTrigger asChild>
+                                            <div className="relative group aspect-square cursor-pointer">
+                                                <Image
+                                                    src={photo.url}
+                                                    alt={dictionary.testimonials.galleryAlt}
+                                                    fill
+                                                    className="object-cover rounded-lg shadow-md transition-transform group-hover:scale-105"
+                                                    data-ai-hint="customer photo"
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                                    <p className="text-white text-center text-sm p-2">{photo.vehicleName || dictionary.testimonials.galleryHover}</p>
+                                                </div>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent className="p-0 border-0 max-w-4xl">
+                                             <div className="relative aspect-[4/3]">
+                                                <Image
+                                                    src={photo.url}
+                                                    alt={dictionary.testimonials.galleryAlt}
+                                                    fill
+                                                    className="object-contain rounded-lg"
+                                                />
+                                             </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 ))}
                             </div>
                         ) : (

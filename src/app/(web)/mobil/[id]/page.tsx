@@ -22,6 +22,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { VehicleCard } from '@/components/vehicle-card';
 import { useRef, useState, useEffect, useMemo } from 'react';
@@ -345,15 +346,29 @@ function VehicleDetail() {
                             {gallery.length > 0 ? (
                                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {gallery.map(photo => (
-                                         <div key={photo.id} className="relative group aspect-square">
-                                            <Image
-                                                src={photo.url}
-                                                alt={`${dictionary.testimonials.galleryAlt} - ${representativeVehicle.name}`}
-                                                fill
-                                                className="object-cover rounded-lg shadow-md transition-transform group-hover:scale-105"
-                                                data-ai-hint="customer photo"
-                                            />
-                                        </div>
+                                         <Dialog key={photo.id}>
+                                            <DialogTrigger asChild>
+                                                <div className="relative group aspect-square cursor-pointer">
+                                                    <Image
+                                                        src={photo.url}
+                                                        alt={`${dictionary.testimonials.galleryAlt} - ${representativeVehicle.name}`}
+                                                        fill
+                                                        className="object-cover rounded-lg shadow-md transition-transform group-hover:scale-105"
+                                                        data-ai-hint="customer photo"
+                                                    />
+                                                </div>
+                                            </DialogTrigger>
+                                            <DialogContent className="p-0 border-0 max-w-4xl">
+                                                <div className="relative aspect-[4/3]">
+                                                    <Image
+                                                        src={photo.url}
+                                                        alt={`${dictionary.testimonials.galleryAlt} - ${representativeVehicle.name}`}
+                                                        fill
+                                                        className="object-contain rounded-lg"
+                                                    />
+                                                </div>
+                                            </DialogContent>
+                                         </Dialog>
                                     ))}
                                 </div>
                             ) : (
