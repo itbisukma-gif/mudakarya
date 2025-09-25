@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, forwardRef } from 'react';
+import { useState, useMemo, useEffect, forwardRef, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -24,10 +24,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label"
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 import type { Vehicle, Driver } from '@/lib/types';
-import { Minus, Plus, CalendarIcon, ChevronDown, Loader2 } from 'lucide-react';
+import { Minus, Plus, CalendarIcon, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import { format, addDays, differenceInCalendarDays, isBefore, startOfDay } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useLanguage } from '@/hooks/use-language';
@@ -35,6 +36,8 @@ import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceCosts } from '@/app/dashboard/keuangan/actions';
+import { checkVehicleAvailability } from '@/app/actions/reservation-actions';
+import { useDebounce } from '@/hooks/use-debounce';
 
 
 export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ variants }, ref) => {
@@ -54,6 +57,9 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
     const [isStartCalendarOpen, setStartCalendarOpen] = useState(false);
     const [isEndCalendarOpen, setEndCalendarOpen] = useState(false);
+    
+    const [isCheckingAvailability, startAvailabilityCheck] = useTransition();
+    const [isAvailable, setIsAvailable] = useState(true);
 
     const showDriverSelection = service === 'dengan-supir' || service === 'all-include';
 
@@ -70,6 +76,19 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         return variants.find(v => v.id === selectedVariantId);
     }, [variants, selectedVariantId]);
 
+    const calculatedDuration = useMemo(() => {
+        if (activeTab === 'direct') {
+            return rentalDays > 0 ? rentalDays : 1;
+        }
+        if (activeTab === 'reservation' && startDate && endDate) {
+            const diff = differenceInCalendarDays(endDate, startDate);
+            return diff >= 1 ? diff : 1;
+        }
+        return 1;
+    }, [startDate, endDate, rentalDays, activeTab]);
+
+    const debouncedStartDate = useDebounce(startDate, 500);
+    const debouncedEndDate = useDebounce(endDate, 500);
 
     useEffect(() => {
         const supabaseClient = createClient();
@@ -103,7 +122,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         };
         fetchInitialData();
     }, [supabase, showDriverSelection]);
-    
+
     useEffect(() => {
         if (showDriverSelection && availableDrivers.length > 0) {
             if (!driverId) {
@@ -113,19 +132,32 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             setDriverId(undefined);
         }
     }, [showDriverSelection, availableDrivers, driverId]);
+    
+    // Availability check effect
+    useEffect(() => {
+        if (activeTab !== 'reservation' || !debouncedStartDate || !debouncedEndDate || !selectedVehicle) {
+            setIsAvailable(true); // Always available for direct booking
+            return;
+        }
+
+        startAvailabilityCheck(async () => {
+            const { data, error } = await checkVehicleAvailability(
+                selectedVehicle.id,
+                debouncedStartDate.toISOString(),
+                debouncedEndDate.toISOString()
+            );
+
+            if (error) {
+                console.error("Availability check failed:", error.message);
+                setIsAvailable(false); // Assume not available on error
+            } else {
+                setIsAvailable(data);
+            }
+        });
+    }, [debouncedStartDate, debouncedEndDate, selectedVehicle, activeTab]);
+
 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
-
-    const calculatedDuration = useMemo(() => {
-        if (activeTab === 'reservation' && startDate && endDate) {
-            const diff = differenceInCalendarDays(endDate, startDate);
-            return diff >= 1 ? diff : 1;
-        }
-        if (activeTab === 'direct') {
-            return rentalDays > 0 ? rentalDays : 1;
-        }
-        return 1;
-    }, [startDate, endDate, rentalDays, activeTab]);
 
     const { totalCost, discountAmount, baseRentalCost, maticFee, driverFee, fuelFee } = useMemo(() => {
         if (!selectedVehicle || calculatedDuration <= 0 || !serviceCosts) {
@@ -179,7 +211,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || isLoading;
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || isLoading || (activeTab === 'reservation' && (!isAvailable || isCheckingAvailability));
 
     const paymentUrl = useMemo(() => {
         if (isBookingDisabled || !selectedVehicle) return '#';
@@ -306,6 +338,21 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                             </Popover>
                          </div>
                      </div>
+                     {isCheckingAvailability && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin"/>
+                            <span>Mengecek ketersediaan...</span>
+                        </div>
+                     )}
+                      {!isCheckingAvailability && !isAvailable && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Tidak Tersedia</AlertTitle>
+                            <AlertDescription>
+                                Mobil ini tidak tersedia pada rentang tanggal yang Anda pilih. Silakan pilih tanggal lain.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                 </TabsContent>
 
                 {/* Common Fields */}
@@ -383,7 +430,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
              <Button className="w-full mt-6 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100" disabled={isBookingDisabled} asChild>
                 <Link href={paymentUrl}>
-                    {dictionary.orderForm.bookNow}
+                    {isCheckingAvailability ? 'Memeriksa...' : dictionary.orderForm.bookNow}
                 </Link>
             </Button>
              {isBookingDisabled && showDriverSelection && !driverId && availableDrivers.length === 0 && (

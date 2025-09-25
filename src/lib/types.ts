@@ -116,3 +116,12 @@ export type Promotion = {
     imageUrl: string;
     vehicleId?: string | null;
 };
+
+export type Reservation = {
+  id?: number;
+  created_at?: string;
+  vehicleId: string;
+  orderId: string;
+  startDate: string; // ISO 8601 date string
+  endDate: string; // ISO 8601 date string
+}

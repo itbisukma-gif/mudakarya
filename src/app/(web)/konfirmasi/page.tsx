@@ -17,12 +17,12 @@ import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { BankAccount, Order, Vehicle, Driver } from "@/lib/types";
+import type { BankAccount, Order, Vehicle, Driver, Reservation } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppIcon } from "@/components/icons";
 import { createClient } from '@/utils/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { updateVehicleStatus, adjustVehicleStock } from "@/app/dashboard/armada/actions";
+import { updateVehicleStatus } from "@/app/dashboard/armada/actions";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 import { incrementBookedCount } from "@/app/actions/vehicle-stats";
 
@@ -246,8 +246,6 @@ function KonfirmasiComponent() {
     const [orderId, setOrderId] = useState('');
     const [selectedBankId, setSelectedBankId] = useState<string | undefined>(undefined);
     const [isSavingOrder, setIsSavingOrder] = useState(false);
-    const [finalVehicleId, setFinalVehicleId] = useState<string | null>(null);
-    const [isPartnerOrder, setIsPartnerOrder] = useState(false);
 
     const selectedBank = useMemo(() => {
         return bankAccounts.find(bank => bank.accountNumber === selectedBankId);
@@ -307,69 +305,16 @@ function KonfirmasiComponent() {
                  const { data: driverData } = await supabase.from('drivers').select('*').eq('id', driverId).single();
                  setDriver(driverData);
             }
-
-            if (vehicleData) {
-                // Logic to determine the actual physical unit to book
-                if (isPartnerUnitParam) {
-                    // If the booked unit is a "unit khusus" (special/partner), lock it to that specific unit.
-                    setFinalVehicleId(vehicleData.id);
-                    setIsPartnerOrder(true);
-                } else {
-                    // If the booked unit is a "unit biasa" (regular), find any available regular unit of the same model.
-                    const { data: availableUnit } = await supabase
-                        .from('vehicles')
-                        .select('id')
-                        .eq('brand', vehicleData.brand)
-                        .eq('name', vehicleData.name)
-                        .eq('transmission', vehicleData.transmission)
-                        .eq('fuel', vehicleData.fuel)
-                        .eq('status', 'tersedia')
-                        .eq('unitType', 'biasa')
-                        .limit(1)
-                        .single();
-
-                    if (availableUnit) {
-                        setFinalVehicleId(availableUnit.id);
-                        setIsPartnerOrder(false);
-                    } else {
-                        // If no regular unit is available, fall back to a partner unit of the same model if available
-                        const { data: partnerFallbackUnit } = await supabase
-                            .from('vehicles')
-                            .select('id')
-                            .eq('brand', vehicleData.brand)
-                            .eq('name', vehicleData.name)
-                            .eq('transmission', vehicleData.transmission)
-                            .eq('fuel', vehicleData.fuel)
-                            .gt('stock', 0)
-                            .eq('unitType', 'khusus')
-                            .limit(1)
-                            .single();
-                        
-                        if (partnerFallbackUnit) {
-                            setFinalVehicleId(partnerFallbackUnit.id);
-                            setIsPartnerOrder(true);
-                        } else {
-                            // If no units are available at all, show an error (handled by disabled button)
-                            // and potentially lock the original vehicle ID to show the correct details
-                            setFinalVehicleId(vehicleData.id); 
-                            toast({
-                                variant: 'destructive',
-                                title: 'Stok Habis',
-                                description: `Mohon maaf, semua unit ${vehicleData.name} sedang tidak tersedia.`
-                            });
-                        }
-                    }
-                }
-            }
         };
         fetchVehicleAndDriver();
-    }, [vehicleId, driverId, supabase, isPartnerUnitParam, toast]);
+    }, [vehicleId, driverId, supabase]);
 
     const handleUploadSuccess = async (proofUrl: string) => {
-        if (!supabase || !finalVehicleId || !vehicle || isSavingOrder) return;
+        if (!supabase || !vehicleId || !vehicle || isSavingOrder) return;
         setIsSavingOrder(true);
 
         try {
+            // 1. Create the new order
             const newOrder: Omit<Order, 'created_at'> = {
                 id: orderId,
                 customerName: customerName,
@@ -380,12 +325,12 @@ function KonfirmasiComponent() {
                 service: service?.replace('-', ' ') || null,
                 driver: driver ? driver.name : null,
                 driverId: driverId,
-                vehicleId: finalVehicleId,
+                vehicleId: vehicleId,
                 paymentProof: proofUrl,
                 status: 'pending',
                 paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
                 total: Number(total),
-                isPartnerUnit: isPartnerOrder,
+                isPartnerUnit: isPartnerUnitParam,
             };
 
             const { error: insertError } = await supabase.from('orders').insert(newOrder);
@@ -394,15 +339,29 @@ function KonfirmasiComponent() {
                 throw new Error(insertError.message);
             }
 
-            if (isPartnerOrder) {
-                // For special units, decrement stock and set status
-                await adjustVehicleStock(finalVehicleId, -1);
+            // 2. Create a reservation entry if start and end dates are provided
+            if (startDateStr && endDateStr) {
+                const newReservation: Omit<Reservation, 'id' | 'created_at'> = {
+                    vehicleId: vehicleId,
+                    orderId: orderId,
+                    startDate: startDateStr,
+                    endDate: endDateStr
+                };
+                const { error: reservationError } = await supabase.from('reservations').insert(newReservation);
+                if (reservationError) {
+                    // If creating reservation fails, we should ideally roll back the order creation.
+                    // For now, we'll log the error and notify the user.
+                    console.error('Failed to create reservation entry:', reservationError);
+                    throw new Error('Gagal menyimpan jadwal reservasi. ' + reservationError.message);
+                }
+            } else {
+                // For "direct booking", we can mark the vehicle as 'dipesan' if it's a regular unit
+                if (vehicle.unitType === 'biasa') {
+                     await updateVehicleStatus(vehicleId, 'dipesan');
+                }
             }
-            // Always set status to 'dipesan' for any booked unit
-            await updateVehicleStatus(finalVehicleId, 'dipesan');
 
-
-            // Increment booked count (fire-and-forget)
+            // 3. Increment booked count (fire-and-forget)
             await incrementBookedCount(vehicle.id);
 
             setUploadSuccess(true);
@@ -431,7 +390,7 @@ function KonfirmasiComponent() {
         )
     }
     
-    if (!vehicle || !finalVehicleId) {
+    if (!vehicle) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin"/>
@@ -449,11 +408,12 @@ function KonfirmasiComponent() {
         return (
             <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
                  <Card>
-                    <CardContent className="p-6 md:p-8 text-center">
-                        <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                        <h1 className="text-2xl md:text-3xl font-bold">Satu Langkah Lagi!</h1>
-                        <p className="text-muted-foreground mt-2 max-w-sm mx-auto">Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin kami melalui WhatsApp untuk mempercepat proses verifikasi.</p>
-                        
+                    <CardHeader className="p-6 md:p-8 text-center">
+                      <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                      <CardTitle className="text-2xl md:text-3xl font-bold">Satu Langkah Lagi!</CardTitle>
+                      <CardDescription className="text-muted-foreground mt-2 max-w-sm mx-auto">Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin kami melalui WhatsApp untuk mempercepat proses verifikasi.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0">                        
                          <div className="text-left bg-muted/30 rounded-lg p-4 mt-6 space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">{dictionary.confirmation.orderNumber}:</span>
@@ -524,11 +484,12 @@ function KonfirmasiComponent() {
                     Kembali
                 </Button>
                 <Card className="w-full">
-                    <CardContent className="p-6 md:p-8 text-center">
+                    <CardHeader className="p-6 md:p-8 text-center">
                         <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
-                        <h1 className="text-2xl md:text-3xl font-bold">Selesaikan Pembayaran</h1>
-                        <p className="text-muted-foreground mt-2">{dictionary.confirmation.description}</p>
-
+                        <CardTitle className="text-2xl md:text-3xl font-bold">Selesaikan Pembayaran</CardTitle>
+                        <CardDescription className="text-muted-foreground mt-2">{dictionary.confirmation.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0">
                         <div className="text-left bg-muted/30 rounded-lg p-4 mt-6 space-y-2">
                             <div className="flex justify-between">
                                 <span className="text-sm text-muted-foreground">{dictionary.confirmation.orderNumber}:</span>
