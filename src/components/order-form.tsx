@@ -117,14 +117,14 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     const formatCurrency = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
     const calculatedDuration = useMemo(() => {
-        if (activeTab === 'reservation') {
-            if (startDate && endDate) {
-                const diff = differenceInCalendarDays(endDate, startDate);
-                return diff >= 1 ? diff : 1;
-            }
-            return 1;
+        if (activeTab === 'reservation' && startDate && endDate) {
+            const diff = differenceInCalendarDays(endDate, startDate);
+            return diff >= 1 ? diff : 1;
         }
-        return rentalDays > 0 ? rentalDays : 1;
+        if (activeTab === 'direct') {
+            return rentalDays > 0 ? rentalDays : 1;
+        }
+        return 1;
     }, [startDate, endDate, rentalDays, activeTab]);
 
     const { totalCost, discountAmount, baseRentalCost, maticFee, driverFee, fuelFee } = useMemo(() => {
