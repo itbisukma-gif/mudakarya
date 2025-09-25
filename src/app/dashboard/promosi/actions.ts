@@ -7,6 +7,9 @@ import { revalidatePath } from 'next/cache';
 
 export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>, discount: number | null | undefined, allVariants: Vehicle[]) {
     const supabase = createServiceRoleClient();
+
+    // Before upserting, fetch the old promotion data to see if the vehicle link is changing.
+    const { data: oldPromoData } = await supabase.from('promotions').select('vehicleId').eq('id', promoData.id).single();
     
     // 1. Upsert the promotion itself
     const { data: savedPromo, error: promoError } = await supabase.from('promotions').upsert(promoData, { onConflict: 'id' }).select().single();
@@ -15,33 +18,36 @@ export async function upsertPromotion(promoData: Omit<Promotion, 'created_at'>, 
         return { data: null, error: promoError };
     }
 
-    // 2. Find the vehicle that was originally linked to get its brand and name
-    const sourceVehicle = allVariants.find(v => v.id === promoData.vehicleId);
+    // 2. Find the vehicle that was originally linked to get its brand and name if a vehicle is selected
+    if (promoData.vehicleId && promoData.vehicleId !== 'none') {
+        const sourceVehicle = allVariants.find(v => v.id === promoData.vehicleId);
 
-    if (sourceVehicle) {
-        // 3. Find all variants of this vehicle model
-        const variantsToUpdate = allVariants.filter(v => v.brand === sourceVehicle.brand && v.name === sourceVehicle.name);
-        
-        // 4. Create an array of upsert promises for all variants
-        const updatePromises = variantsToUpdate.map(variant => 
-            supabase.from('vehicles').update({ discountPercentage: discount || null }).eq('id', variant.id)
-        );
+        if (sourceVehicle) {
+            // 3. Find all variants of this vehicle model
+            const variantsToUpdate = allVariants.filter(v => v.brand === sourceVehicle.brand && v.name === sourceVehicle.name);
+            
+            // 4. Create an array of upsert promises for all variants
+            const updatePromises = variantsToUpdate.map(variant => 
+                supabase.from('vehicles').update({ discountPercentage: discount || null }).eq('id', variant.id)
+            );
 
-        const results = await Promise.all(updatePromises);
-        const firstError = results.find(res => res.error);
+            const results = await Promise.all(updatePromises);
+            const firstError = results.find(res => res.error);
 
-        if (firstError) {
-            console.error('Error updating one or more vehicle variants with discount:', firstError.error);
-            // Even if discount application fails, we still return the saved promo data but with a warning.
-            // The primary action (saving promo) was successful.
-            return { data: savedPromo, error: firstError.error };
+            if (firstError) {
+                console.error('Error updating one or more vehicle variants with discount:', firstError.error);
+                // Even if discount application fails, we still return the saved promo data but with a warning.
+                return { data: savedPromo, error: firstError.error };
+            }
         }
     }
     
-    // 5. Handle removal of discount from a previously linked vehicle if the link has changed
-    const oldPromo = await supabase.from('promotions').select('vehicleId').eq('id', promoData.id).single();
-    if (oldPromo.data?.vehicleId && oldPromo.data.vehicleId !== promoData.vehicleId) {
-        const oldVehicle = allVariants.find(v => v.id === oldPromo.data!.vehicleId);
+    // 5. Handle removal of discount from a previously linked vehicle if the link has changed or been removed.
+    const oldVehicleId = oldPromoData?.vehicleId;
+    const newVehicleId = (promoData.vehicleId === 'none' || !promoData.vehicleId) ? null : promoData.vehicleId;
+
+    if (oldVehicleId && oldVehicleId !== newVehicleId) {
+        const oldVehicle = allVariants.find(v => v.id === oldVehicleId);
         if (oldVehicle) {
             const oldVariantsToClear = allVariants.filter(v => v.brand === oldVehicle.brand && v.name === oldVehicle.name);
             const clearPromises = oldVariantsToClear.map(variant => 
