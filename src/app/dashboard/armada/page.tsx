@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect, useCallback, ChangeEvent } from "react";
@@ -8,8 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Vehicle } from "@/lib/types";
-import { MoreVertical, PlusCircle, Trash2, Upload, Loader2, Sparkles, CheckCircle, Clock, Car } from "lucide-react";
+import type { Vehicle, Reservation } from "@/lib/types";
+import { MoreVertical, PlusCircle, Trash2, Upload, Loader2, Sparkles, CheckCircle, Clock, Car, Calendar } from "lucide-react";
 import Image from "next/image";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +26,12 @@ import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 
 export const dynamic = 'force-dynamic';
 
-function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: (vehicle: Vehicle) => void, onDelete: (vehicleId: string) => void }) {
+interface VehicleWithReservations extends Vehicle {
+    reservations?: Pick<Reservation, 'startDate' | 'endDate'>[];
+}
+
+
+function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: VehicleWithReservations, onEdit: (vehicle: Vehicle) => void, onDelete: (vehicleId: string) => void }) {
     const { logoUrl } = useVehicleLogo(vehicle.brand);
 
     const hasDiscount = vehicle.discountPercentage && vehicle.discountPercentage > 0;
@@ -33,6 +39,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
         ? vehicle.price * (1 - vehicle.discountPercentage / 100)
         : vehicle.price;
     const isSpecialUnit = vehicle.unitType === 'khusus';
+    const hasReservations = vehicle.reservations && vehicle.reservations.length > 0;
 
     const formatPrice = (price: number | null) => {
         if (price === null) return 'N/A';
@@ -125,6 +132,14 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: Vehicle, onEdit: 
                         </Badge>
                     )}
                 </div>
+                 {hasReservations && vehicle.status === 'tersedia' && (
+                    <div className="absolute top-2 right-2">
+                        <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
+                            <Calendar className="h-3 w-3 mr-1.5"/>
+                            Direservasi
+                        </Badge>
+                    </div>
+                )}
                  {hasDiscount && (
                     <Badge variant="destructive" className="absolute bottom-2 right-2 shadow-lg">
                       {vehicle.discountPercentage}% OFF
@@ -438,7 +453,7 @@ function VehicleForm({ vehicle, onSave, onCancel }: { vehicle?: Vehicle | null; 
 }
 
 function ArmadaPage() {
-    const [fleet, setFleet] = useState<Vehicle[]>([]);
+    const [fleet, setFleet] = useState<VehicleWithReservations[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setFormOpen] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -452,17 +467,41 @@ function ArmadaPage() {
     const fetchFleet = useCallback(async () => {
         if (!supabase) return;
         setIsLoading(true);
-        let query = supabase.from('vehicles').select('*');
-        if (debouncedSearchTerm) {
-            query = query.or(`name.ilike.%${debouncedSearchTerm}%,brand.ilike.%${debouncedSearchTerm}%,code.ilike.%${debouncedSearchTerm}%`);
-        }
-        const { data, error } = await query.order('created_at', { ascending: false });
 
-        if (error) {
-            toast({ variant: "destructive", title: "Gagal memuat armada", description: error.message });
-        } else {
-            setFleet(data || []);
+        // Fetch vehicles
+        let vehicleQuery = supabase.from('vehicles').select('*');
+        if (debouncedSearchTerm) {
+            vehicleQuery = vehicleQuery.or(`name.ilike.%${debouncedSearchTerm}%,brand.ilike.%${debouncedSearchTerm}%,code.ilike.%${debouncedSearchTerm}%`);
         }
+        const { data: vehicles, error: vehicleError } = await vehicleQuery.order('created_at', { ascending: false });
+
+        if (vehicleError) {
+            toast({ variant: "destructive", title: "Gagal memuat armada", description: vehicleError.message });
+            setIsLoading(false);
+            return;
+        }
+
+        // Fetch future reservations
+        const today = new Date().toISOString();
+        const { data: reservations, error: reservationError } = await supabase
+            .from('reservations')
+            .select('vehicleId, startDate, endDate')
+            .gte('endDate', today);
+
+        if (reservationError) {
+             toast({ variant: "destructive", title: "Gagal memuat data reservasi", description: reservationError.message });
+        }
+
+        // Combine data
+        const fleetWithReservations = vehicles.map(vehicle => {
+            const vehicleReservations = reservations?.filter(r => r.vehicleId === vehicle.id) || [];
+            return {
+                ...vehicle,
+                reservations: vehicleReservations,
+            };
+        });
+
+        setFleet(fleetWithReservations);
         setIsLoading(false);
     }, [supabase, debouncedSearchTerm, toast]);
 
@@ -470,6 +509,8 @@ function ArmadaPage() {
         const supabaseClient = createClient();
         setSupabase(supabaseClient);
     }, []);
+
+
 
     useEffect(() => {
         if (supabase) {
@@ -558,3 +599,5 @@ function ArmadaPage() {
 }
 
 export default ArmadaPage;
+
+  

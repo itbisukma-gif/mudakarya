@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, useEffect, useTransition, useCallback } from 'react';
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Send, Eye, Share, CheckCircle, Car, ShieldCheck, Clock, AlertTriangle, Loader2, Users } from "lucide-react";
+import { Send, Eye, Share, CheckCircle, Car, ShieldCheck, Clock, AlertTriangle, Loader2, Users, Calendar } from "lucide-react";
 import Link from "next/link";
 import type { Driver, Order, OrderStatus, Vehicle } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -19,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { formatDistanceToNow, differenceInHours } from 'date-fns';
+import { formatDistanceToNow, differenceInHours, isToday, isPast } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { createClient } from '@/utils/supabase/client';
 import { updateDriverStatus } from '../actions';
@@ -74,21 +73,18 @@ function OrderCard({ order, drivers, vehicle, onDataChange }: { order: Order, dr
             }
 
             // Handle Vehicle Status and Stock Changes
-            if (order.isPartnerUnit) {
+            if (vehicle) {
                 if (newStatus === 'disetujui') {
-                     await updateVehicleStatus(order.vehicleId, 'disewa');
-                } else if (newStatus === 'selesai' || newStatus === 'tidak disetujui') {
-                    // Restore stock for partner unit
-                    await adjustVehicleStock(order.vehicleId, 1);
-                    await updateVehicleStatus(order.vehicleId, 'tersedia');
-                }
-            } else { // Regular unit
-                 if (newStatus === 'disetujui') {
-                    await updateVehicleStatus(order.vehicleId, 'disewa');
+                    await updateVehicleStatus(vehicle.id, 'disewa');
                 } else if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && (oldStatus === 'disetujui' || oldStatus === 'dipesan')) {
-                    await updateVehicleStatus(order.vehicleId, 'tersedia');
+                     if (vehicle.unitType === 'khusus') {
+                        // For special units, incrementing stock is the way to make it available again
+                        await adjustVehicleStock(vehicle.id, 1);
+                    }
+                    await updateVehicleStatus(vehicle.id, 'tersedia');
                 }
             }
+
             
             // Handle Driver Status
             if ((newStatus === 'tidak disetujui' || newStatus === 'selesai') && order.driverId) {
@@ -211,7 +207,7 @@ ${assignmentUrl}`;
                                 <Select 
                                     value={order.driverId ? `${order.driverId}|${order.driver}` : undefined} 
                                     onValueChange={handleDriverChange}
-                                    disabled={order.status !== 'pending' || isPending}
+                                    disabled={order.status !== 'pending' && order.status !== 'dipesan' || isPending}
                                 >
                                     <SelectTrigger className="w-[150px] h-8 text-xs">
                                     <SelectValue placeholder="Pilih Driver" />
@@ -229,7 +225,7 @@ ${assignmentUrl}`;
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {order.status === 'pending' && selectedDriver && (
+                                {(order.status === 'pending' || order.status === 'dipesan') && selectedDriver && (
                                     <Button size="sm" variant="outline" asChild className="h-8 w-8 p-0 bg-green-500 text-white hover:bg-green-600 hover:text-white border-green-600">
                                         <a href={whatsAppAssignmentUrl} target="_blank" rel="noopener noreferrer">
                                             <WhatsAppIcon className="h-4 w-4" />
@@ -351,6 +347,39 @@ export default function OrdersPage() {
 
     const fetchOrderData = useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
+        
+        // --- Automatic Status Update Logic ---
+        // Fetch reservations that need to be activated
+        const today = new Date().toISOString().split('T')[0];
+        const { data: dueReservations, error: dueResError } = await supabaseClient
+            .from('orders')
+            .select('id')
+            .eq('status', 'dipesan')
+            .lte('reservations.startDate', today); // This seems to be pseudo-code, Supabase doesn't join like this in JS client.
+            // A server-side function would be better, but for now we process client-side.
+            
+        const { data: allReservations, error: allResError } = await supabaseClient.from('reservations').select('orderId, startDate');
+
+        if (!allResError) {
+            const ordersToActivate = allReservations
+                .filter(res => (isToday(new Date(res.startDate)) || isPast(new Date(res.startDate))))
+                .map(res => res.orderId);
+            
+            const { data: ordersDataToActivate } = await supabaseClient
+                .from('orders')
+                .select('id, status')
+                .in('id', ordersToActivate)
+                .eq('status', 'dipesan');
+            
+            if (ordersDataToActivate && ordersDataToActivate.length > 0) {
+                const activationPromises = ordersDataToActivate.map(order => updateOrderStatus(order.id, 'disetujui'));
+                await Promise.all(activationPromises);
+                toast({ title: 'Status Otomatis', description: `${ordersDataToActivate.length} reservasi telah otomatis masuk ke "On Progress".`});
+            }
+        }
+        // --- End of Automatic Status Update Logic ---
+
+
         const [orderRes, driverRes, vehicleRes] = await Promise.all([
             supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
             supabaseClient.from('drivers').select('*'),
@@ -383,9 +412,10 @@ export default function OrdersPage() {
         }
     }, [supabase, fetchOrderData]);
 
-    const { pendingOrders, approvedOrders, completedOrders } = useMemo(() => {
+    const { pendingOrders, reservedOrders, approvedOrders, completedOrders } = useMemo(() => {
         return {
-            pendingOrders: orders.filter(o => o.status === 'pending' || o.status === 'dipesan'),
+            pendingOrders: orders.filter(o => o.status === 'pending'),
+            reservedOrders: orders.filter(o => o.status === 'dipesan'),
             approvedOrders: orders.filter(o => o.status === 'disetujui'),
             completedOrders: orders.filter(o => o.status === 'selesai' || o.status === 'tidak disetujui'),
         }
@@ -429,11 +459,17 @@ export default function OrdersPage() {
       </div>
       
        <Tabs defaultValue="incoming">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="incoming">
                 Pesanan Masuk
                  {pendingOrders.length > 0 && (
                     <Badge className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center">{pendingOrders.length}</Badge>
+                )}
+            </TabsTrigger>
+             <TabsTrigger value="reserved">
+                Reservasi
+                 {reservedOrders.length > 0 && (
+                    <Badge className="ml-2 rounded-full h-5 w-5 p-0 flex items-center justify-center">{reservedOrders.length}</Badge>
                 )}
             </TabsTrigger>
             <TabsTrigger value="on-progress">
@@ -463,6 +499,26 @@ export default function OrdersPage() {
                 <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold">Tidak Ada Pesanan Masuk</h3>
                     <p className="text-muted-foreground mt-2 mb-6">Saat ada pesanan baru dengan status "pending", pesanan tersebut akan muncul di sini.</p>
+                </div>
+            )}
+        </TabsContent>
+         <TabsContent value="reserved" className="mt-6">
+           {reservedOrders.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {reservedOrders.map((order) => (
+                   <OrderCard 
+                    key={order.id} 
+                    order={order}
+                    drivers={drivers}
+                    vehicle={vehicles.find(v => v.id === order.vehicleId)}
+                    onDataChange={() => supabase && fetchOrderData(supabase)}
+                   />
+                ))}
+            </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
+                    <h3 className="text-xl font-semibold">Tidak Ada Reservasi</h3>
+                    <p className="text-muted-foreground mt-2 mb-6">Pesanan untuk tanggal mendatang akan ditampilkan di sini.</p>
                 </div>
             )}
         </TabsContent>
@@ -511,4 +567,4 @@ export default function OrdersPage() {
   );
 }
 
-    
+  

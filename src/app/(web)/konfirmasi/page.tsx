@@ -13,7 +13,7 @@ import { CheckCircle, Loader2, ClipboardCopy, Paperclip, AlertCircle, ArrowLeft,
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay, isToday } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -318,6 +318,10 @@ function KonfirmasiComponent() {
         setIsSavingOrder(true);
 
         try {
+            // Determine the order status based on whether it's a reservation or a direct booking
+            const isReservation = startDateStr && !isToday(startOfDay(parseISO(startDateStr)));
+            const orderStatus = isReservation ? 'dipesan' : 'pending';
+
             // 1. Create the new order
             const newOrder: Omit<Order, 'created_at'> = {
                 id: orderId,
@@ -331,10 +335,10 @@ function KonfirmasiComponent() {
                 driverId: driverId,
                 vehicleId: vehicleId,
                 paymentProof: proofUrl,
-                status: 'pending',
+                status: orderStatus,
                 paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
                 total: Number(total),
-                isPartnerUnit: isPartnerUnitParam,
+                isPartnerUnit: vehicle.unitType === 'khusus'
             };
 
             const { error: insertError } = await supabase.from('orders').insert(newOrder);
@@ -358,12 +362,13 @@ function KonfirmasiComponent() {
                     console.error('Failed to create reservation entry:', reservationError);
                     throw new Error('Gagal menyimpan jadwal reservasi. ' + reservationError.message);
                 }
-            } else {
-                // For "direct booking", we can mark the vehicle as 'dipesan' if it's a regular unit
-                if (vehicle.unitType === 'biasa') {
-                     await updateVehicleStatus(vehicleId, 'dipesan');
-                }
             }
+            
+            // For direct bookings of special units, adjust stock immediately
+            if (vehicle.unitType === 'khusus' && !isReservation) {
+                await updateVehicleStatus(vehicleId, 'dipesan');
+            }
+
 
             // 3. Increment booked count (fire-and-forget)
             await incrementBookedCount(vehicle.id);
@@ -628,3 +633,5 @@ export default function KonfirmasiPage() {
         </Suspense>
     )
 }
+
+  
