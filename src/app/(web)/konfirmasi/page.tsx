@@ -349,11 +349,12 @@ function KonfirmasiComponent() {
 
             // 2. Create a reservation entry if start and end dates are provided
             if (startDateStr && endDateStr) {
-                const newReservation: Omit<Reservation, 'id' | 'created_at'> = {
+                const newReservation: Reservation = {
                     vehicleId: vehicleId,
                     orderId: orderId,
                     startDate: startDateStr,
-                    endDate: endDateStr
+                    endDate: endDateStr,
+                    created_at: new Date().toISOString()
                 };
                 const { error: reservationError } = await supabase.from('reservations').insert(newReservation);
                 if (reservationError) {
@@ -633,5 +634,3 @@ export default function KonfirmasiPage() {
         </Suspense>
     )
 }
-
-  
