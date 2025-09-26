@@ -37,7 +37,6 @@ function PembayaranComponent() {
     const startDateStr = searchParams.get('startDate');
     const endDateStr = searchParams.get('endDate');
     const driverId = searchParams.get('driverId');
-    const isPartnerUnit = searchParams.get('isPartnerUnit') === 'true';
 
     const baseRentalCost = parseFloat(searchParams.get('baseCost') || '0');
     const totalCost = parseFloat(searchParams.get('totalCost') || '0');
@@ -85,7 +84,7 @@ function PembayaranComponent() {
             service: service || '',
             name: encodeURIComponent(fullName),
             phone: encodeURIComponent(phone),
-            isPartnerUnit: String(isPartnerUnit),
+            isPartnerUnit: String(vehicle.unitType === 'khusus'),
         });
 
         if (startDateStr) params.append('startDate', startDateStr);
@@ -95,7 +94,7 @@ function PembayaranComponent() {
         if (driverId) params.append('driverId', driverId);
 
         return `/konfirmasi?${params.toString()}`;
-    }, [isFormValid, paymentMethod, totalCost, vehicle, days, service, startDateStr, endDateStr, maticFee, discountAmount, fullName, phone, driverId, isPartnerUnit]);
+    }, [isFormValid, paymentMethod, totalCost, vehicle, days, service, startDateStr, endDateStr, maticFee, discountAmount, fullName, phone, driverId]);
 
     useEffect(() => {
         const supabaseClient = createClient();

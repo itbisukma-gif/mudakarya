@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect, forwardRef, useTransition } from 'react';
@@ -232,7 +233,6 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
             driverFee: String(driverFee),
             fuelFee: String(fuelFee),
             discount: String(discountAmount),
-            isPartnerUnit: String(selectedVehicle.unitType === 'khusus'),
         });
 
         if (activeTab === 'reservation' && startDate && endDate) {
