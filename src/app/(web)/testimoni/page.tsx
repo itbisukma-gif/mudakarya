@@ -38,16 +38,16 @@ function TestimonialsPageContent() {
             const { data: testimonialsData, error: testimonialsError } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
             const { data: galleryData, error: galleryError } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
 
-            if (testimonialsError) toast({ variant: 'destructive', title: 'Gagal memuat testimoni', description: testimonialsError.message });
+            if (testimonialsError) toast({ variant: 'destructive', title: dictionary.errors.failedToLoad('testimoni'), description: testimonialsError.message });
             else setTestimonials(testimonialsData || []);
 
-            if (galleryError) toast({ variant: 'destructive', title: 'Gagal memuat galeri', description: galleryError.message });
+            if (galleryError) toast({ variant: 'destructive', title: dictionary.errors.failedToLoad('galeri'), description: galleryError.message });
             else setGallery(galleryData || []);
 
             setIsLoading(false);
         };
         fetchData();
-    }, [toast, supabase]);
+    }, [toast, supabase, dictionary]);
 
     return (
         <>
@@ -93,7 +93,7 @@ function TestimonialsPageContent() {
                             </div>
                         ) : (
                              <div className="text-center py-16 text-muted-foreground">
-                                <p>Belum ada testimoni.</p>
+                                <p>{dictionary.testimonials.noReviews}</p>
                             </div>
                         )}
                     </TabsContent>
@@ -120,7 +120,7 @@ function TestimonialsPageContent() {
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
                                              <DialogHeader>
-                                                <DialogTitle>Pratinjau Gambar</DialogTitle>
+                                                <DialogTitle>{dictionary.testimonials.imagePreview}</DialogTitle>
                                                 <DialogDescription>
                                                     {photo.vehicleName || "Momen pelanggan bersama MudaKarya RentCar"}
                                                 </DialogDescription>

@@ -4,6 +4,14 @@ import { Home, Star, Pin, FileText, ArrowLeft, User, Building } from 'lucide-rea
 
 const id = {
     loading: "Memuat",
+    back: "Kembali",
+    errors: {
+      failedToLoadBankAccounts: "Gagal memuat rekening bank",
+      failedToLoadAdminContact: "Gagal memuat info kontak admin",
+      noResults: "Tidak ada hasil",
+      noResultsMatch: "Tidak ada mobil yang cocok dengan kriteria pencarian Anda.",
+      failedToLoad: (item: string) => `Gagal memuat ${item}.`
+    },
     navLinks: [
       { href: "/", label: "Home", icon: Home },
       { href: "/profil", label: "Profil", icon: Building },
@@ -27,11 +35,14 @@ const id = {
     home: {
       hero: {
         title: (brand: string, name: string) => `Promo Spesial ${brand} ${name}`,
+        defaultTitle: "Sewa Mobil Mudah & Cepat",
+        defaultDescription: "Pesan kendaraan impian Anda untuk liburan atau kebutuhan bisnis dengan harga terbaik.",
         description: "Dapatkan diskon 25% untuk perjalanan akhir pekan Anda!",
         bookNow: "Pesan Sekarang",
       },
       fleet: {
         title: "Armada Kami",
+        loading: "Memuat data armada...",
         searchPlaceholder: "Cari mobil...",
         filterAndSort: "Filter & Sortir",
         filterDescription: "Sesuaikan pencarian mobil Anda.",
@@ -225,6 +236,8 @@ const id = {
         rented: "Menyewa",
         galleryAlt: "Galeri pelanggan MudaKarya RentCar",
         galleryHover: "Momen bersama MudaKarya RentCar",
+        imagePreview: "Pratinjau Gambar",
+        noReviews: "Belum ada testimoni.",
     },
     contact: {
         title: "Hubungi & Kunjungi Kami",
@@ -254,6 +267,8 @@ const id = {
     vehicleDetail: {
         pricePerDay: "Harga sewa per hari",
         bookNow: "Pesan Sekarang",
+        viewed: (count: number) => `Dilihat ${count} kali`,
+        booked: (count: number) => `Dipesan ${count} kali`,
         details: {
             title: "Detail Kendaraan",
             brand: "Brand",
@@ -278,6 +293,11 @@ const id = {
             commentPlaceholder: "Tulis komentar Anda di sini...",
             yourRating: "Rating Anda:",
             submitReview: "Kirim Ulasan",
+            formIncomplete: "Form Tidak Lengkap",
+            formIncompleteDesc: "Mohon isi nama, berikan rating, dan komentar.",
+            submissionSuccess: "Ulasan Terkirim",
+            submissionSuccessDesc: "Terima kasih atas masukan Anda!",
+            submissionFailed: "Gagal Mengirim Ulasan",
         },
         otherRecommendations: "Rekomendasi Mobil Lain",
     },
@@ -289,6 +309,14 @@ const id = {
 
 const en: typeof id = {
     loading: "Loading",
+    back: "Back",
+    errors: {
+      failedToLoadBankAccounts: "Failed to load bank accounts",
+      failedToLoadAdminContact: "Failed to load admin contact info",
+      noResults: "No results",
+      noResultsMatch: "No cars match your search criteria.",
+      failedToLoad: (item: string) => `Failed to load ${item}.`
+    },
     navLinks: [
       { href: "/", label: "Home", icon: Home },
       { href: "/profil", label: "Profile", icon: Building },
@@ -312,11 +340,14 @@ const en: typeof id = {
     home: {
       hero: {
         title: (brand: string, name: string) => `Special Promo for ${brand} ${name}`,
+        defaultTitle: "Easy & Fast Car Rental",
+        defaultDescription: "Book your dream vehicle for vacation or business needs at the best price.",
         description: "Get a 25% discount for your weekend trip!",
         bookNow: "Book Now",
       },
       fleet: {
         title: "Our Fleet",
+        loading: "Loading fleet data...",
         searchPlaceholder: "Search for a car...",
         filterAndSort: "Filter & Sort",
         filterDescription: "Customize your car search.",
@@ -510,6 +541,8 @@ const en: typeof id = {
         rented: "Rented",
         galleryAlt: "MudaKarya RentCar customer gallery",
         galleryHover: "Moments with MudaKarya RentCar",
+        imagePreview: "Image Preview",
+        noReviews: "No testimonials yet.",
     },
     contact: {
         title: "Contact & Visit Us",
@@ -539,6 +572,8 @@ const en: typeof id = {
     vehicleDetail: {
         pricePerDay: "Rental price per day",
         bookNow: "Book Now",
+        viewed: (count: number) => `Viewed ${count} times`,
+        booked: (count: number) => `Booked ${count} times`,
         details: {
             title: "Vehicle Details",
             brand: "Brand",
@@ -563,6 +598,11 @@ const en: typeof id = {
             commentPlaceholder: "Write your comment here...",
             yourRating: "Your Rating:",
             submitReview: "Submit Review",
+            formIncomplete: "Incomplete Form",
+            formIncompleteDesc: "Please provide a name, rating, and comment.",
+            submissionSuccess: "Review Submitted",
+            submissionSuccessDesc: "Thank you for your feedback!",
+            submissionFailed: "Failed to Submit Review",
         },
         otherRecommendations: "Other Car Recommendations",
     },
@@ -574,3 +614,4 @@ const en: typeof id = {
 
 export const dictionaries = { id, en };
 export type Language = keyof typeof dictionaries;
+

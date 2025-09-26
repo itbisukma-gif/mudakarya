@@ -215,8 +215,8 @@ function HomePageContent() {
                                     <Image src="https://picsum.photos/seed/hero/1280/720" alt="Default Hero Image" fill className="object-cover" data-ai-hint="car road banner" />
                                      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent p-6 sm:p-8 md:p-12 flex flex-col items-start justify-center">
                                         <div className='max-w-md'>
-                                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">Sewa Mobil Mudah & Cepat</h2>
-                                            <p className="text-base md:text-lg text-primary-foreground/80 mt-3 md:mt-4">Pesan kendaraan impian Anda untuk liburan atau kebutuhan bisnis dengan harga terbaik.</p>
+                                            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">{dictionary.home.hero.defaultTitle}</h2>
+                                            <p className="text-base md:text-lg text-primary-foreground/80 mt-3 md:mt-4">{dictionary.home.hero.defaultDescription}</p>
                                             <Button size="lg" className="mt-6 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">{dictionary.home.hero.bookNow}</Button>
                                         </div>
                                      </div>
@@ -325,7 +325,7 @@ function HomePageContent() {
                 {isLoading ? (
                      <div className="text-center py-16 text-muted-foreground flex justify-center items-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Memuat data armada...
+                        {dictionary.home.fleet.loading}
                     </div>
                 ) : sortedFleet.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -335,7 +335,7 @@ function HomePageContent() {
                   </div>
                 ) : (
                   <div className="text-center py-16 text-muted-foreground">
-                    <p>Tidak ada mobil yang cocok dengan kriteria pencarian Anda.</p>
+                    <p>{dictionary.errors.noResultsMatch}</p>
                   </div>
                 )}
 

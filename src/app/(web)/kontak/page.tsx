@@ -61,14 +61,14 @@ function KontakPageContent() {
             setIsLoading(true);
             const { data, error } = await supabase.from('contact_info').select('*').single();
             if (error || !data) {
-                toast({ variant: 'destructive', title: 'Gagal memuat informasi kontak.', description: error?.message });
+                toast({ variant: 'destructive', title: dictionary.errors.failedToLoad('informasi kontak'), description: error?.message });
             } else {
                 setContactInfo(data);
             }
             setIsLoading(false);
         };
         fetchContactInfo();
-    }, [toast, supabase]);
+    }, [toast, supabase, dictionary]);
 
     const formatWhatsappUrl = (phone: string | null | undefined): string => {
         if (!phone) return '#';
@@ -91,7 +91,7 @@ function KontakPageContent() {
     }
 
     if (!contactInfo) {
-        return <div className="container py-16 text-center">Gagal memuat informasi kontak.</div>
+        return <div className="container py-16 text-center">{dictionary.errors.failedToLoad('informasi kontak')}</div>
     }
 
     const hasSocialMedia = contactInfo.instagram || contactInfo.facebook || contactInfo.twitter || contactInfo.tiktok || contactInfo.telegram;

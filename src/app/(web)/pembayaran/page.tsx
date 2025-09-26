@@ -149,7 +149,7 @@ function PembayaranComponent() {
         <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
              <Button variant="ghost" onClick={() => router.back()} className="mb-6 -ml-4">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali
+                {dictionary.back}
             </Button>
             <div className="text-center mb-10">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{dictionary.payment.title}</h1>

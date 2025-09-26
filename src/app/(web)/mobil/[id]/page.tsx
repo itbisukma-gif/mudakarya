@@ -144,7 +144,7 @@ function VehicleDetail() {
 
   const handleSubmitReview = async () => {
       if (!userName.trim() || userRating === 0 || !userComment.trim() || !vehicle) {
-          toast({ variant: 'destructive', title: 'Form Tidak Lengkap', description: 'Mohon isi nama, berikan rating, dan komentar.' });
+          toast({ variant: 'destructive', title: dictionary.vehicleDetail.reviews.formIncomplete, description: dictionary.vehicleDetail.reviews.formIncompleteDesc });
           return;
       }
       setIsSubmittingReview(true);
@@ -157,9 +157,9 @@ function VehicleDetail() {
       };
       const result = await upsertTestimonial(newTestimonial);
       if (result.error) {
-          toast({ variant: 'destructive', title: 'Gagal Mengirim Ulasan', description: result.error.message });
+          toast({ variant: 'destructive', title: dictionary.vehicleDetail.reviews.submissionFailed, description: result.error.message });
       } else {
-          toast({ title: 'Ulasan Terkirim', description: 'Terima kasih atas masukan Anda!' });
+          toast({ title: dictionary.vehicleDetail.reviews.submissionSuccess, description: dictionary.vehicleDetail.reviews.submissionSuccessDesc });
           if (result.data) {
              setTestimonials(prev => [result.data!, ...prev]);
           }
@@ -231,11 +231,11 @@ function VehicleDetail() {
              <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
                 <div className="flex items-center gap-1.5">
                     <Eye className="h-4 w-4"/>
-                    <span>Dilihat {vehicle?.view_count || 0} kali</span>
+                    <span>{dictionary.vehicleDetail.viewed(vehicle?.view_count || 0)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <ShoppingCart className="h-4 w-4"/>
-                    <span>Dipesan {vehicle?.booked_count || 0} kali</span>
+                    <span>{dictionary.vehicleDetail.booked(vehicle?.booked_count || 0)}</span>
                 </div>
             </div>
           </div>
@@ -360,7 +360,7 @@ function VehicleDetail() {
                                             </DialogTrigger>
                                             <DialogContent className="max-w-4xl">
                                                 <DialogHeader>
-                                                    <DialogTitle>Pratinjau Gambar</DialogTitle>
+                                                    <DialogTitle>{dictionary.testimonials.imagePreview}</DialogTitle>
                                                     <DialogDescription>
                                                         {photo.vehicleName || `${representativeVehicle.brand} ${representativeVehicle.name}`}
                                                     </DialogDescription>

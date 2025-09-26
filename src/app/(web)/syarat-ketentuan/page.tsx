@@ -30,14 +30,14 @@ function TermsPageContent() {
             setIsLoading(true);
             const { data, error } = await supabase.from('terms_content').select('*').single();
             if (error || !data) {
-                toast({ variant: 'destructive', title: 'Gagal memuat syarat & ketentuan.', description: error?.message });
+                toast({ variant: 'destructive', title: dictionary.errors.failedToLoad('syarat & ketentuan'), description: error?.message });
             } else {
                 setTermsContent(data);
             }
             setIsLoading(false);
         };
         fetchTerms();
-    }, [toast, supabase]);
+    }, [toast, supabase, dictionary]);
 
     if (isLoading) {
         return (
@@ -49,7 +49,7 @@ function TermsPageContent() {
     }
 
     if (!termsContent) {
-        return <div className="container py-16 text-center">Gagal memuat syarat & ketentuan.</div>
+        return <div className="container py-16 text-center">{dictionary.errors.failedToLoad('syarat & ketentuan')}</div>
     }
 
     const generalTermsList = termsContent.general?.split('\n').filter(line => line.trim() !== '') || [];

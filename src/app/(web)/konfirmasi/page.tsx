@@ -292,20 +292,20 @@ function KonfirmasiComponent() {
         const fetchInitialData = async () => {
             const { data: bankData, error: bankError } = await supabaseClient.from('bank_accounts').select('*');
             if (bankError) {
-                toast({ variant: 'destructive', title: 'Gagal memuat rekening bank' });
+                toast({ variant: 'destructive', title: dictionary.errors.failedToLoadBankAccounts });
             } else {
                 setBankAccounts(bankData || []);
             }
             
             const { data: contactData, error: contactError } = await supabaseClient.from('contact_info').select('whatsapp').single();
             if(contactError) {
-                toast({ variant: 'destructive', title: 'Gagal memuat info kontak admin' });
+                toast({ variant: 'destructive', title: dictionary.errors.failedToLoadAdminContact });
             } else {
                 setContactInfo(contactData as ContactInfo);
             }
         };
         fetchInitialData();
-    }, [toast]);
+    }, [toast, dictionary]);
 
     useEffect(() => {
         if (!supabase || !vehicleId) return;
@@ -523,7 +523,7 @@ function KonfirmasiComponent() {
         <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
                 <Button variant="ghost" onClick={() => router.back()} className="mb-6 -ml-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Kembali
+                    {dictionary.back}
                 </Button>
                 <Card className="w-full">
                     <CardHeader className="p-6 md:p-8 text-center">
@@ -670,3 +670,4 @@ export default function KonfirmasiPage() {
       
 
     
+
