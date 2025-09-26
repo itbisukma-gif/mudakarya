@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import { Suspense, useEffect, useState, ChangeEvent, useMemo } from "react";
@@ -25,6 +26,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { updateVehicleStatus } from "@/app/dashboard/armada/actions";
 import { createSignedUploadUrl } from "@/app/actions/upload-actions";
 import { incrementBookedCount } from "@/app/actions/vehicle-stats";
+import { checkVehicleAvailability } from "@/app/actions/reservation-actions";
 
 async function fileToDataUri(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -237,7 +239,6 @@ function KonfirmasiComponent() {
     const customerName = searchParams.get('name');
     const customerPhone = searchParams.get('phone');
     const driverId = searchParams.get('driverId');
-    const isPartnerUnitParam = searchParams.get('isPartnerUnit') === 'true';
     
     const { dictionary } = useLanguage();
 
@@ -322,6 +323,17 @@ function KonfirmasiComponent() {
             const isReservation = startDateStr && !isToday(startOfDay(parseISO(startDateStr)));
             const orderStatus = isReservation ? 'dipesan' : 'pending';
 
+            // Check if this booking will create a double-booking for a regular unit.
+            let isPartnerUnitNeeded = vehicle.unitType === 'khusus';
+            if (vehicle.unitType === 'biasa' && startDateStr && endDateStr) {
+                const { data: isAvailable } = await checkVehicleAvailability(vehicle.id, startDateStr, endDateStr);
+                // If it's NOT available, it means we have a double book, so we need a partner unit.
+                if (isAvailable === false) {
+                    isPartnerUnitNeeded = true;
+                }
+            }
+
+
             // 1. Create the new order
             const newOrder: Omit<Order, 'created_at'> = {
                 id: orderId,
@@ -338,7 +350,7 @@ function KonfirmasiComponent() {
                 status: orderStatus,
                 paymentMethod: paymentMethod === 'bank' ? 'Transfer Bank' : 'QRIS',
                 total: Number(total),
-                isPartnerUnit: vehicle.unitType === 'khusus'
+                isPartnerUnit: isPartnerUnitNeeded
             };
 
             const { error: insertError } = await supabase.from('orders').insert(newOrder);
@@ -634,3 +646,5 @@ export default function KonfirmasiPage() {
         </Suspense>
     )
 }
+
+      
