@@ -101,7 +101,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 <div className="flex flex-col gap-y-1.5 items-start">
                     <div className="flex items-center gap-1.5">
                         <Users className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{displayVehicle.passengers || '-'} Penumpang</span>
+                        <span className="truncate">{displayVehicle.passengers || '-'} {dictionary.vehicleCard.passengers}</span>
                     </div>
                      <div className="flex items-center gap-1.5">
                         <Fuel className="h-4 w-4 flex-shrink-0" />

@@ -64,6 +64,9 @@ const id = {
         book: "Pesan",
         tooltip: "Tekan untuk detail",
         outOfStock: "Stok Habis",
+        passengers: "Penumpang",
+        fuel: "Bahan Bakar",
+        transmission: "Transmisi",
     },
     orderForm: {
         title: "Form Pemesanan",
@@ -346,6 +349,9 @@ const en: typeof id = {
         book: "Book",
         tooltip: "Click for details",
         outOfStock: "Out of Stock",
+        passengers: "Passengers",
+        fuel: "Fuel",
+        transmission: "Transmission",
     },
     orderForm: {
         title: "Booking Form",
