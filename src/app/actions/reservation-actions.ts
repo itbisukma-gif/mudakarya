@@ -18,13 +18,9 @@ export async function checkVehicleAvailability(vehicleId: string, startDate: str
     
     const supabase = createServiceRoleClient();
 
-    // The logic is to find any reservation that overlaps with the desired [startDate, endDate] range.
-    // An overlap occurs if:
-    // 1. An existing reservation starts during the new range.
-    // 2. An existing reservation ends during the new range.
-    // 3. An existing reservation completely contains the new range.
-    // PostgreSQL's overlap operator (&&) for ranges is ideal, but to do it with standard filters:
-    // We look for reservations where the start is before our end, AND the end is after our start.
+    // Corrected logic: An overlap occurs if an existing reservation's start date
+    // is before the new reservation's end date, AND the existing reservation's end date
+    // is after the new reservation's start date.
     
     const { data, error, count } = await supabase
         .from('reservations')
@@ -44,4 +40,3 @@ export async function checkVehicleAvailability(vehicleId: string, startDate: str
 
     return { data: isAvailable, error: null };
 }
-
