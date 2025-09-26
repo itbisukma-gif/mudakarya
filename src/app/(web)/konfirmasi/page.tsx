@@ -18,7 +18,7 @@ import { format, parseISO, startOfDay, isToday } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { BankAccount, Order, Vehicle, Driver, Reservation } from "@/lib/types";
+import type { BankAccount, Order, Vehicle, Driver, Reservation, ContactInfo } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppIcon } from "@/components/icons";
 import { createClient } from '@/utils/supabase/client';
@@ -227,6 +227,7 @@ function KonfirmasiComponent() {
     const [driver, setDriver] = useState<Driver | null>(null);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+    const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
     
     const paymentMethod = searchParams.get('paymentMethod');
     const total = searchParams.get('total');
@@ -288,15 +289,22 @@ function KonfirmasiComponent() {
         const randomOrderId = `ORD-${Math.floor(Math.random() * 90000) + 10000}`;
         setOrderId(randomOrderId);
 
-        const fetchBankAccounts = async () => {
-            const { data, error } = await supabaseClient.from('bank_accounts').select('*');
-            if (error) {
+        const fetchInitialData = async () => {
+            const { data: bankData, error: bankError } = await supabaseClient.from('bank_accounts').select('*');
+            if (bankError) {
                 toast({ variant: 'destructive', title: 'Gagal memuat rekening bank' });
             } else {
-                setBankAccounts(data || []);
+                setBankAccounts(bankData || []);
+            }
+            
+            const { data: contactData, error: contactError } = await supabaseClient.from('contact_info').select('whatsapp').single();
+            if(contactError) {
+                toast({ variant: 'destructive', title: 'Gagal memuat info kontak admin' });
+            } else {
+                setContactInfo(contactData as ContactInfo);
             }
         };
-        fetchBankAccounts();
+        fetchInitialData();
     }, [toast]);
 
     useEffect(() => {
@@ -424,17 +432,20 @@ function KonfirmasiComponent() {
     
     if (uploadSuccess) {
         const driverWhatsappUrl = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, '')}` : "#";
-        const adminWhatsappMessage = `Halo Admin, saya ingin konfirmasi pembayaran untuk pesanan dengan Order ID: ${orderId}`;
+        const adminWhatsappMessage = dictionary.confirmation.upload.success.adminWhatsappMessage(orderId);
         
-        let adminPhone = '6281234567890'; // Default admin number
-        let formattedAdminPhone = adminPhone.replace(/\D/g, '');
-        if (formattedAdminPhone.startsWith('0')) {
-            formattedAdminPhone = '62' + formattedAdminPhone.substring(1);
-        } else if (!formattedAdminPhone.startsWith('62')) {
-            formattedAdminPhone = '62' + formattedAdminPhone;
-        }
+        const formatAdminWhatsappUrl = (phone: string | null | undefined): string => {
+            if (!phone) return '#';
+            let formattedPhone = phone.replace(/\D/g, '');
+            if (formattedPhone.startsWith('0')) {
+                formattedPhone = '62' + formattedPhone.substring(1);
+            } else if (!formattedPhone.startsWith('62')) {
+                formattedPhone = '62' + formattedPhone;
+            }
+            return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(adminWhatsappMessage)}`;
+        };
         
-        const adminWhatsappUrl = `https://wa.me/${formattedAdminPhone}?text=${encodeURIComponent(adminWhatsappMessage)}`;
+        const adminWhatsappUrl = formatAdminWhatsappUrl(contactInfo?.whatsapp);
 
         return (
             <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">

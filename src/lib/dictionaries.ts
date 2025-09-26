@@ -194,6 +194,7 @@ const id = {
                 description: "Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin melalui WhatsApp untuk mempercepat proses verifikasi.",
                 contactAdmin: "Hubungi Admin via WhatsApp",
                 contactDriver: "Hubungi Supir",
+                adminWhatsappMessage: (orderId: string) => `Halo Admin, saya ingin konfirmasi pembayaran untuk pesanan dengan Order ID: ${orderId}`
             },
             error: {
                 title: "Upload Gagal",
@@ -475,6 +476,7 @@ const en: typeof id = {
                 description: "Your proof of payment has been sent. Please confirm your order with our admin via WhatsApp to speed up the verification process.",
                 contactAdmin: "Contact Admin via WhatsApp",
                 contactDriver: "Contact Driver",
+                adminWhatsappMessage: (orderId: string) => `Hello Admin, I want to confirm payment for Order ID: ${orderId}`
             },
             error: {
                 title: "Upload Failed",
