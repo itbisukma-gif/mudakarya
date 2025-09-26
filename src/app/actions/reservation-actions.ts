@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createServiceRoleClient } from '@/utils/supabase/server';
@@ -27,5 +28,7 @@ export async function checkVehicleAvailability(vehicleId: string, startDate: str
         return { data: false, error };
     }
 
-    return { data, error: null };
+    // If data is null, it means no overlapping reservations were found, so the vehicle IS available.
+    // The ?? operator handles this: if data is null or undefined, it defaults to true.
+    return { data: data ?? true, error: null };
 }
