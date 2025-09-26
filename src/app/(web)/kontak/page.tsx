@@ -70,6 +70,17 @@ function KontakPageContent() {
         fetchContactInfo();
     }, [toast, supabase]);
 
+    const formatWhatsappUrl = (phone: string | null | undefined): string => {
+        if (!phone) return '#';
+        let formattedPhone = phone.replace(/\D/g, '');
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '62' + formattedPhone.substring(1);
+        } else if (!formattedPhone.startsWith('62')) {
+            formattedPhone = '62' + formattedPhone;
+        }
+        return `https://wa.me/${formattedPhone}`;
+    };
+
     if (isLoading) {
         return (
             <div className="container py-16 text-center flex justify-center items-center gap-2">
@@ -118,7 +129,7 @@ function KontakPageContent() {
                                 {dictionary.contact.getDirections}
                             </Button>
                         </a>
-                         <a href={`https://wa.me/${contactInfo.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                         <a href={formatWhatsappUrl(contactInfo.whatsapp)} target="_blank" rel="noopener noreferrer">
                             <Button variant="outline" size="lg">
                                  <WhatsAppIcon className="mr-2 h-4 w-4" />
                                 {dictionary.contact.contactWhatsApp}
@@ -141,7 +152,7 @@ function KontakPageContent() {
                          <div className="flex flex-col items-center gap-2">
                             <Phone className="h-10 w-10 text-primary" />
                             <h3 className="font-semibold text-lg">{dictionary.contact.phone}</h3>
-                            <a href={`https://wa.me/${contactInfo.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground text-sm hover:text-primary">{contactInfo.whatsapp}</a>
+                            <a href={formatWhatsappUrl(contactInfo.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-muted-foreground text-sm hover:text-primary">{contactInfo.whatsapp}</a>
                         </div>
                     </div>
 

@@ -46,6 +46,17 @@ export function WebFooter({ className }: { className?: string }) {
     };
     fetchContactInfo();
   }, [supabase]);
+  
+  const formatWhatsappUrl = (phone: string | null | undefined): string => {
+    if (!phone) return '#';
+    let formattedPhone = phone.replace(/\D/g, '');
+    if (formattedPhone.startsWith('0')) {
+        formattedPhone = '62' + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith('62')) {
+        formattedPhone = '62' + formattedPhone;
+    }
+    return `https://wa.me/${formattedPhone}`;
+  };
 
   const hasSocialMedia = contactInfo && (contactInfo.instagram || contactInfo.facebook || contactInfo.twitter || contactInfo.tiktok || contactInfo.telegram);
 
@@ -100,8 +111,8 @@ export function WebFooter({ className }: { className?: string }) {
               {contactInfo ? (
                 <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>{contactInfo.address}</li>
-                    <li>Email: {contactInfo.email}</li>
-                    <li>WhatsApp: {contactInfo.whatsapp}</li>
+                    <li>Email: <a href={`mailto:${contactInfo.email}`} className="hover:text-primary">{contactInfo.email}</a></li>
+                    <li>WhatsApp: <a href={formatWhatsappUrl(contactInfo.whatsapp)} target="_blank" rel="noopener noreferrer" className="hover:text-primary">{contactInfo.whatsapp}</a></li>
                 </ul>
               ) : (
                  <ul className="space-y-2 text-sm text-muted-foreground">

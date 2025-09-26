@@ -76,7 +76,12 @@ export default function PengaturanPage() {
   }, [toast, supabase]);
    
    const handleContactChange = (field: keyof Omit<ContactInfo, SocialPlatformKey | 'id'>, value: string) => {
-    setContactInfo(prev => prev ? ({ ...prev, [field]: value }) : null);
+    if (field === 'whatsapp') {
+        const cleaned = value.replace(/\D/g, '');
+        setContactInfo(prev => prev ? ({ ...prev, [field]: cleaned }) : null);
+    } else {
+        setContactInfo(prev => prev ? ({ ...prev, [field]: value }) : null);
+    }
    }
    
     const handleTermsChange = (field: keyof TermsContent, value: string) => {
@@ -184,7 +189,8 @@ export default function PengaturanPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="whatsapp">WhatsApp</Label>
-                            <Input id="whatsapp" value={contactInfo.whatsapp} onChange={(e) => handleContactChange('whatsapp', e.target.value)} />
+                            <Input id="whatsapp" value={contactInfo.whatsapp} onChange={(e) => handleContactChange('whatsapp', e.target.value)} placeholder="081234567890"/>
+                             <p className="text-xs text-muted-foreground">Masukkan hanya angka, tanpa + atau spasi.</p>
                         </div>
                     </div>
                     <div className="space-y-2">

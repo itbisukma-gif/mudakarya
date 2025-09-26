@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import type { Order, Vehicle } from '@/lib/types';
+import type { Order, Vehicle, ContactInfo } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -25,6 +25,7 @@ function SharedInvoiceComponent() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [order, setOrder] = useState<Order | null>(null);
     const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+    const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
@@ -43,19 +44,25 @@ function SharedInvoiceComponent() {
         if (orderId) {
             const fetchOrder = async () => {
                 setIsLoading(true);
-                const { data, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('id', orderId)
-                    .single();
+                const [orderRes, contactRes] = await Promise.all([
+                     supabase.from('orders').select('*').eq('id', orderId).single(),
+                     supabase.from('contact_info').select('whatsapp').single()
+                ]);
+
+                const { data: orderData, error } = orderRes;
                 
-                if (error || !data) {
+                if (error || !orderData) {
                     setOrder(null);
                 } else {
-                    setOrder(data);
-                    const { data: vehicleData } = await supabase.from('vehicles').select('*').eq('id', data.vehicleId).single();
+                    setOrder(orderData);
+                    const { data: vehicleData } = await supabase.from('vehicles').select('*').eq('id', orderData.vehicleId).single();
                     setVehicle(vehicleData);
                 }
+                
+                if(contactRes.data) {
+                    setContactInfo(contactRes.data as ContactInfo);
+                }
+
                 setIsLoading(false);
             }
             fetchOrder();
@@ -104,6 +111,17 @@ function SharedInvoiceComponent() {
             setIsDownloading(false);
         }
     };
+    
+    const adminWhatsappUrl = useMemo(() => {
+        if (!contactInfo?.whatsapp) return '#';
+        let formattedPhone = contactInfo.whatsapp.replace(/\D/g, '');
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '62' + formattedPhone.substring(1);
+        } else if (!formattedPhone.startsWith('62')) {
+            formattedPhone = '62' + formattedPhone;
+        }
+        return `https://wa.me/${formattedPhone}`;
+    }, [contactInfo]);
     
     if (isLoading) {
         return (
@@ -154,7 +172,7 @@ function SharedInvoiceComponent() {
                     </Button>
                  </div>
                 <Button asChild className="w-full mt-2">
-                    <Link href="https://wa.me/6281234567890" target="_blank">
+                    <Link href={adminWhatsappUrl} target="_blank">
                         <WhatsAppIcon className="h-4 w-4 mr-2" />
                         Hubungi Admin
                     </Link>

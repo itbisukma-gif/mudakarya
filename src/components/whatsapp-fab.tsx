@@ -34,7 +34,18 @@ export function WhatsappFab() {
     return null;
   }
 
-  const whatsappUrl = `https://wa.me/${contactInfo.whatsapp.replace(/\D/g, '')}`;
+  const formatWhatsappUrl = (phone: string | null | undefined): string => {
+    if (!phone) return '#';
+    let formattedPhone = phone.replace(/\D/g, '');
+    if (formattedPhone.startsWith('0')) {
+        formattedPhone = '62' + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith('62')) {
+        formattedPhone = '62' + formattedPhone;
+    }
+    return `https://wa.me/${formattedPhone}`;
+  };
+
+  const whatsappUrl = formatWhatsappUrl(contactInfo.whatsapp);
 
   return (
     <TooltipProvider>

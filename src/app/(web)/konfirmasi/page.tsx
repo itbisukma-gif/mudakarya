@@ -425,7 +425,16 @@ function KonfirmasiComponent() {
     if (uploadSuccess) {
         const driverWhatsappUrl = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, '')}` : "#";
         const adminWhatsappMessage = `Halo Admin, saya ingin konfirmasi pembayaran untuk pesanan dengan Order ID: ${orderId}`;
-        const adminWhatsappUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(adminWhatsappMessage)}`;
+        
+        let adminPhone = '6281234567890'; // Default admin number
+        let formattedAdminPhone = adminPhone.replace(/\D/g, '');
+        if (formattedAdminPhone.startsWith('0')) {
+            formattedAdminPhone = '62' + formattedAdminPhone.substring(1);
+        } else if (!formattedAdminPhone.startsWith('62')) {
+            formattedAdminPhone = '62' + formattedAdminPhone;
+        }
+        
+        const adminWhatsappUrl = `https://wa.me/${formattedAdminPhone}?text=${encodeURIComponent(adminWhatsappMessage)}`;
 
         return (
             <div className="container mx-auto max-w-lg py-8 md:py-12 px-4">
