@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useTransition, useCallback } from 'react';
+import { useState, useMemo, useEffect, useTransition, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -344,6 +344,8 @@ export default function OrdersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
 
     const fetchOrderData = useCallback(async (supabaseClient: SupabaseClient) => {
         setIsLoading(true);
@@ -404,6 +406,9 @@ export default function OrdersPage() {
     useEffect(() => {
         const supabaseClient = createClient();
         setSupabase(supabaseClient);
+         if (typeof window !== 'undefined') {
+            audioRef.current = new Audio('/notification.mp3');
+        }
     }, []);
 
     useEffect(() => {
@@ -411,6 +416,31 @@ export default function OrdersPage() {
             fetchOrderData(supabase);
         }
     }, [supabase, fetchOrderData]);
+    
+     useEffect(() => {
+        if (!supabase) return;
+
+        const channel = supabase.channel('realtime-orders')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+                const newOrder = payload.new as Order;
+                setOrders(prevOrders => [newOrder, ...prevOrders]);
+                
+                // Play notification sound
+                audioRef.current?.play().catch(e => console.error("Error playing sound:", e));
+                
+                // Show toast notification
+                toast({
+                    title: "Pesanan Baru Masuk!",
+                    description: `Pesanan dari ${newOrder.customerName} (ID: ${newOrder.id}) telah diterima.`,
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase, toast]);
+
 
     const { pendingOrders, reservedOrders, approvedOrders, completedOrders } = useMemo(() => {
         return {
@@ -568,3 +598,5 @@ export default function OrdersPage() {
 }
 
   
+
+    
