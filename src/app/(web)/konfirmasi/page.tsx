@@ -46,7 +46,7 @@ function BankAccountDetails({ bank }: { bank: BankAccount }) {
         navigator.clipboard.writeText(bank.accountNumber);
         setCopied(true);
         toast({
-            title: "Berhasil Disalin",
+            title: dictionary.confirmation.copied,
             description: "Nomor rekening telah disalin ke clipboard.",
         });
         setTimeout(() => setCopied(false), 2000);
@@ -174,7 +174,7 @@ function UploadProof({ onUpload, orderId, isBankTransfer, isBankSelected }: { on
                 <div className="flex flex-wrap items-center gap-2">
                     <Label htmlFor="proof-upload" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
                         <Paperclip className="h-4 w-4 mr-2" />
-                        Pilih File
+                        {dictionary.confirmation.upload.selectFile}
                     </Label>
                     <Button onClick={handleUpload} disabled={isSubmitDisabled} className="transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100">
                         {uploadState === 'uploading' ? (
@@ -187,7 +187,7 @@ function UploadProof({ onUpload, orderId, isBankTransfer, isBankSelected }: { on
                 </div>
                  {isBankTransfer && !isBankSelected && (
                     <p className="text-xs text-destructive mt-2">
-                        Silakan pilih bank tujuan terlebih dahulu sebelum mengirim bukti pembayaran.
+                        {dictionary.confirmation.upload.selectBankFirst}
                     </p>
                 )}
                 <Input
@@ -324,7 +324,7 @@ function KonfirmasiComponent() {
             const orderStatus = isReservation ? 'dipesan' : 'pending';
 
             // Check if this booking will create a double-booking for a regular unit.
-            let isPartnerUnitNeeded = vehicle.unitType === 'khusus';
+            let isPartnerUnitNeeded = false;
             if (vehicle.unitType === 'biasa' && startDateStr && endDateStr) {
                 const { data: isAvailable } = await checkVehicleAvailability(vehicle.id, startDateStr, endDateStr);
                 // If it's NOT available, it means we have a double book, so we need a partner unit.
@@ -441,8 +441,8 @@ function KonfirmasiComponent() {
                  <Card>
                     <CardHeader className="p-6 md:p-8 text-center">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <CardTitle className="text-2xl md:text-3xl font-bold">Satu Langkah Lagi!</CardTitle>
-                      <CardDescription className="text-muted-foreground mt-2 max-w-sm mx-auto">Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin kami melalui WhatsApp untuk mempercepat proses verifikasi.</CardDescription>
+                      <CardTitle className="text-2xl md:text-3xl font-bold">{dictionary.confirmation.upload.success.title}</CardTitle>
+                      <CardDescription className="text-muted-foreground mt-2 max-w-sm mx-auto">{dictionary.confirmation.upload.success.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-0">                        
                          <div className="text-left bg-muted/30 rounded-lg p-4 mt-6 space-y-2 text-sm">
@@ -486,7 +486,7 @@ function KonfirmasiComponent() {
                                  <Button asChild variant="outline" className="w-full">
                                     <Link href={driverWhatsappUrl} target="_blank">
                                         <WhatsAppIcon className="h-4 w-4 mr-2" />
-                                        Hubungi Supir
+                                        {dictionary.confirmation.upload.success.contactDriver}
                                     </Link>
                                 </Button>
                             )}
@@ -517,7 +517,7 @@ function KonfirmasiComponent() {
                 <Card className="w-full">
                     <CardHeader className="p-6 md:p-8 text-center">
                         <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
-                        <CardTitle className="text-2xl md:text-3xl font-bold">Selesaikan Pembayaran</CardTitle>
+                        <CardTitle className="text-2xl md:text-3xl font-bold">{dictionary.confirmation.title}</CardTitle>
                         <CardDescription className="text-muted-foreground mt-2">{dictionary.confirmation.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 pt-0">
@@ -620,7 +620,7 @@ function KonfirmasiComponent() {
                                             <Button variant="outline" asChild>
                                                 <a href={qrCodeUrl} download={`qris-payment-${orderId}.png`}>
                                                     <Download className="h-4 w-4 mr-2" />
-                                                    Unduh Kode QR
+                                                    {dictionary.confirmation.paymentInstructions.qris.download}
                                                 </a>
                                             </Button>
                                         </>

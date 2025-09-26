@@ -154,8 +154,8 @@ const id = {
         }
     },
     confirmation: {
-        title: "Terima Kasih!",
-        description: "Pesanan Anda telah kami terima.",
+        title: "Selesaikan Pembayaran",
+        description: "Mohon selesaikan pembayaran agar pesanan Anda dapat kami proses.",
         orderNumber: "Nomor Pesanan",
         status: "Status",
         statusAwaitingPayment: "Menunggu Pembayaran",
@@ -169,7 +169,7 @@ const id = {
         invalidPeriod: "Periode tidak valid",
         days: "hari",
         copy: "Salin",
-        copied: "Tersalin!",
+        copied: "Berhasil Disalin",
         paymentInstructions: {
             bank: {
                 title: "Instruksi Pembayaran",
@@ -179,6 +179,7 @@ const id = {
             qris: {
                 title: "Instruksi Pembayaran QRIS",
                 description: "Silakan pindai kode QR di bawah ini menggunakan aplikasi perbankan atau e-wallet Anda.",
+                download: "Unduh Kode QR",
                 important: {
                     title: "Penting!",
                     description: "Pastikan nominal yang Anda masukkan sesuai dengan total tagihan.",
@@ -189,18 +190,20 @@ const id = {
             title: "Unggah Bukti Pembayaran",
             description: "Setelah melakukan pembayaran, silakan unggah bukti transfer atau screenshot di sini.",
             success: {
-                title: "Upload Berhasil!",
-                description: "Terima kasih! Tim kami akan segera melakukan verifikasi.",
-                contactAdmin: "Hubungi Admin",
+                title: "Satu Langkah Lagi!",
+                description: "Bukti pembayaran Anda telah terkirim. Mohon konfirmasi pesanan Anda kepada admin melalui WhatsApp untuk mempercepat proses verifikasi.",
+                contactAdmin: "Hubungi Admin via WhatsApp",
+                contactDriver: "Hubungi Supir",
             },
             error: {
                 title: "Upload Gagal",
             },
-            selectFile: "Klik untuk memilih file",
-            fileHint: "PNG, JPG, JPEG (maks. 5MB)",
+            selectFile: "Pilih File",
+            fileHint: "PNG, JPG, JPEG (maks. 4MB)",
             preview: "Pratinjau:",
             uploading: "Mengunggah...",
             submit: "Kirim Bukti Pembayaran",
+            selectBankFirst: "Silakan pilih bank tujuan terlebih dahulu sebelum mengirim bukti.",
         },
         error: {
             title: "Data Pesanan Tidak Lengkap",
@@ -429,8 +432,8 @@ const en: typeof id = {
         }
     },
     confirmation: {
-        title: "Thank You!",
-        description: "Your order has been received.",
+        title: "Complete Payment",
+        description: "Please complete the payment so we can process your order.",
         orderNumber: "Order Number",
         status: "Status",
         statusAwaitingPayment: "Awaiting Payment",
@@ -454,6 +457,7 @@ const en: typeof id = {
             qris: {
                 title: "QRIS Payment Instructions",
                 description: "Please scan the QR code below using your banking or e-wallet application.",
+                download: "Download QR Code",
                 important: {
                     title: "Important!",
                     description: "Please ensure the amount you enter matches the total bill.",
@@ -464,18 +468,20 @@ const en: typeof id = {
             title: "Upload Payment Proof",
             description: "After making the payment, please upload the transfer proof or screenshot here.",
             success: {
-                title: "Upload Successful!",
-                description: "Thank you! Our team will verify it shortly.",
-                contactAdmin: "Contact Admin",
+                title: "One More Step!",
+                description: "Your proof of payment has been sent. Please confirm your order with our admin via WhatsApp to speed up the verification process.",
+                contactAdmin: "Contact Admin via WhatsApp",
+                contactDriver: "Contact Driver",
             },
             error: {
                 title: "Upload Failed",
             },
-            selectFile: "Click to select a file",
-            fileHint: "PNG, JPG, JPEG (max. 5MB)",
+            selectFile: "Select File",
+            fileHint: "PNG, JPG, JPEG (max. 4MB)",
             preview: "Preview:",
             uploading: "Uploading...",
             submit: "Submit Payment Proof",
+            selectBankFirst: "Please select a destination bank before submitting proof.",
         },
         error: {
             title: "Incomplete Order Data",
