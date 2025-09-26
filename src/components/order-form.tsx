@@ -138,13 +138,14 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
     
     // Availability check effect
     useEffect(() => {
-        if (activeTab !== 'reservation' || !debouncedStartDate || !debouncedEndDate || !selectedVehicle) {
-            setIsAvailable(true); // Always available for direct booking
+        // --- NEW LOGIC ---
+        // Only run the check if it's a reservation for a "khusus" (special) unit.
+        if (activeTab !== 'reservation' || !debouncedStartDate || !debouncedEndDate || !selectedVehicle || selectedVehicle.unitType !== 'khusus') {
+            setIsAvailable(true); // Always available for direct booking or for 'biasa' units.
             return;
         }
 
         startAvailabilityCheck(async () => {
-             // Convert local start/end date to UTC string for Supabase (TIMESTAMPTZ)
             const startISO = debouncedStartDate.toISOString();
             const endISO = debouncedEndDate.toISOString();
             
@@ -218,7 +219,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
         setEndCalendarOpen(false);
     };
 
-    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || isLoading || (activeTab === 'reservation' && (!isAvailable || isCheckingAvailability));
+    const isBookingDisabled = (showDriverSelection && !driverId) || calculatedDuration <= 0 || !selectedVehicle || isLoading || (activeTab === 'reservation' && !isAvailable || isCheckingAvailability);
 
     const paymentUrl = useMemo(() => {
         if (isBookingDisabled || !selectedVehicle) return '#';
@@ -344,13 +345,13 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
                             </Popover>
                          </div>
                      </div>
-                     {isCheckingAvailability && (
+                     {isCheckingAvailability && selectedVehicle?.unitType === 'khusus' && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin"/>
                             <span>Mengecek ketersediaan...</span>
                         </div>
                      )}
-                      {!isCheckingAvailability && !isAvailable && (
+                      {!isCheckingAvailability && !isAvailable && selectedVehicle?.unitType === 'khusus' && (
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Tidak Tersedia</AlertTitle>
@@ -436,7 +437,7 @@ export const OrderForm = forwardRef<HTMLDivElement, { variants: Vehicle[] }>(({ 
 
              <Button className="w-full mt-6 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-md active:scale-100" disabled={isBookingDisabled} asChild>
                 <Link href={paymentUrl}>
-                    {isCheckingAvailability ? 'Memeriksa...' : dictionary.orderForm.bookNow}
+                    {isCheckingAvailability && selectedVehicle?.unitType === 'khusus' ? 'Memeriksa...' : dictionary.orderForm.bookNow}
                 </Link>
             </Button>
              {isBookingDisabled && showDriverSelection && !driverId && availableDrivers.length === 0 && (
