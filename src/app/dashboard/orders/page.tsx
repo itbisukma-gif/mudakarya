@@ -185,12 +185,12 @@ ${assignmentUrl}`;
                         </AlertDescription>
                     </Alert>
                 )}
-                 {order.isPartnerUnit && vehicle?.unitType !== 'khusus' && order.status === 'pending' && vehicle && (
+                 {order.isPartnerUnit && vehicle && (
                     <Alert className="bg-blue-50 border-blue-200 text-blue-800 [&>svg]:text-blue-600">
                         <Users className="h-4 w-4" />
-                        <AlertTitle className="font-semibold">Unit Mitra</AlertTitle>
+                        <AlertTitle className="font-semibold">Unit Mitra Diperlukan</AlertTitle>
                         <AlertDescription className="text-blue-700">
-                            Unit internal tidak tersedia. Hubungi mitra untuk menyediakan: <span className="font-bold">{vehicle.brand} {vehicle.name} ({vehicle.transmission}, {vehicle.fuel})</span>.
+                            Pesanan ini perlu dipenuhi dari unit mitra: <span className="font-bold">{vehicle.brand} {vehicle.name}</span>.
                         </AlertDescription>
                     </Alert>
                 )}
