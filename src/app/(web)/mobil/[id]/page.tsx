@@ -320,11 +320,11 @@ function VehicleDetail() {
                         </CardHeader>
                             <CardContent className="space-y-4 p-4 pt-0">
                             <div className="space-y-2">
-                                <Label htmlFor="customerName">Nama Anda</Label>
-                                <Input id="customerName" placeholder="Tulis nama Anda" value={userName} onChange={e => setUserName(e.target.value)} />
+                                <Label htmlFor="customerName">{dictionary.vehicleDetail.reviews.yourName}</Label>
+                                <Input id="customerName" placeholder={dictionary.vehicleDetail.reviews.namePlaceholder} value={userName} onChange={e => setUserName(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="comment">Komentar</Label>
+                                <Label htmlFor="comment">{dictionary.vehicleDetail.reviews.commentLabel}</Label>
                                 <Textarea id="comment" placeholder={dictionary.vehicleDetail.reviews.commentPlaceholder} rows={3} value={userComment} onChange={e => setUserComment(e.target.value)} />
                             </div>
                             <div className="flex justify-between items-center bg-muted/50 p-2 rounded-md">
